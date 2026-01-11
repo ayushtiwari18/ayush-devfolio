@@ -1,137 +1,95 @@
-import { Mail, MapPin, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Contact from '@/components/sections/Contact';
-import { supabase } from '@/lib/supabase';
+import { ArrowLeft, Mail, Github, Linkedin, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const metadata = {
   title: 'Contact - Ayush Tiwari',
-  description: 'Get in touch with Ayush Tiwari for collaborations, opportunities, or just to say hello',
+  description: 'Get in touch with me for collaborations and opportunities',
 };
 
-export default async function ContactPage() {
-  const { data: profile } = await supabase
-    .from('profile_settings')
-    .select('*')
-    .single();
-
+export default function ContactPage() {
   return (
     <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <Link href="/">
-          <Button variant="outline" className="mb-8">
-            ← Back to Home
+          <Button variant="outline" className="mb-8 hover:bg-primary/10 hover:border-primary">
+            <ArrowLeft className="mr-2" size={18} />
+            Back to Home
           </Button>
         </Link>
 
         {/* Page Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-            Get In <span className="gradient-text">Touch</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-4">
+            Get in <span className="gradient-text">Touch</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have a project in mind or want to collaborate? I'd love to hear from you!
+            Let's connect! I'm always open to discussing new projects, creative ideas, or opportunities.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
-          {/* Contact Info */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-6">Contact Information</h2>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 bg-card border border-border rounded-xl">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Mail className="text-primary" size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                    <a
-                      href="mailto:ayush@example.com"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      ayush@example.com
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-4 bg-card border border-border rounded-xl">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPin className="text-primary" size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">Location</h3>
-                    <p className="text-muted-foreground">Mumbai, Maharashtra, India</p>
-                  </div>
-                </div>
-              </div>
+        {/* Contact Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {/* Email */}
+          <a
+            href="mailto:ayushtiwari102003@gmail.com"
+            className="p-6 bg-card border border-border rounded-xl hover:border-primary/50 transition-all group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Mail size={24} className="text-primary" />
             </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Email</h3>
+            <p className="text-muted-foreground">ayushtiwari102003@gmail.com</p>
+          </a>
 
-            {/* Social Links */}
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-6">Connect With Me</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {profile?.github_url && (
-                  <a
-                    href={profile.github_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
-                  >
-                    <div className="text-foreground group-hover:text-primary transition-colors">
-                      GitHub
-                    </div>
-                  </a>
-                )}
-                {profile?.linkedin_url && (
-                  <a
-                    href={profile.linkedin_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
-                  >
-                    <div className="text-foreground group-hover:text-primary transition-colors">
-                      LinkedIn
-                    </div>
-                  </a>
-                )}
-                {profile?.twitter_url && (
-                  <a
-                    href={profile.twitter_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
-                  >
-                    <div className="text-foreground group-hover:text-primary transition-colors">
-                      Twitter
-                    </div>
-                  </a>
-                )}
-              </div>
+          {/* Location */}
+          <div className="p-6 bg-card border border-border rounded-xl">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+              <MapPin size={24} className="text-primary" />
             </div>
-
-            {/* Quick Links */}
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-6">Quick Links</h2>
-              <div className="flex flex-wrap gap-3">
-                <Link href="/projects">
-                  <Button variant="outline">View Projects</Button>
-                </Link>
-                <Link href="/blog">
-                  <Button variant="outline">Read Blog</Button>
-                </Link>
-                <Link href="/about">
-                  <Button variant="outline">About Me</Button>
-                </Link>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Location</h3>
+            <p className="text-muted-foreground">Jabalpur, Madhya Pradesh, India</p>
           </div>
 
-          {/* Contact Form */}
-          <div>
-            <Contact />
-          </div>
+          {/* GitHub */}
+          <a
+            href="https://github.com/ayushtiwari18"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-6 bg-card border border-border rounded-xl hover:border-primary/50 transition-all group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Github size={24} className="text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">GitHub</h3>
+            <p className="text-muted-foreground">@ayushtiwari18</p>
+          </a>
+
+          {/* LinkedIn */}
+          <a
+            href="https://linkedin.com/in/ayush-tiwari"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-6 bg-card border border-border rounded-xl hover:border-primary/50 transition-all group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Linkedin size={24} className="text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">LinkedIn</h3>
+            <p className="text-muted-foreground">Ayush Tiwari</p>
+          </a>
+        </div>
+
+        {/* CTA */}
+        <div className="text-center p-8 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20">
+          <h3 className="text-2xl font-bold text-foreground mb-3">Ready to work together?</h3>
+          <p className="text-muted-foreground mb-6">I'm available for freelance projects and full-time opportunities</p>
+          <a href="mailto:ayushtiwari102003@gmail.com">
+            <Button size="lg" className="font-semibold">
+              Send me an email
+            </Button>
+          </a>
         </div>
       </div>
     </main>
