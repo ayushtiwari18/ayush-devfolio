@@ -64,11 +64,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${inter.className} dark bg-background text-foreground`}>
         <ThreeBackground />
         <Navbar />
-        <main className="pt-16 min-h-screen">{children}</main>
+        <main className="pt-16 min-h-screen relative z-10">{children}</main>
         <Footer />
       </body>
     </html>
