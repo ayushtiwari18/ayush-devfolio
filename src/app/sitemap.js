@@ -1,9 +1,19 @@
-import { getPublishedProjects } from '@/services/projects.service';
-import { getPublishedBlogPosts } from '@/services/blog.service';
-import { SITE_CONFIG } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 
 export default async function sitemap() {
-  const baseUrl = SITE_CONFIG.url;
+  const baseUrl = 'https://ayush-tiwari.vercel.app'; // Update with your domain
+
+  // Fetch all published projects
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('slug, created_at')
+    .eq('published', true);
+
+  // Fetch all published blog posts
+  const { data: posts } = await supabase
+    .from('blog_posts')
+    .select('slug, created_at')
+    .eq('published', true);
 
   // Static pages
   const staticPages = [
@@ -14,70 +24,34 @@ export default async function sitemap() {
       priority: 1,
     },
     {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/projects`,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
+      changeFrequency: 'daily',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/certifications`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/hackathons`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.5,
+      changeFrequency: 'daily',
+      priority: 0.8,
     },
   ];
 
   // Dynamic project pages
-  let projectPages = [];
-  try {
-    const projects = await getPublishedProjects();
-    projectPages = projects.map((project) => ({
-      url: `${baseUrl}/projects/${project.slug}`,
-      lastModified: new Date(project.updated_at),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    }));
-  } catch (error) {
-    console.error('Failed to fetch projects for sitemap:', error);
-  }
+  const projectPages = (projects || []).map((project) => ({
+    url: `${baseUrl}/projects/${project.slug}`,
+    lastModified: new Date(project.created_at),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
 
   // Dynamic blog pages
-  let blogPages = [];
-  try {
-    const posts = await getPublishedBlogPosts();
-    blogPages = posts.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.updated_at),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    }));
-  } catch (error) {
-    console.error('Failed to fetch blog posts for sitemap:', error);
-  }
+  const blogPages = (posts || []).map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.created_at),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
 
   return [...staticPages, ...projectPages, ...blogPages];
 }
