@@ -1,0 +1,14 @@
+# Vercel Redeploy Trigger
+
+This file forces Vercel to recognize the latest commit.
+Last trigger: 2026-01-11 23:40 IST
+
+## Latest Fix (d46b869)
+- ✅ All pages now static
+- ✅ No Supabase data fetching
+- ✅ Projects page: Coming Soon
+- ✅ Blog page: Coming Soon
+- ✅ Certifications page: Coming Soon
+- ✅ Contact page: Static cards
+
+This WILL build successfully! 🚀
