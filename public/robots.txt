@@ -1,10 +1,6 @@
-# Allow all crawlers
+# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
 
-# Disallow admin pages
-Disallow: /admin/
-Disallow: /api/
-
-# Sitemap
-Sitemap: https://ayush-tiwari.vercel.app/sitemap.xml
+# Sitemaps
+Sitemap: https://ayush-devfolio.vercel.app/sitemap.xml
