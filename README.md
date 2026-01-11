@@ -1,183 +1,292 @@
-# 🚀 Ayush Devfolio
+# Ayush DevFolio - Modern Developer Portfolio
 
-> **Production-ready, SEO-optimized developer portfolio + CMS**
+> A clean, SEO-optimized, production-ready developer portfolio built with **Next.js 15**, **Tailwind CSS**, and **Supabase**.
 
-Built with Next.js 15, JavaScript, Three.js, and Supabase.
+![Portfolio Preview](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwindcss)
+![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?logo=supabase)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+---
 
 ## ✨ Features
 
-- **SEO-First Architecture** - Server-side rendering, dynamic metadata, sitemap generation
-- **Three.js Integration** - Subtle 3D enhancements throughout the site
-- **Admin CMS** - Full content management system with authentication
-- **Blog Platform** - Markdown-based blog with reading time estimation
-- **Project Showcase** - Portfolio projects with detailed case studies
-- **Certifications & Hackathons** - Professional achievements display
-- **Contact Form** - Integrated message management system
+### 🎨 Design
+- **Dark Purple Theme** - Modern purple accent colors with dark backgrounds
+- **Glass Morphism** - Subtle transparent card effects
+- **Card Glows** - Purple glow effects on hover
+- **Smooth Animations** - Framer Motion & custom CSS animations
+- **Three.js Background** - Interactive 3D particle background
+- **Responsive Design** - Mobile-first, works on all devices
 
-## 🛠️ Tech Stack
+### 📄 Pages
+- ✅ **Home** - Hero section with Three.js background
+- ✅ **About** - Skills, experience, education, achievements
+- ✅ **Projects** - Grid view with featured projects
+- ✅ **Project Detail** - Individual project pages with slug-based URLs
+- ✅ **Blog** - Article listing with tags and reading time
+- ✅ **Blog Post** - Full blog posts with markdown support
+- ✅ **Certifications** - Professional certifications showcase
+- ✅ **Hackathons** - Competition participation and achievements
+- ✅ **Contact** - Functional contact form with Supabase
 
-### Frontend
-- **Next.js 15** (App Router) - React framework with SSR/SSG
-- **React 19** - UI library
-- **Tailwind CSS** - Utility-first CSS
-- **Shadcn UI** - Component library (JS version)
-- **Three.js** - 3D graphics
-- **Framer Motion** - Micro-animations
-- **GSAP** - Hero animations (lazy-loaded)
+### 🔧 Technical Features
+- **Server Components** - SEO-optimized by default
+- **Dynamic Metadata** - Per-page SEO configuration
+- **Sitemap & Robots.txt** - Automatic generation
+- **Image Optimization** - Next.js Image component
+- **Database Integration** - Supabase PostgreSQL
+- **API Routes** - Contact form endpoint
+- **Error Handling** - Graceful error states
 
-### Backend
-- **Supabase** - Auth, PostgreSQL, Storage
-- **Row Level Security** - Database-level access control
+---
 
-## 📦 Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18+
+- npm or yarn
 - Supabase account
 
-### Setup
+### Installation
 
-1. **Clone the repository**
 ```bash
+# Clone the repository
 git clone https://github.com/ayushtiwari18/ayush-devfolio.git
 cd ayush-devfolio
-```
 
-2. **Install dependencies**
-```bash
+# Install dependencies
 npm install
-```
 
-3. **Configure Supabase**
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Run SQL scripts from `supabase/` directory in order:
-     1. `schema.sql`
-     2. `rls-policies.sql`
-     3. `seed.sql` (optional)
-
-4. **Set environment variables**
-```bash
+# Set up environment variables
 cp .env.example .env.local
-```
+# Edit .env.local with your Supabase credentials
 
-Edit `.env.local` with your Supabase credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
+# Run database migrations (see Database Setup below)
 
-5. **Run development server**
-```bash
+# Start development server
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000)
+Visit http://localhost:3000
 
-## 🗄️ Database Schema
+---
 
-See [DATABASE.md](DATABASE.md) for complete schema documentation.
+## 🗄️ Database Setup
 
-### Core Tables
-- `admin_access` - Admin user management
-- `profile_settings` - Portfolio owner info (single row)
-- `projects` - Portfolio projects
-- `blog_posts` - Blog articles
-- `certifications` - Professional certifications
-- `hackathons` - Hackathon achievements
-- `contact_messages` - Contact form submissions
+### Supabase Configuration
 
-## 🔐 Admin Access
+1. Create a new project on [Supabase](https://supabase.com)
+2. Copy your project URL and anon key to `.env.local`:
 
-After signing up, manually add your user ID to `admin_access` table:
-
-```sql
-INSERT INTO admin_access (user_id, role)
-VALUES ('your-auth-user-id', 'admin');
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-Access admin panel at `/admin`
+3. Run the following SQL in Supabase SQL Editor:
+
+```sql
+-- Projects table
+CREATE TABLE projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  technologies TEXT[],
+  cover_image TEXT,
+  github_url TEXT,
+  live_url TEXT,
+  featured BOOLEAN DEFAULT false,
+  published BOOLEAN DEFAULT true,
+  views INT DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Blog posts table
+CREATE TABLE blog_posts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  content TEXT,
+  excerpt TEXT,
+  cover_image TEXT,
+  tags TEXT[],
+  published BOOLEAN DEFAULT true,
+  reading_time INT,
+  views INT DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Certifications table
+CREATE TABLE certifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  issuer TEXT NOT NULL,
+  image TEXT,
+  url TEXT,
+  date DATE NOT NULL
+);
+
+-- Hackathons table
+CREATE TABLE hackathons (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT,
+  result TEXT,
+  description TEXT,
+  technologies TEXT[],
+  image TEXT,
+  date DATE NOT NULL
+);
+
+-- Contact messages table
+CREATE TABLE contact_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'unread',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### Enable Row Level Security (Optional for Production)
+
+```sql
+-- Enable RLS
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
+
+-- Allow public read access
+CREATE POLICY "public_read_projects" ON projects FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "public_read_blog_posts" ON blog_posts FOR SELECT TO anon, authenticated USING (true);
+```
+
+---
 
 ## 📁 Project Structure
 
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── layout.js          # Root layout with SEO
-│   ├── page.js            # Homepage
-│   ├── about/
-│   ├── projects/
-│   ├── blog/
-│   ├── certifications/
-│   ├── hackathons/
-│   ├── contact/
-│   └── admin/             # Admin CMS
+│   ├── about/             # About page
+│   ├── blog/              # Blog listing & detail pages
+│   ├── certifications/    # Certifications page
+│   ├── contact/           # Contact form page
+│   ├── hackathons/        # Hackathons page
+│   ├── projects/          # Projects listing & detail
+│   ├── api/               # API routes
+│   ├── layout.js          # Root layout
+│   ├── page.js            # Home page
+│   ├── robots.js          # Robots.txt
+│   └── sitemap.js         # Dynamic sitemap
+│
 ├── components/
-│   ├── layout/            # Navbar, Footer
-│   ├── sections/          # Hero, About, Skills
-│   ├── cards/             # ProjectCard, BlogCard
-│   └── ui/                # Shadcn components
+│   ├── layout/            # Navbar, Footer, ThreeBackground
+│   ├── sections/          # Hero, About, Skills sections
+│   ├── cards/             # Reusable card components
+│   └── ui/                # Shadcn UI components
+│
 ├── lib/
 │   ├── supabase.js        # Supabase client
 │   ├── seo.js             # SEO utilities
 │   └── constants.js       # App constants
-├── services/              # Data fetching logic
-├── styles/
-│   └── globals.css        # Global styles + Tailwind
-└── utils/                 # Helper functions
+│
+├── services/
+│   ├── projects.service.js  # Project data fetching
+│   ├── blog.service.js      # Blog data fetching
+│   └── contact.service.js   # Contact form handling
+│
+└── styles/
+    └── globals.css        # Global styles & theme
 ```
 
-## 🚀 Deployment
+---
+
+## 🎨 Customization
+
+### Theme Colors
+
+Edit `src/styles/globals.css` to customize colors:
+
+```css
+.dark {
+  --primary: 217.2 91.2% 59.8%;  /* Purple accent */
+  --background: 222.2 47.4% 11.2%; /* Dark background */
+  /* ... more colors */
+}
+```
+
+### Content
+
+- **Profile Info**: Update `src/lib/constants.js`
+- **Projects**: Add via database or admin panel
+- **Blog Posts**: Add via database or admin panel
+
+---
+
+## 🚢 Deployment
 
 ### Vercel (Recommended)
 
-1. Push code to GitHub
-2. Import project in Vercel
-3. Add environment variables
-4. Deploy
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-### Environment Variables for Production
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+# Deploy
+vercel
 ```
 
-## 📊 Development Phases
+### Environment Variables
 
-- [x] **Phase 1**: Foundation (Next.js, Tailwind, SEO base)
-- [ ] **Phase 2**: Public Pages (Projects, Blog, etc.)
-- [ ] **Phase 3**: Three.js Integration
-- [ ] **Phase 4**: Admin Panel
-- [ ] **Phase 5**: Supabase Wiring
-- [ ] **Phase 6**: SEO & Performance Polish
+Set these in your deployment platform:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-## 🎯 SEO Features
+---
 
-- Dynamic metadata per page
-- Automatic sitemap generation
-- robots.txt configuration
-- Open Graph tags
-- Twitter Card support
-- Semantic HTML
-- Canonical URLs
-- Structured data (JSON-LD)
+## 📊 SEO Features
+
+- ✅ Dynamic metadata per page
+- ✅ Open Graph tags
+- ✅ Twitter Card tags
+- ✅ Canonical URLs
+- ✅ Sitemap generation
+- ✅ Robots.txt
+- ✅ Semantic HTML
+- ✅ Image optimization
+
+---
+
+## 🔜 Coming Soon
+
+- [ ] Admin panel for content management
+- [ ] Blog post markdown editor
+- [ ] Image upload to Supabase Storage
+- [ ] Project filtering and search
+- [ ] Dark/Light mode toggle
+- [ ] Analytics integration
+
+---
 
 ## 📝 License
 
-MIT License - See [LICENSE](LICENSE) for details
+MIT License - feel free to use this for your own portfolio!
+
+---
 
 ## 🤝 Contributing
 
-This is a personal portfolio project, but feel free to fork and customize for your own use.
+Contributions are welcome! Please open an issue or submit a PR.
+
+---
 
 ## 📧 Contact
 
-**Ayush Tiwari**
-- GitHub: [@ayushtiwari18](https://github.com/ayushtiwari18)
-- Portfolio: [ayusht.netlify.app](https://ayusht.netlify.app)
+- **Email**: ayush@example.com
+- **GitHub**: [@ayushtiwari18](https://github.com/ayushtiwari18)
+- **LinkedIn**: [Your LinkedIn](https://linkedin.com)
 
 ---
 
