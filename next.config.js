@@ -9,20 +9,6 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    // GSAP lazy loading optimization
-    config.module.rules.push({
-      test: /\.js$/,
-      include: /gsap/,
-      use: {
-        loader: 'babel-loader',
-        options: {
-          presets: ['next/babel'],
-        },
-      },
-    });
-    return config;
-  },
 };
 
 module.exports = nextConfig;
