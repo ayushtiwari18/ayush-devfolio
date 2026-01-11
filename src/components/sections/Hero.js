@@ -23,6 +23,16 @@ export default function Hero({ profile }) {
   const [showOrbits, setShowOrbits] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
 
+  const handleOrbitToggle = () => {
+    setShowOrbits(!showOrbits);
+    console.log(`🔭 Orbits ${!showOrbits ? 'ON' : 'OFF'}`);
+  };
+
+  const handleRotationToggle = () => {
+    setAutoRotate(!autoRotate);
+    console.log(`${!autoRotate ? '▶️' : '⏸️'} Rotation ${!autoRotate ? 'ON' : 'OFF'}`);
+  };
+
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-black">
       {/* Solar System Background */}
@@ -65,24 +75,51 @@ export default function Hero({ profile }) {
         </div>
       </div>
 
-      {/* Solar System Controls - Better Mobile Positioning */}
+      {/* Solar System Controls - Enhanced with Visual Feedback */}
       <div className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2">
+        {/* Orbits Toggle */}
         <button
-          onClick={() => setShowOrbits(!showOrbits)}
-          className="px-3 py-2 sm:px-4 sm:py-2 bg-black/60 backdrop-blur-md border border-primary/30 rounded-lg text-xs sm:text-sm font-medium text-white hover:bg-primary/20 hover:border-primary transition-all shadow-lg shadow-primary/20"
+          onClick={handleOrbitToggle}
+          className={`px-3 py-2 sm:px-4 sm:py-2 backdrop-blur-md rounded-lg text-xs sm:text-sm font-medium transition-all shadow-lg ${
+            showOrbits
+              ? 'bg-primary/30 border-2 border-primary text-white shadow-primary/50'
+              : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20 hover:border-primary shadow-primary/20'
+          }`}
           aria-label={showOrbits ? 'Hide orbits' : 'Show orbits'}
         >
-          <span className="hidden sm:inline">{showOrbits ? 'Hide' : 'Show'} Orbits</span>
-          <span className="sm:hidden">🔭</span>
+          <span className="hidden sm:inline">
+            {showOrbits ? '✓ Orbits ON' : 'Show Orbits'}
+          </span>
+          <span className="sm:hidden text-base">
+            {showOrbits ? '✓' : '🔭'}
+          </span>
         </button>
+
+        {/* Rotation Toggle */}
         <button
-          onClick={() => setAutoRotate(!autoRotate)}
-          className="px-3 py-2 sm:px-4 sm:py-2 bg-black/60 backdrop-blur-md border border-primary/30 rounded-lg text-xs sm:text-sm font-medium text-white hover:bg-primary/20 hover:border-primary transition-all shadow-lg shadow-primary/20"
+          onClick={handleRotationToggle}
+          className={`px-3 py-2 sm:px-4 sm:py-2 backdrop-blur-md rounded-lg text-xs sm:text-sm font-medium transition-all shadow-lg ${
+            autoRotate
+              ? 'bg-accent/30 border-2 border-accent text-white shadow-accent/50'
+              : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20 hover:border-primary shadow-primary/20'
+          }`}
           aria-label={autoRotate ? 'Pause rotation' : 'Play rotation'}
         >
-          <span className="hidden sm:inline">{autoRotate ? 'Pause' : 'Play'}</span>
-          <span className="sm:hidden">{autoRotate ? '⏸️' : '▶️'}</span>
+          <span className="hidden sm:inline">
+            {autoRotate ? '⏸️ Playing' : '▶️ Paused'}
+          </span>
+          <span className="sm:hidden text-base">
+            {autoRotate ? '⏸️' : '▶️'}
+          </span>
         </button>
+
+        {/* Status Indicator */}
+        <div className="hidden sm:flex items-center justify-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-xs text-gray-400 border border-white/10">
+          <div className={`w-2 h-2 rounded-full ${
+            autoRotate ? 'bg-green-500 animate-pulse' : 'bg-gray-500'
+          }`} />
+          <span>{autoRotate ? 'Live' : 'Paused'}</span>
+        </div>
       </div>
 
       {/* Decorative Elements for Style */}
