@@ -20,73 +20,81 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
   useEffect(() => {
     if (!mountRef.current) return;
 
-    let THREE, initThreeJS, createStarfield, createPlanets, createAsteroidBelt, updatePlanets;
+    let isSubscribed = true;
 
     // Lazy load Three.js and utilities
     Promise.all([
       import('three'),
       import('@/lib/solarSystemUtils'),
-    ]).then(([threeModule, utilsModule]) => {
-      THREE = threeModule.default;
+    ])
+      .then(([threeModule, utilsModule]) => {
+        if (!isSubscribed || !mountRef.current) return;
 
-      initThreeJS = utilsModule.initThreeJS;
-      createStarfield = utilsModule.createStarfield;
-      createPlanets = utilsModule.createPlanets;
-      createAsteroidBelt = utilsModule.createAsteroidBelt;
-      updatePlanets = utilsModule.updatePlanets;
+        const { initThreeJS, createStarfield, createPlanets, createAsteroidBelt, updatePlanets } = utilsModule;
 
-      // Initialize Three.js
-      const { scene, camera, renderer, composer, controls } = initThreeJS(mountRef.current);
-      sceneRef.current = scene;
-      cameraRef.current = camera;
-      rendererRef.current = renderer;
-      composerRef.current = composer;
-      controlsRef.current = controls;
+        // Initialize Three.js
+        const { scene, camera, renderer, composer, controls } = initThreeJS(mountRef.current);
+        sceneRef.current = scene;
+        cameraRef.current = camera;
+        rendererRef.current = renderer;
+        composerRef.current = composer;
+        controlsRef.current = controls;
 
-      // Create starfield
-      starsRef.current = createStarfield(scene);
+        // Create starfield
+        starsRef.current = createStarfield(scene);
 
-      // Create planets
-      const { planetObjects, orbitPaths } = createPlanets(scene);
-      planetsRef.current = planetObjects;
-      orbitPathsRef.current = orbitPaths;
+        // Create planets
+        const { planetObjects, orbitPaths } = createPlanets(scene);
+        planetsRef.current = planetObjects;
+        orbitPathsRef.current = orbitPaths;
 
-      // Create asteroid belt
-      asteroidBeltRef.current = createAsteroidBelt(scene);
+        // Create asteroid belt
+        asteroidBeltRef.current = createAsteroidBelt(scene);
 
-      // Animation loop
-      const animate = () => {
-        timeRef.current += 0.01;
+        console.log('✅ Solar System initialized:', {
+          planets: planetObjects.length,
+          orbits: orbitPaths.length,
+          stars: starsRef.current ? 'created' : 'failed',
+        });
 
-        // Update planets
-        updatePlanets(planetsRef.current, timeRef.current, autoRotate);
+        // Animation loop
+        const animate = () => {
+          if (!isSubscribed) return;
 
-        // Rotate asteroid belt
-        if (asteroidBeltRef.current) {
-          asteroidBeltRef.current.rotation.z += 0.001;
-        }
+          timeRef.current += 0.01;
 
-        // Rotate stars slightly for subtle effect
-        if (starsRef.current) {
-          starsRef.current.rotation.x += 0.0001;
-          starsRef.current.rotation.y += 0.0001;
-        }
+          // Update planets
+          updatePlanets(planetsRef.current, timeRef.current, autoRotate);
 
-        // Update controls
-        if (controlsRef.current) {
-          controlsRef.current.update();
-        }
+          // Rotate asteroid belt
+          if (asteroidBeltRef.current) {
+            asteroidBeltRef.current.rotation.z += 0.001;
+          }
 
-        // Render scene with post-processing
-        if (composerRef.current) {
-          composerRef.current.render();
-        }
+          // Rotate stars slightly for subtle effect
+          if (starsRef.current) {
+            starsRef.current.rotation.x += 0.0001;
+            starsRef.current.rotation.y += 0.0001;
+          }
 
-        animationIdRef.current = requestAnimationFrame(animate);
-      };
+          // Update controls
+          if (controlsRef.current) {
+            controlsRef.current.update();
+          }
 
-      animate();
-    });
+          // Render scene with post-processing
+          if (composerRef.current) {
+            composerRef.current.render();
+          }
+
+          animationIdRef.current = requestAnimationFrame(animate);
+        };
+
+        animate();
+      })
+      .catch((error) => {
+        console.error('❌ Solar System initialization failed:', error);
+      });
 
     // Handle window resize
     const handleResize = () => {
@@ -111,14 +119,19 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
 
     // Cleanup
     return () => {
+      isSubscribed = false;
       window.removeEventListener('resize', handleResize);
 
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
       }
 
-      if (mountRef.current && rendererRef.current) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
+      if (mountRef.current && rendererRef.current && rendererRef.current.domElement.parentNode) {
+        try {
+          mountRef.current.removeChild(rendererRef.current.domElement);
+        } catch (e) {
+          console.warn('Cleanup warning:', e);
+        }
       }
 
       // Dispose resources
@@ -133,14 +146,19 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
           sceneRef.current.remove(object);
         }
       }
+
+      console.log('✅ Solar System cleanup complete');
     };
   }, [autoRotate]);
 
   // Toggle orbit visibility
   useEffect(() => {
-    orbitPathsRef.current.forEach((orbit) => {
-      orbit.visible = showOrbits;
-    });
+    if (orbitPathsRef.current.length > 0) {
+      orbitPathsRef.current.forEach((orbit) => {
+        orbit.visible = showOrbits;
+      });
+      console.log(`🔭 Orbits ${showOrbits ? 'shown' : 'hidden'}`);
+    }
   }, [showOrbits]);
 
   return <div ref={mountRef} className="absolute inset-0 w-full h-full" />;
