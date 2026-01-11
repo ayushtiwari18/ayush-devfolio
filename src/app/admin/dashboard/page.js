@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   FolderGit2,
@@ -13,56 +16,60 @@ import {
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 
-export const dynamic = 'force-dynamic';
+export default function AdminDashboardPage() {
+  const [stats, setStats] = useState({
+    projects: { total: 0, published: 0, views: 0 },
+    blogPosts: { total: 0, published: 0, views: 0 },
+    certifications: 0,
+    hackathons: 0,
+    messages: { total: 0, unread: 0 },
+    totalViews: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-async function getDashboardStats() {
-  try {
-    const [projects, blogPosts, certifications, hackathons, messages] = await Promise.all([
-      supabase.from('projects').select('id, views, published', { count: 'exact' }),
-      supabase.from('blog_posts').select('id, views, published', { count: 'exact' }),
-      supabase.from('certifications').select('id', { count: 'exact' }),
-      supabase.from('hackathons').select('id', { count: 'exact' }),
-      supabase.from('contact_messages').select('id, status', { count: 'exact' }),
-    ]);
+  useEffect(() => {
+    getDashboardStats();
+  }, []);
 
-    const totalProjectViews = projects.data?.reduce((acc, p) => acc + (p.views || 0), 0) || 0;
-    const totalBlogViews = blogPosts.data?.reduce((acc, b) => acc + (b.views || 0), 0) || 0;
-    const unreadMessages = messages.data?.filter((m) => m.status === 'unread').length || 0;
+  const getDashboardStats = async () => {
+    try {
+      const [projects, blogPosts, certifications, hackathons, messages] = await Promise.all([
+        supabase.from('projects').select('id, views, published', { count: 'exact' }),
+        supabase.from('blog_posts').select('id, views, published', { count: 'exact' }),
+        supabase.from('certifications').select('id', { count: 'exact' }),
+        supabase.from('hackathons').select('id', { count: 'exact' }),
+        supabase.from('contact_messages').select('id, status', { count: 'exact' }),
+      ]);
 
-    return {
-      projects: {
-        total: projects.count || 0,
-        published: projects.data?.filter((p) => p.published).length || 0,
-        views: totalProjectViews,
-      },
-      blogPosts: {
-        total: blogPosts.count || 0,
-        published: blogPosts.data?.filter((b) => b.published).length || 0,
-        views: totalBlogViews,
-      },
-      certifications: certifications.count || 0,
-      hackathons: hackathons.count || 0,
-      messages: {
-        total: messages.count || 0,
-        unread: unreadMessages,
-      },
-      totalViews: totalProjectViews + totalBlogViews,
-    };
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return {
-      projects: { total: 0, published: 0, views: 0 },
-      blogPosts: { total: 0, published: 0, views: 0 },
-      certifications: 0,
-      hackathons: 0,
-      messages: { total: 0, unread: 0 },
-      totalViews: 0,
-    };
-  }
-}
+      const totalProjectViews = projects.data?.reduce((acc, p) => acc + (p.views || 0), 0) || 0;
+      const totalBlogViews = blogPosts.data?.reduce((acc, b) => acc + (b.views || 0), 0) || 0;
+      const unreadMessages = messages.data?.filter((m) => m.status === 'unread').length || 0;
 
-export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+      setStats({
+        projects: {
+          total: projects.count || 0,
+          published: projects.data?.filter((p) => p.published).length || 0,
+          views: totalProjectViews,
+        },
+        blogPosts: {
+          total: blogPosts.count || 0,
+          published: blogPosts.data?.filter((b) => b.published).length || 0,
+          views: totalBlogViews,
+        },
+        certifications: certifications.count || 0,
+        hackathons: hackathons.count || 0,
+        messages: {
+          total: messages.count || 0,
+          unread: unreadMessages,
+        },
+        totalViews: totalProjectViews + totalBlogViews,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const statsCards = [
     {
@@ -156,6 +163,14 @@ export default async function AdminDashboardPage() {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -186,25 +201,23 @@ export default async function AdminDashboardPage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {statsCards.map((stat) => (
-            <div
-              key={stat.title}
-              className="bg-card border border-border rounded-xl p-6 card-glow hover-lift transition-all cursor-pointer"
-              onClick={() => stat.href && (window.location.href = stat.href)}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 ${stat.bgColor} rounded-lg`}>
-                  <stat.icon className={stat.color} size={24} />
+            <Link key={stat.title} href={stat.href || '#'}>
+              <div className="bg-card border border-border rounded-xl p-6 card-glow hover-lift transition-all cursor-pointer">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 ${stat.bgColor} rounded-lg`}>
+                    <stat.icon className={stat.color} size={24} />
+                  </div>
+                  {stat.badge && (
+                    <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
+                      {stat.badge}
+                    </span>
+                  )}
                 </div>
-                {stat.badge && (
-                  <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
-                    {stat.badge}
-                  </span>
-                )}
+                <h3 className="text-3xl font-bold text-foreground mb-1">{stat.value}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{stat.title}</p>
+                <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
               </div>
-              <h3 className="text-3xl font-bold text-foreground mb-1">{stat.value}</h3>
-              <p className="text-sm text-muted-foreground mb-2">{stat.title}</p>
-              <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
