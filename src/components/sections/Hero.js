@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SITE_CONFIG } from '@/lib/constants';
@@ -57,12 +58,12 @@ export function Hero() {
             {SITE_CONFIG.description}
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" asChild>
-              <a href="/projects">View My Work</a>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <a href="/contact">Get In Touch</a>
-            </Button>
+            <Link href="/projects">
+              <Button size="lg">View My Work</Button>
+            </Link>
+            <Link href="/contact">
+              <Button size="lg" variant="outline">Get In Touch</Button>
+            </Link>
           </div>
         </div>
       </div>
