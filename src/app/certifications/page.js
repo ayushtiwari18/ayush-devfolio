@@ -1,77 +1,62 @@
 import Image from 'next/image';
-import { Award, ExternalLink, Calendar } from 'lucide-react';
+import Link from 'next/link';
+import { Award, ExternalLink, Calendar, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Certifications',
-  description: 'My professional certifications and achievements in web development and technology.',
+  title: 'Certifications - Ayush Tiwari',
+  description: 'Professional certifications and credentials earned by Ayush Tiwari',
 };
 
 export default async function CertificationsPage() {
-  let certifications = [];
-  let error = null;
+  const { data: certifications } = await supabase
+    .from('certifications')
+    .select('*')
+    .order('date', { ascending: false });
 
-  try {
-    const { data, error: fetchError } = await supabase
-      .from('certifications')
-      .select('*')
-      .order('date', { ascending: false });
-
-    if (fetchError) throw fetchError;
-    certifications = data || [];
-  } catch (err) {
-    console.error('Error loading certifications:', err);
-    error = 'Failed to load certifications.';
-  }
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+    });
+  };
 
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Award className="text-primary" size={40} />
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground">
-              <span className="gradient-text">Certifications</span>
-            </h1>
+    <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <Link href="/">
+          <Button variant="outline" className="mb-8">
+            <ArrowLeft className="mr-2" size={18} />
+            Back to Home
+          </Button>
+        </Link>
+
+        {/* Page Header */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+            <Award className="text-primary" size={32} />
           </div>
-          <p className="text-xl text-muted-foreground">
-            Professional certifications and credentials I've earned throughout my journey.
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
+            Professional <span className="gradient-text">Certifications</span>
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Credentials and certifications earned through continuous learning and skill development
           </p>
         </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="max-w-4xl mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-center">
-            {error}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!error && certifications.length === 0 && (
-          <div className="max-w-2xl mx-auto text-center py-20">
-            <div className="p-8 bg-card border border-border rounded-lg">
-              <Award className="mx-auto text-muted-foreground mb-4" size={48} />
-              <h3 className="text-2xl font-bold text-foreground mb-4">No Certifications Yet</h3>
-              <p className="text-muted-foreground">
-                I'm currently working on earning new certifications. Check back soon!
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Certifications Grid */}
-        {!error && certifications.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        {certifications && certifications.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {certifications.map((cert) => (
               <div
                 key={cert.id}
-                className="bg-card border border-border rounded-lg overflow-hidden card-glow hover-lift transition-all"
+                className="bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all"
               >
                 {/* Certificate Image */}
                 {cert.image && (
-                  <div className="relative w-full h-48 bg-muted">
+                  <div className="relative h-48 bg-muted">
                     <Image
                       src={cert.image}
                       alt={cert.title}
@@ -81,26 +66,22 @@ export default async function CertificationsPage() {
                   </div>
                 )}
 
-                {/* Content */}
+                {/* Certificate Content */}
                 <div className="p-6">
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    {cert.title}
-                  </h3>
-
-                  {/* Issuer */}
-                  <p className="text-primary font-medium mb-4">{cert.issuer}</p>
-
-                  {/* Date */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                    <Calendar size={14} />
-                    <span>
-                      {new Date(cert.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                      })}
-                    </span>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Award className="text-primary" size={20} />
+                    </div>
+                    {cert.date && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar size={14} />
+                        <span>{formatDate(cert.date)}</span>
+                      </div>
+                    )}
                   </div>
+
+                  <h3 className="text-lg font-bold text-foreground mb-2">{cert.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{cert.issuer}</p>
 
                   {/* View Certificate Button */}
                   {cert.url && (
@@ -108,47 +89,25 @@ export default async function CertificationsPage() {
                       href={cert.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full"
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                     >
-                      <Button
-                        variant="outline"
-                        className="w-full border-primary text-primary hover:bg-primary/10"
-                      >
-                        View Certificate
-                        <ExternalLink className="ml-2" size={16} />
-                      </Button>
+                      View Certificate
+                      <ExternalLink size={14} />
                     </a>
                   )}
                 </div>
               </div>
             ))}
           </div>
-        )}
-
-        {/* Stats Section */}
-        {!error && certifications.length > 0 && (
-          <div className="max-w-4xl mx-auto mt-20 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 bg-card border border-border rounded-lg text-center card-glow">
-              <p className="text-4xl font-bold text-primary mb-2">{certifications.length}</p>
-              <p className="text-muted-foreground">Total Certifications</p>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Award className="text-primary" size={32} />
             </div>
-            
-            <div className="p-6 bg-card border border-border rounded-lg text-center card-glow">
-              <p className="text-4xl font-bold text-primary mb-2">
-                {new Set(certifications.map(c => c.issuer)).size}
-              </p>
-              <p className="text-muted-foreground">Issuing Organizations</p>
-            </div>
-            
-            <div className="p-6 bg-card border border-border rounded-lg text-center card-glow">
-              <p className="text-4xl font-bold text-primary mb-2">
-                {new Date().getFullYear() - new Date(certifications[certifications.length - 1]?.date).getFullYear()}
-              </p>
-              <p className="text-muted-foreground">Years of Learning</p>
-            </div>
+            <p className="text-muted-foreground">No certifications available yet.</p>
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

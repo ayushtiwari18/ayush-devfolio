@@ -1,208 +1,206 @@
-import { Code2, Briefcase, GraduationCap, Award } from 'lucide-react';
+import { Code, Rocket, Users, Zap, Award, Trophy, Briefcase } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'About Me',
-  description: 'Learn more about my journey, skills, and experience as a full-stack developer.',
+  title: 'About Me - Ayush Tiwari',
+  description: 'Learn more about Ayush Tiwari - Full Stack Developer passionate about creating exceptional digital experiences',
 };
 
-export default function AboutPage() {
-  const skills = {
-    frontend: ['React.js', 'Next.js', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Three.js', 'HTML5', 'CSS3'],
-    backend: ['Node.js', 'Express.js', 'MongoDB', 'PostgreSQL', 'Supabase', 'REST APIs'],
-    tools: ['Git', 'GitHub', 'VS Code', 'Figma', 'Postman', 'Vercel', 'Netlify'],
-  };
+export default async function AboutPage() {
+  // Fetch stats
+  const [projects, blogPosts, certifications, hackathons] = await Promise.all([
+    supabase.from('projects').select('id', { count: 'exact', head: true }),
+    supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
+    supabase.from('certifications').select('id', { count: 'exact', head: true }),
+    supabase.from('hackathons').select('id', { count: 'exact', head: true }),
+  ]);
 
-  const experience = [
+  const features = [
     {
-      title: 'Full Stack Developer',
-      company: 'Freelance',
-      period: '2024 - Present',
-      description: 'Building modern web applications using MERN stack, Next.js, and cloud services.',
+      icon: Code,
+      title: 'Clean Code',
+      description: 'Writing maintainable, scalable, and well-documented code following best practices',
     },
     {
-      title: 'Web Developer',
-      company: 'Personal Projects',
-      period: '2023 - 2024',
-      description: 'Developed multiple full-stack applications including e-commerce platforms, video conferencing tools, and educational platforms.',
+      icon: Rocket,
+      title: 'Performance',
+      description: 'Building high-performance applications optimized for speed and efficiency',
+    },
+    {
+      icon: Users,
+      title: 'User-Centric',
+      description: 'Designing intuitive interfaces that provide exceptional user experiences',
+    },
+    {
+      icon: Zap,
+      title: 'Fast Delivery',
+      description: 'Implementing agile methodologies for rapid development and iteration',
     },
   ];
 
-  const education = [
+  const journey = [
     {
-      degree: 'Bachelor of Technology',
-      field: 'Computer Science',
-      institution: 'University Name',
-      year: '2021 - 2025',
+      year: '2024',
+      title: 'Senior Full Stack Developer',
+      description: 'Leading development of enterprise-scale applications',
+    },
+    {
+      year: '2023',
+      title: 'Full Stack Developer',
+      description: 'Built multiple production applications using modern tech stack',
+    },
+    {
+      year: '2022',
+      title: 'Started Web Development',
+      description: 'Began journey into web development and software engineering',
     },
   ];
 
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-4">
-        {/* Hero Section */}
-        <div className="max-w-4xl mx-auto text-center mb-20">
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl sm:text-6xl font-bold text-foreground mb-6">
             About <span className="gradient-text">Me</span>
           </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed">
-            I'm a passionate full-stack developer who loves building modern web applications
-            that solve real-world problems. With expertise in React, Next.js, and Node.js,
-            I create seamless user experiences and robust backend systems.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            A passionate developer dedicated to crafting exceptional digital experiences
           </p>
         </div>
+      </section>
 
-        {/* Skills Section */}
-        <section className="mb-20">
-          <div className="flex items-center gap-3 mb-8">
-            <Code2 className="text-primary" size={32} />
-            <h2 className="text-3xl font-bold text-foreground">Technical Skills</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Frontend */}
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-4">Frontend</h3>
-              <div className="flex flex-wrap gap-2">
-                {skills.frontend.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-3 py-1 bg-primary/10 text-foreground rounded-full text-sm border border-primary/20"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+      {/* Stats Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
+              <div className="text-4xl font-bold gradient-text mb-2">{projects.count || 0}+</div>
+              <div className="text-sm text-muted-foreground">Projects Completed</div>
             </div>
-
-            {/* Backend */}
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-4">Backend</h3>
-              <div className="flex flex-wrap gap-2">
-                {skills.backend.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-3 py-1 bg-primary/10 text-foreground rounded-full text-sm border border-primary/20"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+            <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
+              <div className="text-4xl font-bold gradient-text mb-2">3+</div>
+              <div className="text-sm text-muted-foreground">Years Experience</div>
             </div>
-
-            {/* Tools */}
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-4">Tools & Others</h3>
-              <div className="flex flex-wrap gap-2">
-                {skills.tools.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-3 py-1 bg-primary/10 text-foreground rounded-full text-sm border border-primary/20"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+            <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
+              <div className="text-4xl font-bold gradient-text mb-2">{certifications.count || 0}+</div>
+              <div className="text-sm text-muted-foreground">Certifications</div>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
+              <div className="text-4xl font-bold gradient-text mb-2">{hackathons.count || 0}+</div>
+              <div className="text-sm text-muted-foreground">Hackathons</div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Experience Section */}
-        <section className="mb-20">
-          <div className="flex items-center gap-3 mb-8">
-            <Briefcase className="text-primary" size={32} />
-            <h2 className="text-3xl font-bold text-foreground">Experience</h2>
+      {/* Story Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
+            My <span className="gradient-text">Story</span>
+          </h2>
+          <div className="space-y-6 text-muted-foreground leading-relaxed">
+            <p>
+              I'm a full-stack developer with a passion for creating elegant solutions to complex problems. 
+              My journey in software development started with curiosity about how websites work, which quickly 
+              evolved into a deep passion for building exceptional digital experiences.
+            </p>
+            <p>
+              With expertise in modern web technologies like Next.js, React, and Node.js, I specialize in 
+              building fast, scalable, and user-friendly applications. I believe in writing clean, maintainable 
+              code and following best practices to ensure long-term success of every project.
+            </p>
+            <p>
+              Beyond coding, I'm an active contributor to the developer community. I write technical articles, 
+              participate in hackathons, and continuously learn new technologies to stay at the forefront of 
+              web development.
+            </p>
+            <p>
+              When I'm not coding, you'll find me exploring new technologies, contributing to open-source 
+              projects, or mentoring aspiring developers. I believe in sharing knowledge and helping others 
+              grow in their development journey.
+            </p>
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-6">
-            {experience.map((exp, index) => (
+      {/* Features Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-foreground mb-12 text-center">
+            What I <span className="gradient-text">Bring</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
               <div
                 key={index}
-                className="p-6 bg-card border border-border rounded-lg card-glow hover-lift"
+                className="bg-card border border-border rounded-xl p-6 card-glow hover-lift transition-all group"
               >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground">{exp.title}</h3>
-                    <p className="text-primary font-medium">{exp.company}</p>
-                  </div>
-                  <span className="text-muted-foreground mt-2 md:mt-0">{exp.period}</span>
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <feature.icon className="text-primary" size={24} />
                 </div>
-                <p className="text-muted-foreground leading-relaxed">{exp.description}</p>
+                <h4 className="text-lg font-bold text-foreground mb-2">{feature.title}</h4>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Education Section */}
-        <section className="mb-20">
-          <div className="flex items-center gap-3 mb-8">
-            <GraduationCap className="text-primary" size={32} />
-            <h2 className="text-3xl font-bold text-foreground">Education</h2>
-          </div>
-
-          <div className="space-y-6">
-            {education.map((edu, index) => (
-              <div
-                key={index}
-                className="p-6 bg-card border border-border rounded-lg card-glow hover-lift"
-              >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground">{edu.degree}</h3>
-                    <p className="text-primary font-medium">{edu.field}</p>
-                    <p className="text-muted-foreground">{edu.institution}</p>
+      {/* Journey Timeline */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-foreground mb-12 text-center">
+            My <span className="gradient-text">Journey</span>
+          </h2>
+          <div className="space-y-8">
+            {journey.map((item, index) => (
+              <div key={index} className="flex gap-6">
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                    {item.year.slice(-2)}
                   </div>
-                  <span className="text-muted-foreground mt-2 md:mt-0">{edu.year}</span>
+                  {index !== journey.length - 1 && (
+                    <div className="w-0.5 h-full bg-border mt-2"></div>
+                  )}
+                </div>
+                <div className="flex-1 pb-8">
+                  <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
+                  <p className="text-sm text-primary mb-2">{item.year}</p>
+                  <p className="text-muted-foreground">{item.description}</p>
                 </div>
               </div>
             ))}
           </div>
-        </section>
-
-        {/* Achievements Section */}
-        <section className="mb-20">
-          <div className="flex items-center gap-3 mb-8">
-            <Award className="text-primary" size={32} />
-            <h2 className="text-3xl font-bold text-foreground">Achievements</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-2">7+ Projects</h3>
-              <p className="text-muted-foreground">Built and deployed full-stack applications</p>
-            </div>
-            
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-2">Hackathons</h3>
-              <p className="text-muted-foreground">Participated in multiple national hackathons</p>
-            </div>
-            
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-2">Open Source</h3>
-              <p className="text-muted-foreground">Contributing to open-source projects</p>
-            </div>
-            
-            <div className="p-6 bg-card border border-border rounded-lg card-glow hover-lift">
-              <h3 className="text-xl font-bold text-primary mb-2">Certifications</h3>
-              <p className="text-muted-foreground">Industry-recognized certifications</p>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <div className="max-w-2xl mx-auto text-center p-8 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Let's Work Together</h2>
-          <p className="text-muted-foreground mb-6">
-            I'm always interested in hearing about new projects and opportunities.
-          </p>
-          <Link href="/contact">
-            <Button className="bg-primary hover:bg-primary/90">
-              Get In Touch
-            </Button>
-          </Link>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-foreground mb-6">
+            Let's Work <span className="gradient-text">Together</span>
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8">
+            I'm always open to new opportunities and collaborations
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/#contact">
+              <Button size="lg" className="bg-primary hover:bg-primary/90">
+                Get In Touch
+              </Button>
+            </Link>
+            <Link href="/projects">
+              <Button size="lg" variant="outline">
+                View My Work
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
