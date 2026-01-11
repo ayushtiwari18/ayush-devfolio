@@ -98,7 +98,7 @@ export default function ProfileImage({ imageUrl }) {
         {/* Profile Image with better fallback */}
         <div className="relative w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
           <Image
-            src={imageUrl || '/placeholder-avatar.png'}
+            src={imageUrl || '/placeholder-avatar.svg'}
             alt="Profile"
             fill
             className="object-cover"
