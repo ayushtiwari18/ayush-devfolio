@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 export async function POST(request) {
   try {
@@ -14,33 +13,15 @@ export async function POST(request) {
       );
     }
 
-    // Insert contact message into Supabase
-    const { data, error } = await supabase
-      .from('contact_messages')
-      .insert([
-        {
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          message: message.trim(),
-          status: 'unread',
-        },
-      ])
-      .select()
-      .single();
+    // For now, just log the message (Supabase integration will be added later)
+    console.log('Contact form submission:', { name, email, message });
 
-    if (error) {
-      console.error('Supabase error:', error);
-      return NextResponse.json(
-        { error: 'Failed to submit message' },
-        { status: 500 }
-      );
-    }
-
+    // Simulate successful submission
     return NextResponse.json(
       {
         success: true,
-        message: 'Message sent successfully',
-        data,
+        message: 'Message received! We\'ll get back to you soon.',
+        note: 'Contact form is in demo mode. Supabase integration coming soon.',
       },
       { status: 200 }
     );
