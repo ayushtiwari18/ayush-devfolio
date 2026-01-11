@@ -10,8 +10,11 @@ import ScrollIndicator from './ScrollIndicator';
 const SolarSystem = dynamic(() => import('@/components/animations/SolarSystem'), {
   ssr: false,
   loading: () => (
-    <div className="absolute inset-0 flex items-center justify-center bg-black">
-      <div className="text-white">Loading Solar System...</div>
+    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black via-primary/5 to-accent/5">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-primary font-medium">Loading Universe...</p>
+      </div>
     </div>
   ),
 });
@@ -27,47 +30,64 @@ export default function Hero({ profile }) {
         <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} />
       </div>
 
-      {/* Dark overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
+      {/* Enhanced readability overlay - stronger on mobile */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/80 md:from-black/50 md:via-black/30 md:to-black/70" />
+      
+      {/* Additional vignette effect for better focus */}
+      <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black/50" />
 
-      {/* Main Content */}
+      {/* Main Content - Improved Mobile Layout */}
       <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Top Section - Profile Image */}
-        <div className="flex-1 flex items-center justify-center pt-24 pb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto px-4">
-            {/* Left: Hero Content */}
-            <div className="order-2 lg:order-1">
-              <HeroContent profile={profile} />
-            </div>
+        {/* Content Container with Better Spacing */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Mobile: Vertical Stack | Desktop: Side by Side */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-12 lg:py-0">
+              
+              {/* Profile Image - Top on Mobile, Right on Desktop */}
+              <div className="flex justify-center lg:justify-end lg:order-2 lg:flex-1">
+                <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[400px]">
+                  <ProfileImage imageUrl={profile?.image_url} />
+                </div>
+              </div>
 
-            {/* Right: Profile Image */}
-            <div className="order-1 lg:order-2 flex justify-center">
-              <ProfileImage imageUrl={profile?.image_url} />
+              {/* Hero Content - Bottom on Mobile, Left on Desktop */}
+              <div className="lg:order-1 lg:flex-1">
+                <HeroContent profile={profile} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Section - Scroll Indicator */}
-        <div className="pb-12 flex justify-center">
+        {/* Scroll Indicator - Fixed Bottom with Better Visibility */}
+        <div className="pb-8 lg:pb-12 flex justify-center">
           <ScrollIndicator />
         </div>
       </div>
 
-      {/* Solar System Controls */}
-      <div className="absolute top-24 right-4 z-20 flex flex-col gap-2">
+      {/* Solar System Controls - Better Mobile Positioning */}
+      <div className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2">
         <button
           onClick={() => setShowOrbits(!showOrbits)}
-          className="px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-lg text-sm font-medium text-foreground hover:bg-primary/20 hover:border-primary transition-all"
+          className="px-3 py-2 sm:px-4 sm:py-2 bg-black/60 backdrop-blur-md border border-primary/30 rounded-lg text-xs sm:text-sm font-medium text-white hover:bg-primary/20 hover:border-primary transition-all shadow-lg shadow-primary/20"
+          aria-label={showOrbits ? 'Hide orbits' : 'Show orbits'}
         >
-          {showOrbits ? 'Hide' : 'Show'} Orbits
+          <span className="hidden sm:inline">{showOrbits ? 'Hide' : 'Show'} Orbits</span>
+          <span className="sm:hidden">🔭</span>
         </button>
         <button
           onClick={() => setAutoRotate(!autoRotate)}
-          className="px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-lg text-sm font-medium text-foreground hover:bg-primary/20 hover:border-primary transition-all"
+          className="px-3 py-2 sm:px-4 sm:py-2 bg-black/60 backdrop-blur-md border border-primary/30 rounded-lg text-xs sm:text-sm font-medium text-white hover:bg-primary/20 hover:border-primary transition-all shadow-lg shadow-primary/20"
+          aria-label={autoRotate ? 'Pause rotation' : 'Play rotation'}
         >
-          {autoRotate ? 'Pause' : 'Play'} Rotation
+          <span className="hidden sm:inline">{autoRotate ? 'Pause' : 'Play'}</span>
+          <span className="sm:hidden">{autoRotate ? '⏸️' : '▶️'}</span>
         </button>
       </div>
+
+      {/* Decorative Elements for Style */}
+      <div className="absolute top-1/4 left-4 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-1/4 right-4 w-40 h-40 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
     </section>
   );
 }
