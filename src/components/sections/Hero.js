@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { Github, Linkedin, Twitter, Mail, Download, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ROUTES } from '@/lib/constants';
 
 export default function Hero({ profile }) {
   const heroRef = useRef(null);
@@ -49,13 +51,6 @@ export default function Hero({ profile }) {
     { icon: Mail, href: 'mailto:ayush@example.com', label: 'Email' },
   ];
 
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
     <section
       ref={heroRef}
@@ -97,21 +92,23 @@ export default function Hero({ profile }) {
 
         {/* CTA Buttons */}
         <div className="hero-animate flex flex-wrap items-center justify-center gap-4 mb-16">
-          <Button
-            size="lg"
-            onClick={() => scrollToSection('projects')}
-            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-lg shadow-primary/50 hover:shadow-primary/70 transition-all hover:scale-105"
-          >
-            View My Work
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => scrollToSection('contact')}
-            className="border-2 border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg font-semibold rounded-xl backdrop-blur-sm"
-          >
-            Get In Touch
-          </Button>
+          <Link href={ROUTES.PROJECTS}>
+            <Button
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-lg shadow-primary/50 hover:shadow-primary/70 transition-all hover:scale-105"
+            >
+              View My Work
+            </Button>
+          </Link>
+          <Link href={ROUTES.CONTACT}>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg font-semibold rounded-xl backdrop-blur-sm"
+            >
+              Get In Touch
+            </Button>
+          </Link>
           {profile?.resume_url && (
             <a href={profile.resume_url} target="_blank" rel="noopener noreferrer">
               <Button
@@ -143,19 +140,20 @@ export default function Hero({ profile }) {
         </div>
 
         {/* Scroll Indicator */}
-        <button
-          onClick={() => scrollToSection('about')}
-          className="hero-animate inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors cursor-pointer group"
-          aria-label="Scroll to about section"
-        >
-          <span className="text-sm font-medium">Scroll to explore</span>
-          <div className="w-6 h-10 border-2 border-current rounded-full flex items-start justify-center p-2">
-            <ArrowDown
-              size={16}
-              className="animate-bounce group-hover:translate-y-1 transition-transform"
-            />
-          </div>
-        </button>
+        <Link href={ROUTES.ABOUT}>
+          <button
+            className="hero-animate inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors cursor-pointer group"
+            aria-label="Explore more"
+          >
+            <span className="text-sm font-medium">Explore more</span>
+            <div className="w-6 h-10 border-2 border-current rounded-full flex items-start justify-center p-2">
+              <ArrowDown
+                size={16}
+                className="animate-bounce group-hover:translate-y-1 transition-transform"
+              />
+            </div>
+          </button>
+        </Link>
       </div>
 
       {/* Decorative grid */}
