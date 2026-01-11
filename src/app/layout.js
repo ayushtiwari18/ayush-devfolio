@@ -1,6 +1,9 @@
 import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import { SITE_CONFIG } from '@/lib/constants';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { ThreeBackground } from '@/components/layout/ThreeBackground';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -63,7 +66,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        {children}
+        <ThreeBackground />
+        <Navbar />
+        <main className="pt-16 min-h-screen">{children}</main>
+        <Footer />
       </body>
     </html>
   );
