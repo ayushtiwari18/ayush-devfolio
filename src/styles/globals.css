@@ -136,6 +136,11 @@
     );
   }
 
+  /* Radial gradient for vignette effect */
+  .bg-radial-gradient {
+    background: radial-gradient(circle at center, var(--tw-gradient-stops));
+  }
+
   /* Glass morphism effect */
   .glass {
     background: rgba(255, 255, 255, 0.05);
