@@ -45,7 +45,6 @@
   }
 
   .dark {
-    /* Lighter dark background - not too dark */
     --background: 222.2 47.4% 11.2%;
     --foreground: 210 40% 98%;
 
@@ -55,7 +54,6 @@
     --popover: 222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
 
-    /* Purple primary color */
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
@@ -74,7 +72,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 217.2 91.2% 59.8%;
-    
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -95,18 +93,15 @@
     @apply bg-background text-foreground;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Better text rendering */
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom scrollbar - purple theme */
   ::-webkit-scrollbar {
     width: 10px;
   }
@@ -126,7 +121,6 @@
 }
 
 @layer components {
-  /* Gradient text effect with purple */
   .gradient-text {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(
@@ -136,19 +130,16 @@
     );
   }
 
-  /* Radial gradient for vignette effect */
   .bg-radial-gradient {
     background: radial-gradient(circle at center, var(--tw-gradient-stops));
   }
 
-  /* Glass morphism effect */
   .glass {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Card glow effect - purple */
   .card-glow {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
     transition: box-shadow 0.3s ease;
@@ -158,7 +149,6 @@
     box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
   }
 
-  /* Neon border effect */
   .neon-border {
     border: 2px solid transparent;
     background-image: linear-gradient(
@@ -170,7 +160,6 @@
     background-clip: padding-box, border-box;
   }
 
-  /* Animated gradient background */
   .animated-gradient {
     background: linear-gradient(
       -45deg,
@@ -184,18 +173,11 @@
   }
 
   @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
-  /* Hover lift effect */
   .hover-lift {
     @apply transition-transform duration-300;
   }
@@ -203,15 +185,67 @@
   .hover-lift:hover {
     @apply -translate-y-2;
   }
+
+  /* ==========================================================
+     TIMELINE — Phase 2
+     All timeline-specific CSS lives in this block.
+     Do NOT scatter timeline styles across other sections.
+     ========================================================== */
+
+  /**
+   * VideoPreview ripple overlay
+   * ---------------------------
+   * The SVG feTurbulence filter is applied inline via style prop
+   * when data-ripple="active". This class handles the opacity
+   * transition so the effect fades in/out smoothly.
+   *
+   * GPU path: filter is compositor-only (no layout/paint cost).
+   * The transition only runs on desktop pointer devices.
+   */
+  .ripple-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    will-change: filter;
+  }
+
+  .ripple-overlay[data-ripple='active'] {
+    opacity: 1;
+  }
+
+  /**
+   * Mobile override — coarse pointer (touchscreen)
+   * Ripple filter disabled. VideoPreview falls back to
+   * a simple opacity reveal of the video on tap.
+   * This prevents SVG filter jank on low-power mobile GPUs.
+   */
+  @media (pointer: coarse) {
+    .ripple-overlay {
+      display: none;
+    }
+
+    .video-preview-wrapper {
+      /* On mobile tap: fade transition instead of ripple */
+      transition: opacity 0.2s ease;
+    }
+  }
+
+  /**
+   * Timeline event entrance — no-JS fallback
+   * TimelineEvent sets opacity/transform via Framer Motion.
+   * This rule ensures content is visible if JS fails to hydrate.
+   * Framer Motion overrides this once JS is active.
+   */
+  .timeline-event-wrapper {
+    opacity: 1;
+  }
 }
 
 @layer utilities {
-  /* Text glow - purple */
   .text-glow {
     text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
   }
 
-  /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -219,5 +253,20 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /**
+   * Reduced motion — global override for all timeline animations
+   * This is the CSS-layer fallback. JS also checks matchMedia
+   * in TimelineEvent for the Framer Motion variants.
+   * Double protection: CSS disables transitions if JS hasn't loaded yet.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .ripple-overlay,
+    .video-preview-wrapper,
+    .timeline-event-wrapper * {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 }
