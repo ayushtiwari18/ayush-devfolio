@@ -24,7 +24,6 @@ export default async function HackathonsPage() {
     hackathons = await getPublishedHackathons();
   } catch (err) {
     console.error('Failed to load hackathons:', err);
-    // Graceful degradation — show empty state, don't crash
   }
 
   return (
@@ -83,13 +82,11 @@ export default async function HackathonsPage() {
                       </div>
                     )}
 
-                    {/* Glow Effect */}
                     <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60" />
                   </div>
 
                   {/* Hackathon Content */}
                   <div className="flex-1 p-6 lg:p-8">
-                    {/* Trophy Icon & Title */}
                     <div className="flex items-start gap-4 mb-4">
                       <div className="w-14 h-14 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                         <Trophy className="text-yellow-500" size={28} />
@@ -124,20 +121,20 @@ export default async function HackathonsPage() {
                       </p>
                     )}
 
-                    {/* Technologies */}
-                    {hackathon.technologies && hackathon.technologies.length > 0 && (
+                    {/* Learnings — actual DB column */}
+                    {hackathon.learnings && hackathon.learnings.length > 0 && (
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <Zap size={16} className="text-primary" />
-                          <span className="text-sm font-semibold text-foreground">Tech Stack</span>
+                          <span className="text-sm font-semibold text-foreground">Key Learnings</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {hackathon.technologies.map((tech, i) => (
+                          {hackathon.learnings.map((item, i) => (
                             <span
                               key={i}
                               className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-lg border border-primary/20 hover:bg-primary/20 transition-all"
                             >
-                              {tech}
+                              {item}
                             </span>
                           ))}
                         </div>
@@ -146,7 +143,6 @@ export default async function HackathonsPage() {
                   </div>
                 </div>
 
-                {/* Decorative Corner Accent */}
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-yellow-500/10 to-transparent rounded-bl-full" />
               </div>
             ))}
