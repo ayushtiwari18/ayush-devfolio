@@ -1,7 +1,7 @@
 # Architecture Plan — Phase 2 Timeline System
 
-> **Status**: Approved & Locked
-> **Version**: 2.0.0 (Phase 2 additions)
+> **Status**: ✅ Complete (v2.1.0)
+> **Version**: 2.1.0
 
 ---
 
@@ -25,7 +25,7 @@
 - CSS Scroll-driven Animations: REJECTED — Safari support incomplete
 - Custom window scroll events: REJECTED — main-thread blocking, leak risk
 
-Framer Motion `useScroll` (for ProgressIndicator) uses rAF internally — SSR-safe.
+Framer Motion `useScroll()` (for ProgressIndicator) uses rAF internally — SSR-safe.
 Framer Motion `whileInView` NOT used — replaced with IntersectionObserver + `animate` prop
 for precise one-shot control and guaranteed cleanup.
 
@@ -35,15 +35,15 @@ for precise one-shot control and guaranteed cleanup.
 
 ```
 src/components/timeline/
-├── TimelineContainer.js    ← SERVER COMPONENT (data fetch + SEO shell)
-├── TimelineClient.js       ← CLIENT boundary (scroll context root)
+├── TimelineContainer.js    ← SERVER COMPONENT (data fetch + SEO shell + featuredRank)
+├── TimelineClient.js       ← CLIENT boundary (filter tabs + year separators)
 ├── TimelineTrack.js        ← CLIENT (vertical line, scaleY entrance)
 ├── TimelineEvent.js        ← CLIENT (IntersectionObserver + alternating layout)
-├── EventCard.js            ← CLIENT (pure presentational, zero state)
-├── MediaGallery.js         ← CLIENT (next/image grid + lightbox modal)
+├── EventCard.js            ← CLIENT (hover glow state + read more toggle + achievement badge)
+├── MediaGallery.js         ← CLIENT (next/image grid + lightbox modal + keyboard nav)
 ├── VideoPreview.js         ← CLIENT (SVG ripple filter + lazy video)
 ├── VideoPlayer.js          ← CLIENT (dynamic import target, minimal wrapper)
-└── ProgressIndicator.js    ← CLIENT (useScroll scoped to container ref)
+└── ProgressIndicator.js    ← CLIENT (useScroll scoped to window)
 ```
 
 **Critical boundary rule:** `TimelineContainer` is a Server Component.
@@ -54,17 +54,17 @@ No animation logic may cross the server boundary.
 
 ### Rendering Model
 
-| Component           | Rendering | Reason                                        |
-|---------------------|-----------|-----------------------------------------------|
-| TimelineContainer   | Server    | Supabase fetch, SEO static HTML, no DOM API   |
-| TimelineClient      | Client    | useRef for container, scroll context root     |
-| TimelineTrack       | Client    | Framer Motion DOM animation                   |
-| TimelineEvent       | Client    | IntersectionObserver, useState(isVisible)     |
-| EventCard           | Client    | Lives inside Client tree; pure presentational |
-| MediaGallery        | Client    | useState(lightboxIndex), keyboard events      |
-| VideoPreview        | Client    | useState(isHovered/isInView), IntersectionObs |
-| VideoPlayer         | Client    | Dynamic import target; ssr: false             |
-| ProgressIndicator   | Client    | useScroll requires DOM ref                    |
+| Component           | Rendering | Reason                                                      |
+|---------------------|-----------|-------------------------------------------------------------|
+| TimelineContainer   | Server    | Supabase fetch, SEO static HTML, featuredRank computation   |
+| TimelineClient      | Client    | useState (activeFilter), useMemo (filtered list, year rows) |
+| TimelineTrack       | Client    | Framer Motion DOM animation                                 |
+| TimelineEvent       | Client    | IntersectionObserver, useState(isVisible)                   |
+| EventCard           | Client    | useState(hovered, expanded) — hover glow + read more toggle |
+| MediaGallery        | Client    | useState(lightboxIndex), keyboard events                    |
+| VideoPreview        | Client    | useState(isHovered/isInView), IntersectionObserver          |
+| VideoPlayer         | Client    | Dynamic import target; ssr: false                           |
+| ProgressIndicator   | Client    | useScroll() — tracks window scroll (no containerRef)        |
 
 ---
 
@@ -83,6 +83,8 @@ No animation logic may cross the server boundary.
   order:       number,    // Admin tie-breaker, default 0
   featured:    boolean,
   published:   boolean,
+  // Computed server-side before passing to client:
+  featuredRank: number|undefined, // 0-based rank among featured items; undefined if not featured
 }
 ```
 
@@ -112,7 +114,7 @@ No `.sort()` calls exist or are permitted in any UI component.
   - Never in initial bundle
   - Unmounts when IntersectionObserver sees element leave viewport
 - All `next/image` usage requires explicit `width`/`height` from data model (zero CLS)
-- `useMemo` only in Server Components (TimelineContainer) — not in scroll paths
+- `useMemo` used in `TimelineClient` for filter + year separator computation (acceptable — not in scroll paths)
 - No global `window.addEventListener('scroll', ...)` anywhere in the timeline system
 
 ---
@@ -126,11 +128,11 @@ No `.sort()` calls exist or are permitted in any UI component.
 
 ---
 
-### Files Changed in Phase 2
+### Files in Timeline System
 
 ```
-supabase/timeline-events-migration.sql   ← Run in Supabase SQL Editor
-supabase/timeline-events-seed.sql        ← Run after migration
+supabase/timeline-events-migration.sql     ← Run in Supabase SQL Editor (one-time)
+supabase/timeline-events-seed.sql          ← Reference only — data is live in Supabase
 src/services/timeline.service.js
 src/components/timeline/TimelineContainer.js
 src/components/timeline/TimelineClient.js
@@ -141,7 +143,23 @@ src/components/timeline/MediaGallery.js
 src/components/timeline/VideoPreview.js
 src/components/timeline/VideoPlayer.js
 src/components/timeline/ProgressIndicator.js
-src/styles/globals.css                   ← Timeline CSS block appended
-docs/03-architecture-plan.md             ← This file
-docs/04-feature-specifications.md        ← Timeline behavior specs
+src/app/about/page.js                       ← Consumes TimelineContainer
+src/styles/globals.css                     ← Timeline CSS block
+docs/03-architecture-plan.md               ← This file
+docs/04-feature-specifications.md          ← Timeline behavior specs
 ```
+
+---
+
+### v2.1 Changes (post-launch polish)
+
+| Change | File | Reason |
+|--------|------|--------|
+| Type filter tabs + year separators | TimelineClient.js | UX — 25 items need navigation |
+| Description clamp + Read more toggle | EventCard.js | UX — page too tall without it |
+| Achievement badge on featured events | EventCard.js | Highlight key accomplishments |
+| animate-ping limited to first 3 featured | TimelineEvent.js | Reduced visual noise |
+| Stagger delay capped at index 3 | TimelineEvent.js | No 1.68s wait on deep items |
+| ProgressIndicator tracks window scroll | ProgressIndicator.js | Was broken — tracked inner div |
+| featuredRank computed server-side | TimelineContainer.js | Zero client runtime cost |
+| about/page.js wired to TimelineContainer | about/page.js | Was hardcoded 3-item array |
