@@ -66,7 +66,11 @@ export default function TimelineEvent({ event, index }) {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  const staggerDelay = index * 0.07;
+  // Cap stagger at index 3 — prevents excessive delay on deep items.
+  // Items 0-3 stagger nicely (0ms → 210ms); everything after animates
+  // immediately on scroll with no artificial wait.
+  const staggerDelay = Math.min(index, 3) * 0.07;
+
   const variants = prefersReduced
     ? { hidden: { opacity: 1, x: 0, y: 0 }, visible: { opacity: 1, x: 0, y: 0 } }
     : {
