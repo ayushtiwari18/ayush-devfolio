@@ -3,21 +3,16 @@
 /**
  * ProgressIndicator — scroll progress pill
  * ------------------------------------------
- * POLISH CHANGES:
- * - Track height 96px → 120px
- * - Fill: flat primary → gradient primary → accent
- * - Added top and bottom dot markers for polish
- * - Subtle label on top
+ * Fix: use useScroll() with no target (tracks window scroll)
+ * instead of tracking the inner containerRef div which never
+ * actually scrolls on a full-page layout.
  */
 
 import { useScroll, useTransform, motion } from 'framer-motion';
 
-export default function ProgressIndicator({ containerRef }) {
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end'],
-  });
-
+export default function ProgressIndicator() {
+  // Track window scroll — not a child div
+  const { scrollYProgress } = useScroll();
   const heightPercent = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
 
   return (
@@ -35,7 +30,7 @@ export default function ProgressIndicator({ containerRef }) {
 
       {/* Track */}
       <div className="w-1 h-28 rounded-full bg-border/50 overflow-hidden">
-        {/* Gradient fill */}
+        {/* Gradient fill — now actually animates as user scrolls */}
         <motion.div
           suppressHydrationWarning
           className="w-full rounded-full origin-top"

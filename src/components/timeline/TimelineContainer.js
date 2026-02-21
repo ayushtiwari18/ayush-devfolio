@@ -1,13 +1,10 @@
 /**
  * TimelineContainer — SERVER COMPONENT
  * --------------------------------------
- * Responsibilities:
- * 1. Fetch pre-sorted events from Supabase (reverse chronological, DB layer)
- * 2. Pass static event array to TimelineClient (Client boundary)
- * 3. Render SEO-safe static HTML shell (no JS required for initial content)
- *
- * DECISION: This component must remain a Server Component.
- * Do NOT add 'use client' here. Animations live in TimelineClient.
+ * Changes:
+ * - Computes featuredRank per event (0-based rank among featured items)
+ *   and passes it to TimelineClient so TimelineEvent can limit animate-ping
+ *   to only the first 3 featured items.
  */
 import { getPublishedTimelineEvents } from '@/services/timeline.service';
 import TimelineClient from './TimelineClient';
@@ -32,36 +29,38 @@ export default async function TimelineContainer() {
     );
   }
 
+  // Assign a rank to each featured event (0 = first featured seen, newest first)
+  // TimelineEvent uses this to limit animate-ping to rank < 3
+  let featuredCounter = 0;
+  const eventsWithRank = events.map(event => ({
+    ...event,
+    featuredRank: event.featured ? featuredCounter++ : undefined,
+  }));
+
   return (
     <section
       className="py-24 px-4"
       aria-label="Timeline of events"
     >
-      {/* Section header — server rendered, SEO indexed */}
+      {/* Section header */}
       <div className="max-w-5xl mx-auto mb-20 text-center">
-        {/* Eyebrow label */}
         <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary mb-4">
           Chronicles
         </p>
-
-        {/* Main heading with gradient */}
         <h2 className="text-4xl md:text-5xl font-bold gradient-text inline-block">
           My Journey
         </h2>
-
-        {/* Decorative divider */}
         <div className="mt-5 flex items-center justify-center gap-3">
           <div className="h-px w-16 bg-gradient-to-r from-transparent to-primary/50" />
           <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
           <div className="h-px w-16 bg-gradient-to-l from-transparent to-primary/50" />
         </div>
-
         <p className="mt-5 text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
           A reverse-chronological log of work, learning, and building.
         </p>
       </div>
 
-      <TimelineClient events={events} />
+      <TimelineClient events={eventsWithRank} />
     </section>
   );
 }

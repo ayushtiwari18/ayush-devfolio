@@ -3,15 +3,9 @@
 /**
  * TimelineEvent — single timeline entry with scroll-entrance animation
  * ----------------------------------------------------------------------
- * LAYOUT RULE (FINAL):
- * ALL events render two-column on desktop — always.
- * - Has real media/video → MediaGallery or VideoPreview in media column
- * - No media/video     → MediaFallback in media column
- * The media column is NEVER empty. Single-column layout is mobile-only.
- *
- * Alternating layout:
- * - Even index (0, 2, 4…): card LEFT  | media RIGHT
- * - Odd index  (1, 3, 5…): media LEFT | card RIGHT
+ * Changes:
+ * - animate-ping limited to first 3 featured items (featuredRank prop)
+ * - staggerDelay capped at Math.min(index, 3) * 0.07 (kept from prev fix)
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -30,7 +24,7 @@ const TYPE_CONFIG = {
   enjoyment:   { label: 'Life',        dot: 'bg-orange-500',  border: 'border-orange-500/40',  glow: '249, 115, 22'  },
 };
 
-export default function TimelineEvent({ event, index }) {
+export default function TimelineEvent({ event, index, featuredRank }) {
   const wrapperRef  = useRef(null);
   const observerRef = useRef(null);
   const [isVisible,      setIsVisible]      = useState(false);
@@ -39,9 +33,11 @@ export default function TimelineEvent({ event, index }) {
   const isEven = index % 2 === 0;
   const config = TYPE_CONFIG[event.type] || TYPE_CONFIG.project;
 
-  const hasMedia = Array.isArray(event.media) && event.media.length > 0;
-  const hasVideo = Boolean(event.video_url);
-  const hasRealMedia = hasMedia || hasVideo;
+  const hasMedia    = Array.isArray(event.media) && event.media.length > 0;
+  const hasVideo    = Boolean(event.video_url);
+
+  // Only ping on the first 3 featured items — beyond that it's noise
+  const shouldPing  = event.featured && featuredRank !== undefined && featuredRank < 3;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -66,9 +62,6 @@ export default function TimelineEvent({ event, index }) {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  // Cap stagger at index 3 — prevents excessive delay on deep items.
-  // Items 0-3 stagger nicely (0ms → 210ms); everything after animates
-  // immediately on scroll with no artificial wait.
   const staggerDelay = Math.min(index, 3) * 0.07;
 
   const variants = prefersReduced
@@ -85,7 +78,6 @@ export default function TimelineEvent({ event, index }) {
         },
       };
 
-  // Decide what goes in the media column
   const mediaSlot = hasVideo ? (
     <VideoPreview
       thumbnailUrl={event.media?.[0]?.url || null}
@@ -99,40 +91,28 @@ export default function TimelineEvent({ event, index }) {
   );
 
   return (
-    <li
-      ref={wrapperRef}
-      className="relative mb-20 last:mb-0"
-    >
+    <li ref={wrapperRef} className="relative mb-20 last:mb-0">
       {/* Timeline dot */}
       <span
         aria-hidden="true"
-        className="
-          absolute left-5 md:left-1/2
-          top-7
-          -translate-x-1/2 -translate-y-1/2
-          z-10
-          flex items-center justify-center
-        "
+        className="absolute left-5 md:left-1/2 top-7 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
       >
-        {event.featured && (
+        {shouldPing && (
           <span className={`absolute inline-flex w-5 h-5 rounded-full ${config.dot} opacity-40 animate-ping`} />
         )}
         <span className={`relative inline-flex w-4 h-4 rounded-full ${config.dot} ring-2 ring-background shadow-sm`} />
       </span>
 
-      {/* Two-column layout — ALWAYS on desktop */}
+      {/* Two-column layout */}
       <motion.div
         variants={variants}
         initial="hidden"
         animate={isVisible ? 'visible' : 'hidden'}
         className="pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-10 md:items-center"
       >
-        {/* Card column */}
         <div className={isEven ? 'md:order-1' : 'md:order-2'}>
-          <EventCard event={event} config={config} />
+          <EventCard event={event} config={config} featuredRank={featuredRank} />
         </div>
-
-        {/* Media column — real content OR fallback, never empty */}
         <div className={`${isEven ? 'md:order-2' : 'md:order-1'} mt-4 md:mt-0`}>
           {mediaSlot}
         </div>
