@@ -2,10 +2,44 @@
 -- MIGRATION: timeline_events
 -- Phase 2 — Timeline & Scroll Architecture
 -- Run this in Supabase SQL Editor
+--
+-- SELF-CONTAINED: This file declares all required functions
+-- before using them. Safe to run even if schema.sql has
+-- already been executed (all statements are idempotent).
 -- =====================================================
 
 -- Enable UUID extension (idempotent)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- =====================================================
+-- FUNCTION: update_updated_at()
+-- Declared here so this migration is self-contained.
+-- Identical to the definition in schema.sql.
+-- CREATE OR REPLACE is idempotent — safe to re-run.
+-- =====================================================
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- FUNCTION: is_admin()
+-- Declared here so this migration is self-contained.
+-- Identical to the definition in schema.sql.
+-- CREATE OR REPLACE is idempotent — safe to re-run.
+-- =====================================================
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM admin_access
+        WHERE user_id = auth.uid()
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
 -- TABLE: timeline_events
@@ -82,18 +116,27 @@ CREATE INDEX IF NOT EXISTS idx_timeline_events_public_sort
 
 -- =====================================================
 -- AUTO-UPDATE TRIGGER
--- Matches the update_updated_at() function in schema.sql
+-- Uses update_updated_at() defined above.
+-- DROP first to avoid "trigger already exists" error on re-run.
 -- =====================================================
+DROP TRIGGER IF EXISTS update_timeline_events_updated_at ON timeline_events;
+
 CREATE TRIGGER update_timeline_events_updated_at
     BEFORE UPDATE ON timeline_events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =====================================================
 -- ROW LEVEL SECURITY
--- Pattern: public SELECT on published rows; admin full CRUD
--- Matches rls-policies.sql pattern exactly.
+-- Pattern: public SELECT on published rows; admin full CRUD.
+-- Uses is_admin() defined above.
+-- DROP IF EXISTS on each policy to allow safe re-runs.
 -- =====================================================
 ALTER TABLE timeline_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can read published timeline events" ON timeline_events;
+DROP POLICY IF EXISTS "Admin can insert timeline events"          ON timeline_events;
+DROP POLICY IF EXISTS "Admin can update timeline events"          ON timeline_events;
+DROP POLICY IF EXISTS "Admin can delete timeline events"          ON timeline_events;
 
 CREATE POLICY "Anyone can read published timeline events"
     ON timeline_events FOR SELECT
