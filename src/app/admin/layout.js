@@ -15,29 +15,26 @@ import {
   Menu,
   X,
   User,
+  Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkUser();
-  }, []);
+  useEffect(() => { checkUser(); }, []);
 
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user && pathname !== '/admin/login') {
         router.push('/admin/login');
         return;
       }
-      
       setUser(user);
     } catch (error) {
       console.error('Auth error:', error);
@@ -52,32 +49,30 @@ export default function AdminLayout({ children }) {
     router.push('/admin/login');
   };
 
-  // Don't show layout on login page
-  if (pathname === '/admin/login') {
-    return children;
-  }
+  if (pathname === '/admin/login') return children;
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
       </div>
     );
   }
 
   const navigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Projects', href: '/admin/projects', icon: FolderGit2 },
-    { name: 'Blog Posts', href: '/admin/blog', icon: FileText },
-    { name: 'Certifications', href: '/admin/certifications', icon: Award },
-    { name: 'Hackathons', href: '/admin/hackathons', icon: Trophy },
-    { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Dashboard',       href: '/admin/dashboard',   icon: LayoutDashboard },
+    { name: 'Projects',        href: '/admin/projects',    icon: FolderGit2      },
+    { name: 'Blog Posts',      href: '/admin/blog',        icon: FileText        },
+    { name: 'Timeline',        href: '/admin/timeline',    icon: Clock           },
+    { name: 'Certifications',  href: '/admin/certifications', icon: Award        },
+    { name: 'Hackathons',      href: '/admin/hackathons',  icon: Trophy          },
+    { name: 'Messages',        href: '/admin/messages',    icon: MessageSquare   },
+    { name: 'Settings',        href: '/admin/settings',    icon: Settings        },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile sidebar backdrop */}
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -105,9 +100,9 @@ export default function AdminLayout({ children }) {
             </Link>
           </div>
 
-          {/* Navigation */}
+          {/* Nav */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navigation.map((item) => {
+            {navigation.map(item => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <Link
@@ -127,16 +122,14 @@ export default function AdminLayout({ children }) {
             })}
           </nav>
 
-          {/* User Profile */}
+          {/* User */}
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                 <User size={20} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {user?.email || 'Admin'}
-                </p>
+                <p className="text-sm font-medium text-foreground truncate">{user?.email || 'Admin'}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
             </div>
@@ -151,27 +144,22 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main */}
       <div className="lg:pl-64">
-        {/* Top Bar */}
+        {/* Topbar */}
         <header className="sticky top-0 z-30 bg-card border-b border-border backdrop-blur-sm bg-card/95">
           <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-4">
-              {/* Mobile menu button */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-lg transition-colors"
               >
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
-
-              {/* Page Title */}
               <h2 className="text-xl font-bold text-foreground">
-                {navigation.find((item) => pathname.startsWith(item.href))?.name || 'Dashboard'}
+                {navigation.find(item => pathname.startsWith(item.href))?.name || 'Dashboard'}
               </h2>
             </div>
-
-            {/* Quick Actions */}
             <div className="flex items-center gap-3">
               <Link
                 href="/"
@@ -184,11 +172,9 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Content */}
         <main className="p-6">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
     </div>
