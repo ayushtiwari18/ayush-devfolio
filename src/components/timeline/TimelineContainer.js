@@ -1,13 +1,16 @@
 /**
  * TimelineContainer — SERVER COMPONENT
  * --------------------------------------
- * Changes:
- * - Computes featuredRank per event (0-based rank among featured items)
- *   and passes it to TimelineClient so TimelineEvent can limit animate-ping
- *   to only the first 3 featured items.
+ * revalidate = 60: ISR belt-and-suspenders on top of about/page.js revalidate.
+ * Ensures the timeline section freshens within 60s after admin edits,
+ * even if the container is eventually used in other pages.
  */
+
 import { getPublishedTimelineEvents } from '@/services/timeline.service';
 import TimelineClient from './TimelineClient';
+
+// Revalidate every 60 seconds (ISR)
+export const revalidate = 60;
 
 export default async function TimelineContainer() {
   let events = [];
@@ -29,7 +32,7 @@ export default async function TimelineContainer() {
     );
   }
 
-  // Assign a rank to each featured event (0 = first featured seen, newest first)
+  // Assign a rank to each featured event (0-based, newest first)
   // TimelineEvent uses this to limit animate-ping to rank < 3
   let featuredCounter = 0;
   const eventsWithRank = events.map(event => ({
@@ -38,10 +41,7 @@ export default async function TimelineContainer() {
   }));
 
   return (
-    <section
-      className="py-24 px-4"
-      aria-label="Timeline of events"
-    >
+    <section className="py-24 px-4" aria-label="Timeline of events">
       {/* Section header */}
       <div className="max-w-5xl mx-auto mb-20 text-center">
         <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary mb-4">

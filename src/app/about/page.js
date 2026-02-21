@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import TimelineContainer from '@/components/timeline/TimelineContainer';
 
+// ISR — revalidate this page every 60 seconds.
+// This ensures newly uploaded timeline images / new events appear within 1 minute.
+export const revalidate = 60;
+
 export const metadata = {
   title: 'About Me - Ayush Tiwari',
   description:
@@ -11,7 +15,6 @@ export const metadata = {
 };
 
 export default async function AboutPage() {
-  // Fetch stats
   const [projects, certifications, hackathons] = await Promise.all([
     supabase.from('projects').select('id', { count: 'exact', head: true }),
     supabase.from('certifications').select('id', { count: 'exact', head: true }),
@@ -22,32 +25,28 @@ export default async function AboutPage() {
     {
       icon: Code,
       title: 'Clean Code',
-      description:
-        'Writing maintainable, scalable, and well-documented code following best practices',
+      description: 'Writing maintainable, scalable, and well-documented code following best practices',
     },
     {
       icon: Rocket,
       title: 'Performance',
-      description:
-        'Building high-performance applications optimised for speed and efficiency',
+      description: 'Building high-performance applications optimised for speed and efficiency',
     },
     {
       icon: Users,
       title: 'User-Centric',
-      description:
-        'Designing intuitive interfaces that provide exceptional user experiences',
+      description: 'Designing intuitive interfaces that provide exceptional user experiences',
     },
     {
       icon: Zap,
       title: 'Fast Delivery',
-      description:
-        'Implementing agile methodologies for rapid development and iteration',
+      description: 'Implementing agile methodologies for rapid development and iteration',
     },
   ];
 
   return (
     <main className="min-h-screen">
-      {/* ── Hero ── */}
+      {/* Hero */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl sm:text-6xl font-bold text-foreground mb-6">
@@ -59,14 +58,12 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
-              <div className="text-4xl font-bold gradient-text mb-2">
-                {projects.count || 0}+
-              </div>
+              <div className="text-4xl font-bold gradient-text mb-2">{projects.count || 0}+</div>
               <div className="text-sm text-muted-foreground">Projects Completed</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
@@ -74,22 +71,18 @@ export default async function AboutPage() {
               <div className="text-sm text-muted-foreground">Years Experience</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
-              <div className="text-4xl font-bold gradient-text mb-2">
-                {certifications.count || 0}+
-              </div>
+              <div className="text-4xl font-bold gradient-text mb-2">{certifications.count || 0}+</div>
               <div className="text-sm text-muted-foreground">Certifications</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-6 text-center card-glow">
-              <div className="text-4xl font-bold gradient-text mb-2">
-                {hackathons.count || 0}+
-              </div>
+              <div className="text-4xl font-bold gradient-text mb-2">{hackathons.count || 0}+</div>
               <div className="text-sm text-muted-foreground">Hackathons</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Story ── */}
+      {/* Story */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
@@ -115,7 +108,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ── What I Bring ── */}
+      {/* What I Bring */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground mb-12 text-center">
@@ -138,10 +131,10 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ── Timeline — powered by Supabase timeline_events ── */}
+      {/* Timeline */}
       <TimelineContainer />
 
-      {/* ── CTA ── */}
+      {/* CTA */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-foreground mb-6">
@@ -152,14 +145,10 @@ export default async function AboutPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/#contact">
-              <Button size="lg" className="bg-primary hover:bg-primary/90">
-                Get In Touch
-              </Button>
+              <Button size="lg" className="bg-primary hover:bg-primary/90">Get In Touch</Button>
             </Link>
             <Link href="/projects">
-              <Button size="lg" variant="outline">
-                View My Work
-              </Button>
+              <Button size="lg" variant="outline">View My Work</Button>
             </Link>
           </div>
         </div>
