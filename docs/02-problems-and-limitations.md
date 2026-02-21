@@ -10,7 +10,8 @@
 7. [Code Quality Issues](#code-quality-issues)
 8. [Deployment & Infrastructure Issues](#deployment--infrastructure-issues)
 9. [Corrections in New Project](#corrections-in-new-project)
-10. [AI Instructions for This Phase](#-ai-instructions-for-this-phase)
+10. [Live Bugs Found & Fixed (Feb 21, 2026)](#live-bugs-found--fixed-feb-21-2026)
+11. [AI Instructions for This Phase](#-ai-instructions-for-this-phase)
 
 ---
 
@@ -837,6 +838,127 @@ const supabaseKey = 'eyJ...'; // Committed to GitHub!
 
 ---
 
+## Live Bugs Found & Fixed (Feb 21, 2026)
+
+During the first live DB verification against `information_schema.columns`, the following mismatches were found between service files and the actual Supabase schema. All were fixed in one commit.
+
+### Bug 1 — Hackathons: Non-Existent `published` Column + Wrong Date Field
+
+**File**: `src/services/hackathons.service.js`
+
+| What the service used | What the DB actually has |
+|---|---|
+| `.eq('published', true)` | No `published` column — table has no visibility flag |
+| `.order('event_date', ...)` | Column is `date`, not `event_date` |
+
+**Impact**: Hackathons page always showed empty state, silently swallowed by `try/catch`.
+
+**Fix**:
+```javascript
+// BEFORE (WRONG)
+.eq('published', true)
+.order('event_date', { ascending: false })
+
+// AFTER (CORRECT)
+.order('date', { ascending: false })
+```
+
+---
+
+### Bug 2 — Certifications: Non-Existent `published` Column + Wrong Date Field
+
+**File**: `src/services/certifications.service.js`
+
+| What the service used | What the DB actually has |
+|---|---|
+| `.eq('published', true)` | No `published` column in `certifications` table |
+| `.order('issued_date', ...)` | Column is `issue_date`, not `issued_date` |
+
+**Impact**: Certifications page always showed "Coming Soon" empty state.
+
+**Fix**:
+```javascript
+// BEFORE (WRONG)
+.eq('published', true)
+.order('issued_date', { ascending: false })
+
+// AFTER (CORRECT)
+.order('issue_date', { ascending: false })
+```
+
+---
+
+### Bug 3 — Contact: Non-Existent `subject` Column
+
+**File**: `src/services/contact.service.js`
+
+| What the service inserted | What the DB actually has |
+|---|---|
+| `subject: subject \|\| 'General Inquiry'` | No `subject` column in `contact_messages` |
+
+**Impact**: All contact form submissions silently failed with a Supabase column-not-found error.
+
+**Fix**:
+```javascript
+// BEFORE (WRONG)
+.insert([{ name, email, subject: subject || 'General Inquiry', message, status: 'unread' }])
+
+// AFTER (CORRECT)
+.insert([{ name, email, message, status: 'unread' }])
+```
+
+---
+
+### Bug 4 — Hackathons Page: Wrong Field `technologies` → `learnings`
+
+**File**: `src/app/hackathons/page.js`
+
+| What the component rendered | What the DB actually has |
+|---|---|
+| `hackathon.technologies` | Column is `learnings` (text array), not `technologies` |
+
+**Impact**: Tech stack section was always invisible even for hackathons with data.
+
+**Fix**: Changed field reference and label from "Tech Stack" to "Key Learnings".
+
+---
+
+### Bug 5 — Blog & Projects: Non-Existent RPC Functions
+
+**Files**: `src/services/blog.service.js`, `src/services/projects.service.js`
+
+| What the service called | Reality |
+|---|---|
+| `supabase.rpc('increment_blog_views', ...)` | RPC function not created in DB |
+| `supabase.rpc('increment_project_views', ...)` | RPC function not created in DB |
+
+**Impact**: Silent errors in server logs on every project/blog page visit. Non-critical but noisy.
+
+**Fix**: Wrapped in silent `try/catch`. Views tracking is a future feature — SQL functions to be added when admin panel analytics are built.
+
+```sql
+-- Future: add these functions to Supabase when implementing analytics
+CREATE OR REPLACE FUNCTION increment_project_views(project_slug TEXT)
+RETURNS VOID AS $$
+  UPDATE projects SET views = COALESCE(views, 0) + 1 WHERE slug = project_slug;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION increment_blog_views(blog_slug TEXT)
+RETURNS VOID AS $$
+  UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE slug = blog_slug;
+$$ LANGUAGE SQL;
+```
+
+---
+
+### Root Cause Pattern
+
+All 5 bugs share the same root cause: **services were written before the DB schema was finalized**, then never cross-checked.
+
+> **Rule added**: Before shipping any service, verify every column name and filter field against `information_schema.columns`.
+
+---
+
 ## Corrections in New Project
 
 ### Architecture Corrections
@@ -937,6 +1059,7 @@ Understand and internalize all mistakes from the previous project to avoid repea
 3. **Use "Correct Pattern" examples** as templates
 4. **Ask when pattern is unclear**: Don't guess based on old project
 5. **Validate against corrections table**: Is this fixing a known problem?
+6. **Cross-check every service field** against `information_schema.columns` before shipping
 
 #### DON'T ❌
 1. **Copy code from old project**: It's full of anti-patterns
@@ -944,6 +1067,7 @@ Understand and internalize all mistakes from the previous project to avoid repea
 3. **Skip error handling**: Old project's biggest weakness
 4. **Ignore SEO**: Primary reason for rewrite
 5. **Hardcode values**: Use constants and environment variables
+6. **Write service queries against assumed columns**: Verify against actual DB schema
 
 ### Validation Questions
 
@@ -953,6 +1077,7 @@ Before writing code, ask:
 3. ✅ Am I fixing a documented problem or creating a new one?
 4. ✅ Is this admin panel pattern properly secured?
 5. ✅ Does this support SEO goals?
+6. ✅ Does every column/field I reference actually exist in the DB?
 
 ### Common Traps to Avoid
 
@@ -1010,6 +1135,19 @@ export default function Page() {
 }
 ```
 
+#### Trap #4: Service-Schema Mismatch (NEW — learned Feb 21, 2026)
+```javascript
+// ❌ DON'T — assume column names match your mental model
+.eq('published', true)          // Does this column exist?
+.order('issued_date', ...)      // Is this the real column name?
+.insert([{ subject: '...' }])   // Is subject in the table?
+
+// ✅ DO — verify against DB schema first
+// Run: SELECT column_name FROM information_schema.columns
+//      WHERE table_name = 'your_table';
+// Then write the service.
+```
+
 ### Quality Gates
 
 #### Before Every Component
@@ -1018,6 +1156,12 @@ export default function Page() {
 - [ ] Are errors handled?
 - [ ] Are loading states present?
 - [ ] Is this accessible?
+
+#### Before Every Service Function
+- [ ] Does every `.eq()` filter column exist in the DB?
+- [ ] Does every `.order()` column exist in the DB?
+- [ ] Does every `.insert()` / `.update()` field exist in the DB?
+- [ ] Does every `.rpc()` function exist in Supabase?
 
 #### Before Every Admin Feature
 - [ ] Is authentication verified server-side?
@@ -1041,6 +1185,7 @@ If you catch yourself doing any of these, STOP:
 - 🚩 "I'll add error handling later" → No, add it now
 - 🚩 "This admin check seems simple" → Verify it's secure
 - 🚩 "GSAP works globally" → No, lazy load only
+- 🚩 "I'll assume the column is called X" → No, verify against DB schema
 
 ### Next Steps
 
@@ -1054,10 +1199,11 @@ Once all problems are understood:
 
 ## Document Version
 
-- **Version**: 1.0.0
-- **Last Updated**: February 4, 2026
+- **Version**: 1.1.0
+- **Last Updated**: February 21, 2026
 - **Author**: Ayush Tiwari
 - **Status**: Approved & Locked
+- **Changelog**: Added Section 10 — Live Bugs Found & Fixed (DB-service schema mismatches)
 
 ---
 
