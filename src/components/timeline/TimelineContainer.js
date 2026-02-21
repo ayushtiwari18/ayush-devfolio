@@ -18,15 +18,14 @@ export default async function TimelineContainer() {
   try {
     events = await getPublishedTimelineEvents();
   } catch (error) {
-    // Non-critical: timeline failing should not break the page
     console.warn('[TimelineContainer] Failed to load timeline events:', error?.message);
     events = [];
   }
 
   if (events.length === 0) {
     return (
-      <section className="py-20 px-4" aria-label="Timeline">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="py-24 px-4" aria-label="Timeline">
+        <div className="max-w-5xl mx-auto text-center">
           <p className="text-muted-foreground text-sm">Timeline coming soon.</p>
         </div>
       </section>
@@ -35,24 +34,33 @@ export default async function TimelineContainer() {
 
   return (
     <section
-      className="py-20 px-4"
+      className="py-24 px-4"
       aria-label="Timeline of events"
     >
-      {/* SEO: Static heading — rendered on server, indexed by crawlers */}
-      <div className="max-w-4xl mx-auto mb-16 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+      {/* Section header — server rendered, SEO indexed */}
+      <div className="max-w-5xl mx-auto mb-20 text-center">
+        {/* Eyebrow label */}
+        <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary mb-4">
+          Chronicles
+        </p>
+
+        {/* Main heading with gradient */}
+        <h2 className="text-4xl md:text-5xl font-bold gradient-text inline-block">
           My Journey
         </h2>
-        <p className="mt-3 text-muted-foreground text-base md:text-lg">
+
+        {/* Decorative divider */}
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <div className="h-px w-16 bg-gradient-to-r from-transparent to-primary/50" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+          <div className="h-px w-16 bg-gradient-to-l from-transparent to-primary/50" />
+        </div>
+
+        <p className="mt-5 text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
           A reverse-chronological log of work, learning, and building.
         </p>
       </div>
 
-      {/*
-        Pass pre-sorted events to Client boundary.
-        events array is ALREADY sorted: start_date DESC, order ASC.
-        TimelineClient must NOT re-sort this array.
-      */}
       <TimelineClient events={events} />
     </section>
   );

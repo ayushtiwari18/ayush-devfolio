@@ -3,37 +3,37 @@
 /**
  * TimelineTrack — vertical connector line
  * -----------------------------------------
- * Renders a single vertical line that scales in from top to bottom
- * as the page loads. The line is purely decorative and hidden from
- * assistive technologies (aria-hidden).
- *
- * PERFORMANCE: Single Framer Motion element. No scroll listener.
+ * w-0.5 (2px) — more visible than 1px on retina displays.
+ * Gradient: solid at top, fades out at bottom (more natural than hard stop).
  * Uses CSS transform (scaleY) — compositor-only, zero layout cost.
  */
 
 import { motion } from 'framer-motion';
 
 export default function TimelineTrack({ eventCount }) {
-  // Line only renders if there are events to connect
   if (!eventCount || eventCount < 2) return null;
 
   return (
     <div
       aria-hidden="true"
-      className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
+      className="absolute left-5 md:left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2"
     >
-      {/* Static background line — no animation, provides structure */}
-      <div className="absolute inset-0 bg-border opacity-30" />
+      {/* Static underlay — gives line structure before animation */}
+      <div className="absolute inset-0 bg-border/20" />
 
-      {/* Animated fill line — scales in on mount */}
+      {/* Animated gradient fill — scales in from top on mount */}
       <motion.div
-        className="absolute inset-0 bg-primary origin-top"
+        className="absolute inset-0 origin-top"
+        style={{
+          background:
+            'linear-gradient(to bottom, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.6) 60%, transparent 100%)',
+        }}
         initial={{ scaleY: 0 }}
         animate={{ scaleY: 1 }}
         transition={{
-          duration: 1.2,
+          duration: 1.4,
           ease: [0.25, 0.46, 0.45, 0.94],
-          delay: 0.3,
+          delay: 0.2,
         }}
       />
     </div>
