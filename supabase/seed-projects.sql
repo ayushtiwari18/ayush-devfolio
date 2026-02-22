@@ -1,19 +1,34 @@
 -- ============================================================
--- Seed: All 7 Projects — SELF-CONTAINED
--- Adds all missing columns first, then inserts data.
--- Safe to run multiple times (IF NOT EXISTS + ON CONFLICT).
--- No other migration file needs to run before this.
+-- Seed: All 7 Projects — SELF-CONTAINED & LIVE-DB SAFE
+-- 
+-- Your live table was created from the OLD schema and is missing:
+--   slug, cover_image, github_url, live_url, content,
+--   view_count, updated_at + case-study columns.
+-- 
+-- STEP 1 adds ALL missing columns first (IF NOT EXISTS — safe).
+-- STEP 2 inserts all 7 projects (ON CONFLICT — safe to re-run).
+-- 
+-- Run this ONE file. Nothing else needed.
 -- ============================================================
 
+
 -- ============================================================
--- STEP 1: Extend the projects table with all required columns
--- (all use IF NOT EXISTS — safe to re-run)
+-- STEP 1: Add ALL missing columns to the live projects table
 -- ============================================================
+
+-- Core columns missing from old schema
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS slug         TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS cover_image  TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_url   TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS live_url     TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS content      TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS view_count   INTEGER DEFAULT 0;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at   TIMESTAMPTZ DEFAULT NOW();
 
 -- Ordering & metadata
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS "order"     INTEGER DEFAULT 0;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS duration    TEXT;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS tags        TEXT[] DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS "order"      INTEGER DEFAULT 0;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS duration     TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS tags         TEXT[] DEFAULT '{}';
 
 -- Case study: text fields
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS problem_statement   TEXT;
@@ -27,8 +42,36 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS future_improvements TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS security_notes      TEXT;
 
 -- Case study: JSONB fields
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS strategies  JSONB DEFAULT '[]'::jsonb;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS challenges  JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS strategies   JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS challenges   JSONB DEFAULT '[]'::jsonb;
+
+-- ============================================================
+-- STEP 1b: Backfill slug for any existing rows, then lock it
+-- ============================================================
+
+-- Backfill slug from title for any pre-existing rows
+UPDATE projects
+SET slug = LOWER(
+  REGEXP_REPLACE(
+    REGEXP_REPLACE(title, '[^a-zA-Z0-9\s-]', '', 'g'),
+    '\s+', '-', 'g'
+  )
+)
+WHERE slug IS NULL;
+
+-- Add UNIQUE constraint (safe — IF NOT EXISTS via DO block)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'projects_slug_key'
+      AND conrelid = 'projects'::regclass
+  ) THEN
+    ALTER TABLE projects ADD CONSTRAINT projects_slug_key UNIQUE (slug);
+  END IF;
+ END;
+$$;
+
 
 -- ============================================================
 -- STEP 2: Insert all 7 projects
@@ -414,4 +457,5 @@ ON CONFLICT (slug) DO UPDATE SET
   trade_offs          = EXCLUDED.trade_offs,
   lessons_learned     = EXCLUDED.lessons_learned,
   future_improvements = EXCLUDED.future_improvements,
-  security_notes      = EXCLUDED.security_notes;
+  security_notes      = EXCLUDED.security_notes,
+  updated_at          = NOW();
