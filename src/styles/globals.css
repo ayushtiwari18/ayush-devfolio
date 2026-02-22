@@ -239,6 +239,38 @@
   .timeline-event-wrapper {
     opacity: 1;
   }
+
+  /* ==========================================================
+     PROJECT HERO — Phase 3
+     SVG ripple overlay for /projects/[slug] hero section.
+     Same compositor-thread approach as Timeline Phase 2.
+     Do NOT add JS to the hover loop — CSS owns this.
+     ========================================================== */
+
+  /**
+   * project-ripple-overlay
+   * ----------------------
+   * Distortion layer inside ProjectHero.
+   * opacity + filter controlled via inline style from ProjectHero useState.
+   * will-change: filter keeps this on GPU compositor thread.
+   * transition: opacity 0.35s — smooth fade in/out on hover.
+   */
+  .project-ripple-overlay {
+    pointer-events: none;
+    will-change: filter, opacity;
+    transition: opacity 0.35s ease;
+  }
+
+  /**
+   * Mobile override — coarse pointer (touchscreen)
+   * Ripple entirely hidden on touch devices.
+   * Static hero image shown without distortion.
+   */
+  @media (pointer: coarse) {
+    .project-ripple-overlay {
+      display: none;
+    }
+  }
 }
 
 @layer utilities {
@@ -256,13 +288,13 @@
   }
 
   /**
-   * Reduced motion — global override for all timeline animations
-   * This is the CSS-layer fallback. JS also checks matchMedia
-   * in TimelineEvent for the Framer Motion variants.
-   * Double protection: CSS disables transitions if JS hasn't loaded yet.
+   * Reduced motion — global override
+   * Covers Phase 2 Timeline + Phase 3 Project Hero.
+   * CSS-layer fallback: disables transitions if JS hasn't loaded.
    */
   @media (prefers-reduced-motion: reduce) {
     .ripple-overlay,
+    .project-ripple-overlay,
     .video-preview-wrapper,
     .timeline-event-wrapper * {
       transition: none !important;
