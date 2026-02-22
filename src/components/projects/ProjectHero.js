@@ -9,31 +9,14 @@ const VideoPreviewController = dynamic(
   { ssr: false }
 );
 
-/**
- * ProjectHero
- * -----------
- * Full-width hero image with GentleRain-style WebGL water ripple.
- *
- * How it works:
- *  - Three.js WebGLRenderer + two ping-pong RenderTargets (rtA / rtB / rtC).
- *  - SIMULATION shader: runs wave equation per-pixel on GPU each frame.
- *    Mouse position injects a gaussian droplet (energy) into the height field.
- *  - DISPLAY shader: reads height gradient → surface normal → displaces UV
- *    lookup into the project cover image → glass-water refraction effect.
- *  - Ambient auto-drips keep the surface alive when mouse is idle.
- *  - Lazy-loads Three.js so it never affects SSR or initial bundle.
- */
 export default function ProjectHero({ heroImage, coverImage, previewVideo, youtubeUrl, title }) {
-  const wrapRef   = useRef(null);  // outer container (events + size)
-  const mountRef  = useRef(null);  // inner div Three.js appends canvas into
-  const heroRef   = useRef(null);  // for VideoPreviewController
+  const wrapRef    = useRef(null);
+  const mountRef   = useRef(null);
   const cleanupRef = useRef(null);
   const [imgLoaded, setImgLoaded] = useState(false);
 
   const imageSrc = heroImage || coverImage || null;
 
-  // ── Bootstrap WebGL once the image has been loaded into a cross-origin-safe
-  //     Image element (or immediately when there is no image).
   useEffect(() => {
     const container = mountRef.current;
     const wrapper   = wrapRef.current;
@@ -44,44 +27,38 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
     let rtA, rtB, rtC;
     let animId;
     let lastDrop = 0;
-    const mouse = { x: -1, y: -1, moving: false };
+    const mouse = { moving: false };
 
-    // ── helper: load image into a canvas, return CanvasTexture ───────
-    function loadBgTexture(src, ThreeRef, W, H) {
+    function loadBgTexture(src, T, W, H) {
       return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = W; canvas.height = H;
-        const ctx = canvas.getContext('2d');
-
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const ctx = c.getContext('2d');
         if (src) {
           const img = new window.Image();
           img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, W, H);
-            resolve(new ThreeRef.CanvasTexture(canvas));
-          };
-          img.onerror = () => resolve(buildFallbackTexture(ThreeRef, W, H));
+          img.onload  = () => { ctx.drawImage(img, 0, 0, W, H); resolve(new T.CanvasTexture(c)); };
+          img.onerror = () => resolve(buildFallback(T, W, H));
           img.src = src;
         } else {
-          resolve(buildFallbackTexture(ThreeRef, W, H));
+          resolve(buildFallback(T, W, H));
         }
       });
     }
 
-    function buildFallbackTexture(ThreeRef, W, H) {
-      const canvas = document.createElement('canvas');
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext('2d');
-      const grad = ctx.createRadialGradient(W*0.35, H*0.45, 0, W*0.5, H*0.5, Math.max(W,H)*0.9);
-      grad.addColorStop(0,   'rgba(99,102,241,0.22)');
-      grad.addColorStop(0.4, 'rgba(139,92,246,0.16)');
-      grad.addColorStop(1,   'rgba(0,0,0,0.55)');
-      ctx.fillStyle = grad;
+    function buildFallback(T, W, H) {
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(W*0.35, H*0.45, 0, W*0.5, H*0.5, Math.max(W,H)*0.9);
+      g.addColorStop(0,   'rgba(99,102,241,0.22)');
+      g.addColorStop(0.4, 'rgba(139,92,246,0.16)');
+      g.addColorStop(1,   'rgba(0,0,0,0.55)');
+      ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
-      return new ThreeRef.CanvasTexture(canvas);
+      return new T.CanvasTexture(c);
     }
 
-    // ── main bootstrap ───────────────────────────────────────────
     import('three').then(async (mod) => {
       if (!isAlive) return;
       THREE = mod;
@@ -89,7 +66,6 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
       const W = container.offsetWidth  || wrapper.offsetWidth  || 800;
       const H = container.offsetHeight || wrapper.offsetHeight || 450;
 
-      // ── renderer ────────────────────────────────────────
       renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
       renderer.setPixelRatio(1);
       renderer.setSize(W, H);
@@ -97,7 +73,6 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;border-radius:inherit;';
       container.appendChild(renderer.domElement);
 
-      // ── ping-pong render targets ────────────────────────────
       const rtParams = {
         minFilter: THREE.LinearFilter,
         magFilter: THREE.LinearFilter,
@@ -108,11 +83,9 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
       rtB = new THREE.WebGLRenderTarget(W, H, rtParams);
       rtC = new THREE.WebGLRenderTarget(W, H, rtParams);
 
-      // ── background texture (project cover image) ────────────
       const bgTex = await loadBgTexture(imageSrc, THREE, W, H);
       if (!isAlive) return;
 
-      // ── GLSL shaders ──────────────────────────────────────
       const vert = /* glsl */`
         varying vec2 vUv;
         void main() {
@@ -121,6 +94,9 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         }
       `;
 
+      // ── Simulation shader ──────────────────────────────────────────
+      // Damping 0.978  → ripples fade out naturally within ~1 second.
+      // Gaussian sigma 0.0004 → tight, small drop (not a big splash).
       const simFrag = /* glsl */`
         precision highp float;
         uniform sampler2D uPrev;
@@ -130,23 +106,25 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         uniform float uDropStrength;
         varying vec2 vUv;
         void main() {
-          vec2 px = 1.0 / uResolution;
-          float l = texture2D(uPrev, vUv - vec2(px.x, 0.0)).r;
-          float r = texture2D(uPrev, vUv + vec2(px.x, 0.0)).r;
-          float u = texture2D(uPrev, vUv - vec2(0.0, px.y)).r;
-          float d = texture2D(uPrev, vUv + vec2(0.0, px.y)).r;
-          float c = texture2D(uPrev,  vUv).r;
-          float p = texture2D(uPrev2, vUv).r;
+          vec2  px   = 1.0 / uResolution;
+          float l    = texture2D(uPrev, vUv - vec2(px.x, 0.0)).r;
+          float r    = texture2D(uPrev, vUv + vec2(px.x, 0.0)).r;
+          float u    = texture2D(uPrev, vUv - vec2(0.0, px.y)).r;
+          float d    = texture2D(uPrev, vUv + vec2(0.0, px.y)).r;
+          float p    = texture2D(uPrev2, vUv).r;
           float next = (l + r + u + d) * 0.5 - p;
-          next *= 0.985;
+          next      *= 0.978;                          // faster decay = natural
           if (uMouse.x >= 0.0) {
             float dist = length(vUv - uMouse);
-            next += uDropStrength * exp(-dist * dist / 0.0008);
+            next += uDropStrength * exp(-dist * dist / 0.0004); // tight drop
           }
           gl_FragColor = vec4(next, 0.0, 0.0, 1.0);
         }
       `;
 
+      // ── Display shader ─────────────────────────────────────────────
+      // Displacement scale 1.8 → subtle warp, not funhouse-mirror.
+      // Specular 0.18 → faint glint, not blinding white.
       const dispFrag = /* glsl */`
         precision highp float;
         uniform sampler2D uHeight;
@@ -154,30 +132,27 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         uniform vec2 uResolution;
         varying vec2 vUv;
         void main() {
-          vec2 px = 1.0 / uResolution;
-          float l = texture2D(uHeight, vUv - vec2(px.x, 0.0)).r;
-          float r = texture2D(uHeight, vUv + vec2(px.x, 0.0)).r;
-          float u = texture2D(uHeight, vUv - vec2(0.0, px.y)).r;
-          float d = texture2D(uHeight, vUv + vec2(0.0, px.y)).r;
-          vec2  n = vec2(r - l, d - u) * 4.0;
-          vec2  displacedUv = clamp(vUv + n, 0.0, 1.0);
-          vec4  bg = texture2D(uBackground, displacedUv);
-          float h  = texture2D(uHeight, vUv).r;
-          float spec = max(0.0, h) * 0.5;
-          vec3 specColor = vec3(1.0, 1.0, 1.0) * spec;
-          gl_FragColor = vec4(bg.rgb + specColor, bg.a + abs(h) * 0.3);
+          vec2  px  = 1.0 / uResolution;
+          float l   = texture2D(uHeight, vUv - vec2(px.x, 0.0)).r;
+          float r   = texture2D(uHeight, vUv + vec2(px.x, 0.0)).r;
+          float u   = texture2D(uHeight, vUv - vec2(0.0, px.y)).r;
+          float d   = texture2D(uHeight, vUv + vec2(0.0, px.y)).r;
+          vec2  n   = vec2(r - l, d - u) * 1.8;         // subtle displacement
+          vec2  uv2 = clamp(vUv + n, 0.0, 1.0);
+          vec4  bg  = texture2D(uBackground, uv2);
+          float h   = texture2D(uHeight, vUv).r;
+          float spec = max(0.0, h) * 0.18;              // faint glint only
+          gl_FragColor = vec4(bg.rgb + spec, bg.a + abs(h) * 0.12);
         }
       `;
 
-      // ── scenes & materials ────────────────────────────────────
       const simScene  = new THREE.Scene();
       const dispScene = new THREE.Scene();
-      const camera    = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const cam       = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       const quad      = new THREE.PlaneGeometry(2, 2);
 
       simMat = new THREE.ShaderMaterial({
-        vertexShader: vert,
-        fragmentShader: simFrag,
+        vertexShader: vert, fragmentShader: simFrag,
         uniforms: {
           uPrev:         { value: rtA.texture },
           uPrev2:        { value: rtB.texture },
@@ -188,8 +163,7 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
       });
 
       dispMat = new THREE.ShaderMaterial({
-        vertexShader: vert,
-        fragmentShader: dispFrag,
+        vertexShader: vert, fragmentShader: dispFrag,
         transparent: true,
         uniforms: {
           uHeight:     { value: rtA.texture },
@@ -201,22 +175,20 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
       simScene.add(new THREE.Mesh(quad, simMat));
       dispScene.add(new THREE.Mesh(quad, dispMat));
 
-      // ── helpers ────────────────────────────────────────────
       function drip(x, y, str) {
         simMat.uniforms.uMouse.value.set(x, y);
         simMat.uniforms.uDropStrength.value = str;
         mouse.moving = true;
       }
 
-      // ── animation loop ─────────────────────────────────────────
       function animate() {
         if (!isAlive) return;
         animId = requestAnimationFrame(animate);
 
         const now = performance.now();
-        // ambient drip every 1.2–2.8 s
-        if (now - lastDrop > 1200 + Math.random() * 1600) {
-          drip(Math.random(), Math.random(), 0.2 + Math.random() * 0.25);
+        // Ambient: only 1 small drip every 3–6 s — barely noticeable
+        if (now - lastDrop > 3000 + Math.random() * 3000) {
+          drip(Math.random(), Math.random(), 0.08 + Math.random() * 0.06);
           lastDrop = now;
         } else if (!mouse.moving) {
           simMat.uniforms.uMouse.value.set(-1, -1);
@@ -224,40 +196,38 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         }
         mouse.moving = false;
 
-        // sim pass → rtC
         simMat.uniforms.uPrev.value  = rtA.texture;
         simMat.uniforms.uPrev2.value = rtB.texture;
         renderer.setRenderTarget(rtC);
-        renderer.render(simScene, camera);
+        renderer.render(simScene, cam);
 
-        // rotate buffers B←A, A←C
         const tmp = rtB; rtB = rtA; rtA = rtC; rtC = tmp;
 
-        // display pass → screen
         dispMat.uniforms.uHeight.value = rtA.texture;
         renderer.setRenderTarget(null);
-        renderer.render(dispScene, camera);
+        renderer.render(dispScene, cam);
       }
       animate();
 
-      // ── pointer events on the wrapper (canvas is pointer-events:none) ─
       function getUV(e) {
         const rect = wrapper.getBoundingClientRect();
         const src  = e.touches ? e.touches[0] : e;
         return {
           x:  (src.clientX - rect.left)  / rect.width,
-          y: 1 - (src.clientY - rect.top) / rect.height, // flip Y for WebGL
+          y: 1 - (src.clientY - rect.top) / rect.height,
         };
       }
-      const onMove  = (e) => { const {x,y} = getUV(e); drip(x, y, 0.28); };
-      const onDown  = (e) => { const {x,y} = getUV(e); drip(x, y, 0.8); };
+
+      // Mouse move → very gentle continuous trace
+      const onMove  = (e) => { const {x,y} = getUV(e); drip(x, y, 0.12); };
+      // Click → a proper but still modest splash
+      const onDown  = (e) => { const {x,y} = getUV(e); drip(x, y, 0.45); };
 
       wrapper.addEventListener('mousemove',  onMove, { passive: true });
       wrapper.addEventListener('mousedown',  onDown, { passive: true });
       wrapper.addEventListener('touchstart', onDown, { passive: true });
       wrapper.addEventListener('touchmove',  onMove, { passive: true });
 
-      // ── resize ─────────────────────────────────────────────
       function onResize() {
         if (!wrapRef.current) return;
         const nW = wrapRef.current.offsetWidth;
@@ -269,7 +239,6 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
       }
       window.addEventListener('resize', onResize);
 
-      // stash cleanup
       cleanupRef.current = () => {
         isAlive = false;
         cancelAnimationFrame(animId);
@@ -281,9 +250,8 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         [rtA, rtB, rtC].forEach(rt => rt?.dispose());
         bgTex.dispose();
         renderer.dispose();
-        if (renderer.domElement.parentNode) {
+        if (renderer.domElement.parentNode)
           renderer.domElement.parentNode.removeChild(renderer.domElement);
-        }
       };
     }).catch(console.error);
 
@@ -291,13 +259,11 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
   }, [imageSrc]);
 
   return (
-    // wrapRef → pointer events + bounding rect source
     <div
       ref={wrapRef}
       className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20"
       style={{ aspectRatio: '16 / 7', cursor: 'crosshair' }}
     >
-      {/* Static project image beneath the WebGL canvas */}
       {imageSrc ? (
         <img
           src={imageSrc}
@@ -317,16 +283,10 @@ export default function ProjectHero({ heroImage, coverImage, previewVideo, youtu
         </div>
       )}
 
-      {/* Inner div Three.js appends its canvas into */}
-      <div
-        ref={mountRef}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-      />
+      <div ref={mountRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
 
-      {/* Bottom fade gradient */}
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/60 to-transparent pointer-events-none" />
 
-      {/* Video controller */}
       {previewVideo && (
         <VideoPreviewController
           previewVideo={previewVideo}
