@@ -1,266 +1,322 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
- * WaterRipple — canvas-based water surface simulation.
- * Uses a classic two-buffer height-field wave equation:
- *   next[i] = (2 * curr[i] - prev[i] + damping * (neighbors - 2*curr[i]))
- * Mouse / touch interaction drops ripples into the field.
- * Renders by displacing pixel samples from the source image/gradient.
+ * WaterRipple — GentleRain-style WebGL water simulation.
+ *
+ * Technique (identical to gentlerain.ai):
+ *  1. Two ping-pong WebGL render targets (RTA / RTB) store the wave height field.
+ *  2. SIMULATION SHADER: reads previous two frames, runs the wave equation,
+ *     writes next height field. Mouse position injects energy.
+ *  3. DISPLAY SHADER: reads current height field, computes surface normals,
+ *     displaces UV lookups into the background texture → refraction shimmer.
+ *
+ * The background "texture" is the site's dark indigo gradient rendered
+ * onto an off-screen canvas so it matches the hero theme.
  */
 export default function WaterRipple({ className = '' }) {
-  const canvasRef = useRef(null);
-  const stateRef = useRef(null);
+  const mountRef = useRef(null);
 
-  // ── initialise simulation buffers ──────────────────────────────────────────
-  const init = useCallback((canvas) => {
-    const w = canvas.offsetWidth;
-    const h = canvas.offsetHeight;
-    canvas.width  = w;
-    canvas.height = h;
-    const size = w * h;
+  useEffect(() => {
+    const container = mountRef.current;
+    if (!container) return;
 
-    stateRef.current = {
-      w, h, size,
-      // two height-field buffers (Float32 for smooth gradients)
-      buf: [new Float32Array(size), new Float32Array(size)],
-      cur: 0,
-      ctx: canvas.getContext('2d'),
-      // off-screen source canvas that we displace
-      src: null,
-      animId: null,
-      lastDrop: 0,
-    };
+    let THREE, renderer, simMat, dispMat;
+    let rtA, rtB;
+    let animId;
+    let isAlive = true;
 
-    // build the source gradient canvas once
-    const src = document.createElement('canvas');
-    src.width  = w;
-    src.height = h;
-    const sCtx = src.getContext('2d');
+    // mouse state
+    const mouse = { x: -1, y: -1, moving: false };
+    let lastDrop = 0;
 
-    // deep-blue → purple gradient matching the portfolio dark theme
-    const grad = sCtx.createRadialGradient(w * 0.35, h * 0.45, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
-    grad.addColorStop(0,   'rgba(99,  102, 241, 0.18)');  // indigo
-    grad.addColorStop(0.4, 'rgba(139,  92, 246, 0.12)');  // violet
-    grad.addColorStop(0.8, 'rgba( 30,  27,  75, 0.25)');  // dark navy
-    grad.addColorStop(1,   'rgba(  0,   0,   0, 0.40)');
-    sCtx.fillStyle = grad;
-    sCtx.fillRect(0, 0, w, h);
+    // ── load Three.js then bootstrap ─────────────────────────────
+    import('three').then((mod) => {
+      if (!isAlive) return;
+      THREE = mod;
 
-    // soft noise dots for texture
-    for (let i = 0; i < 120; i++) {
-      const rx = Math.random() * w;
-      const ry = Math.random() * h;
-      const rr = Math.random() * 2 + 0.5;
-      const dot = sCtx.createRadialGradient(rx, ry, 0, rx, ry, rr * 8);
-      dot.addColorStop(0,   `rgba(167,139,250,${(Math.random() * 0.12).toFixed(3)})`);
-      dot.addColorStop(1,   'rgba(0,0,0,0)');
-      sCtx.fillStyle = dot;
-      sCtx.beginPath();
-      sCtx.arc(rx, ry, rr * 8, 0, Math.PI * 2);
-      sCtx.fill();
-    }
+      const W = container.offsetWidth;
+      const H = container.offsetHeight;
 
-    stateRef.current.src = src;
-  }, []);
+      // ── renderer ─────────────────────────────────────────────
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: true,
+        preserveDrawingBuffer: false,
+      });
+      renderer.setPixelRatio(1); // keep sim at 1:1 for speed
+      renderer.setSize(W, H);
+      renderer.domElement.style.cssText =
+        'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;opacity:0.7;';
+      container.appendChild(renderer.domElement);
 
-  // ── drop a ripple at (x, y) with radius r ──────────────────────────────────
-  const drop = useCallback((x, y, radius = 18, strength = 220) => {
-    const s = stateRef.current;
-    if (!s) return;
-    const { w, h, buf, cur } = s;
-    const px = Math.floor(x);
-    const py = Math.floor(y);
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        const dist2 = dx * dx + dy * dy;
-        if (dist2 <= radius * radius) {
-          const nx = px + dx;
-          const ny = py + dy;
-          if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-            const falloff = 1 - Math.sqrt(dist2) / radius;
-            buf[cur][ny * w + nx] += strength * falloff * falloff;
-          }
+      // ── ping-pong render targets ──────────────────────────────
+      const rtParams = {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+      };
+      rtA = new THREE.WebGLRenderTarget(W, H, rtParams);
+      rtB = new THREE.WebGLRenderTarget(W, H, rtParams);
+
+      // ── build background texture from an off-screen canvas ────
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.width = W; bgCanvas.height = H;
+      const bgCtx = bgCanvas.getContext('2d');
+      // deep-indigo radial gradient matching the portfolio theme
+      const grad = bgCtx.createRadialGradient(
+        W * 0.35, H * 0.45, 0,
+        W * 0.5,  H * 0.5,  Math.max(W, H) * 0.9
+      );
+      grad.addColorStop(0,   'rgba(99, 102,241,0.22)');
+      grad.addColorStop(0.4, 'rgba(139, 92,246,0.16)');
+      grad.addColorStop(0.8, 'rgba( 30, 27, 75,0.30)');
+      grad.addColorStop(1,   'rgba(  0,  0,  0,0.55)');
+      bgCtx.fillStyle = grad;
+      bgCtx.fillRect(0, 0, W, H);
+      // faint star-like dots
+      for (let i = 0; i < 80; i++) {
+        const rx = Math.random() * W, ry = Math.random() * H;
+        const rg = bgCtx.createRadialGradient(rx, ry, 0, rx, ry, 40);
+        rg.addColorStop(0,   `rgba(167,139,250,${(Math.random()*0.1).toFixed(3)})`);
+        rg.addColorStop(1,   'rgba(0,0,0,0)');
+        bgCtx.fillStyle = rg;
+        bgCtx.beginPath(); bgCtx.arc(rx, ry, 40, 0, Math.PI*2); bgCtx.fill();
+      }
+      const bgTex = new THREE.CanvasTexture(bgCanvas);
+
+      // ─────────────────────────────────────────────────────────
+      // SIMULATION SHADER
+      // Reads rtA (previous height) and rtB (height before that).
+      // Writes next height to whichever RT we render into.
+      // uMouse injects a gaussian droplet at the cursor position.
+      // ─────────────────────────────────────────────────────────
+      const simVert = /* glsl */`
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
+      `;
+      const simFrag = /* glsl */`
+        precision highp float;
+        uniform sampler2D uPrev;   // height field t-1
+        uniform sampler2D uPrev2;  // height field t-2
+        uniform vec2  uResolution;
+        uniform vec2  uMouse;      // normalised [0,1], -1 = inactive
+        uniform float uDropStrength;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 px = 1.0 / uResolution;
+
+          // sample 4 neighbours
+          float left  = texture2D(uPrev, vUv - vec2(px.x, 0.0)).r;
+          float right = texture2D(uPrev, vUv + vec2(px.x, 0.0)).r;
+          float up    = texture2D(uPrev, vUv - vec2(0.0, px.y)).r;
+          float down  = texture2D(uPrev, vUv + vec2(0.0, px.y)).r;
+          float curr  = texture2D(uPrev,  vUv).r;
+          float prev2 = texture2D(uPrev2, vUv).r;
+
+          // wave equation:  next = 2*curr - prev + c²*(neighbours - 4*curr)
+          // simplified (c²≈0.5):  next = (left+right+up+down)*0.5 - prev2
+          float next = (left + right + up + down) * 0.5 - prev2;
+          next *= 0.986; // damping — controls ripple lifetime
+
+          // inject mouse droplet
+          if (uMouse.x >= 0.0) {
+            float dist = length(vUv - uMouse);
+            // gaussian with sigma ≈ 0.025 of screen width
+            float drop = uDropStrength * exp(-dist * dist / (2.0 * 0.0006));
+            next += drop;
+          }
+
+          gl_FragColor = vec4(next, 0.0, 0.0, 1.0);
+        }
+      `;
+
+      // ─────────────────────────────────────────────────────────
+      // DISPLAY SHADER
+      // Reads the current height field, computes the surface normal
+      // (gradient of heights), then displaces the UV lookup into
+      // the background texture — this is the refraction effect.
+      // ─────────────────────────────────────────────────────────
+      const dispFrag = /* glsl */`
+        precision highp float;
+        uniform sampler2D uHeight;     // current height field
+        uniform sampler2D uBackground; // scene background
+        uniform vec2  uResolution;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 px = 1.0 / uResolution;
+
+          // surface normal from height gradient
+          float left  = texture2D(uHeight, vUv - vec2(px.x, 0.0)).r;
+          float right = texture2D(uHeight, vUv + vec2(px.x, 0.0)).r;
+          float up    = texture2D(uHeight, vUv - vec2(0.0, px.y)).r;
+          float down  = texture2D(uHeight, vUv + vec2(0.0, px.y)).r;
+
+          // gradient = refraction vector
+          vec2 normal = vec2(right - left, down - up) * 3.5;
+
+          // displace UV into background (clamp to edge)
+          vec2 displacedUv = clamp(vUv + normal, 0.0, 1.0);
+          vec4 bg = texture2D(uBackground, displacedUv);
+
+          // slight specular gleam on wave crests
+          float height  = texture2D(uHeight, vUv).r;
+          float specular = max(0.0, height) * 0.6;
+          vec3  specColor = vec3(0.55, 0.45, 1.0) * specular;
+
+          gl_FragColor = vec4(bg.rgb + specColor, bg.a + abs(height) * 0.4);
+        }
+      `;
+
+      // ── two-scene setup (sim scene + display scene) ───────────
+      const simScene  = new THREE.Scene();
+      const dispScene = new THREE.Scene();
+      const camera    = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const quad      = new THREE.PlaneGeometry(2, 2);
+
+      simMat = new THREE.ShaderMaterial({
+        vertexShader: simVert,
+        fragmentShader: simFrag,
+        uniforms: {
+          uPrev:        { value: rtA.texture },
+          uPrev2:       { value: rtB.texture },
+          uResolution:  { value: new THREE.Vector2(W, H) },
+          uMouse:       { value: new THREE.Vector2(-1, -1) },
+          uDropStrength:{ value: 0.0 },
+        },
+      });
+
+      dispMat = new THREE.ShaderMaterial({
+        vertexShader: simVert,
+        fragmentShader: dispFrag,
+        transparent: true,
+        uniforms: {
+          uHeight:     { value: rtA.texture },
+          uBackground: { value: bgTex },
+          uResolution: { value: new THREE.Vector2(W, H) },
+        },
+      });
+
+      simScene.add(new THREE.Mesh(quad, simMat));
+      dispScene.add(new THREE.Mesh(quad, dispMat));
+
+      // keep a third RT to write sim output without reading/writing same texture
+      let rtC = new THREE.WebGLRenderTarget(W, H, rtParams);
+
+      // ── ambient auto-drip ─────────────────────────────────────
+      function triggerDrip(x, y, strength) {
+        simMat.uniforms.uMouse.value.set(x, y);
+        simMat.uniforms.uDropStrength.value = strength;
       }
-    }
-  }, []);
 
-  // ── one simulation + render tick ───────────────────────────────────────────
-  const tick = useCallback(() => {
-    const s = stateRef.current;
-    if (!s) return;
-    const { w, h, size, buf, ctx, src } = s;
-    const cur  = s.cur;
-    const prev = 1 - cur;
-    const DAMPING = 0.986;   // > 0.98 = long-living ripples, < 0.97 = die fast
+      // ── animation loop ────────────────────────────────────────
+      function animate() {
+        if (!isAlive) return;
+        animId = requestAnimationFrame(animate);
 
-    // ── wave propagation ────────────────────────────────────────────
-    const next = buf[prev]; // reuse old buffer
-    const curr = buf[cur];
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const i = y * w + x;
-        next[i] =
-          (curr[i - 1] + curr[i + 1] + curr[i - w] + curr[i + w]) * 0.5
-          - next[i];
-        next[i] *= DAMPING;
+        const now = performance.now();
+
+        // ambient drip every 1.5–3 s
+        if (now - lastDrop > 1500 + Math.random() * 1500) {
+          triggerDrip(Math.random(), Math.random(), 0.25 + Math.random() * 0.3);
+          lastDrop = now;
+        } else if (!mouse.moving) {
+          // clear mouse injection between frames
+          simMat.uniforms.uMouse.value.set(-1, -1);
+          simMat.uniforms.uDropStrength.value = 0.0;
+        }
+
+        // ① run simulation → write into rtC
+        simMat.uniforms.uPrev.value  = rtA.texture;
+        simMat.uniforms.uPrev2.value = rtB.texture;
+        renderer.setRenderTarget(rtC);
+        renderer.render(simScene, camera);
+
+        // ② rotate buffers: B←A, A←C
+        const tmp = rtB; rtB = rtA; rtA = rtC; rtC = tmp;
+
+        // ③ render display pass to screen
+        dispMat.uniforms.uHeight.value = rtA.texture;
+        renderer.setRenderTarget(null);
+        renderer.render(dispScene, camera);
+
+        // clear mouse moving flag after each frame
+        mouse.moving = false;
       }
-    }
-    s.cur = prev; // swap
 
-    // ── render: pixel displacement ──────────────────────────────────
-    const srcData = (() => {
-      const tmp = document.createElement('canvas');
-      tmp.width = w; tmp.height = h;
-      tmp.getContext('2d').drawImage(src, 0, 0);
-      return tmp.getContext('2d').getImageData(0, 0, w, h);
+      animate();
+
+      // ── pointer events (attached to the HERO section, not canvas) ─
+      const hero = container.closest('section') || container;
+
+      function onMove(e) {
+        const rect = hero.getBoundingClientRect();
+        const src  = e.touches ? e.touches[0] : e;
+        const nx   = (src.clientX - rect.left)  / rect.width;
+        const ny   = 1.0 - (src.clientY - rect.top) / rect.height; // flip Y for GL
+        triggerDrip(nx, ny, 0.35);
+        mouse.moving = true;
+      }
+
+      function onDown(e) {
+        const rect = hero.getBoundingClientRect();
+        const src  = e.touches ? e.touches[0] : e;
+        const nx   = (src.clientX - rect.left)  / rect.width;
+        const ny   = 1.0 - (src.clientY - rect.top) / rect.height;
+        triggerDrip(nx, ny, 0.9);
+        mouse.moving = true;
+      }
+
+      hero.addEventListener('mousemove',  onMove, { passive: true });
+      hero.addEventListener('mousedown',  onDown, { passive: true });
+      hero.addEventListener('touchstart', onDown, { passive: true });
+      hero.addEventListener('touchmove',  onMove, { passive: true });
+
+      // ── resize ────────────────────────────────────────────────
+      function onResize() {
+        const nW = container.offsetWidth;
+        const nH = container.offsetHeight;
+        renderer.setSize(nW, nH);
+        [rtA, rtB, rtC].forEach(rt => rt.setSize(nW, nH));
+        simMat.uniforms.uResolution.value.set(nW, nH);
+        dispMat.uniforms.uResolution.value.set(nW, nH);
+      }
+      window.addEventListener('resize', onResize);
+
+      // stash cleanup refs
+      container._rippleCleanup = () => {
+        isAlive = false;
+        cancelAnimationFrame(animId);
+        hero.removeEventListener('mousemove',  onMove);
+        hero.removeEventListener('mousedown',  onDown);
+        hero.removeEventListener('touchstart', onDown);
+        hero.removeEventListener('touchmove',  onMove);
+        window.removeEventListener('resize', onResize);
+        [rtA, rtB, rtC].forEach(rt => rt.dispose());
+        renderer.dispose();
+        if (renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+      };
     });
 
-    // lazy-cache source pixels each frame (fast path)
-    if (!s._srcPixels || s._srcDirty) {
-      const tmp = document.createElement('canvas');
-      tmp.width = w; tmp.height = h;
-      tmp.getContext('2d').drawImage(src, 0, 0);
-      s._srcPixels = tmp.getContext('2d').getImageData(0, 0, w, h);
-      s._srcDirty  = false;
-    }
-    const srcPx  = s._srcPixels;
-    const output = ctx.createImageData(w, h);
-    const od     = output.data;
-    const sd     = srcPx.data;
-    const wave   = buf[s.cur]; // the freshly propagated buffer
-
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const i  = y * w + x;
-        // gradient of height field = refraction vector
-        const dx = (wave[i - 1] - wave[i + 1]) >> 2; // bit-shift ÷4 fast
-        const dy = (wave[i - w] - wave[i + w]) >> 2;
-
-        // clamp source lookup
-        let sx = x + dx;
-        let sy = y + dy;
-        if (sx < 0) sx = 0; else if (sx >= w) sx = w - 1;
-        if (sy < 0) sy = 0; else if (sy >= h) sy = h - 1;
-
-        const src4 = (sy * w + sx) * 4;
-        const dst4 = i * 4;
-
-        od[dst4]     = sd[src4];
-        od[dst4 + 1] = sd[src4 + 1];
-        od[dst4 + 2] = sd[src4 + 2];
-        // enhance alpha slightly in disturbed areas for a gleam
-        const mag = Math.abs(dx) + Math.abs(dy);
-        od[dst4 + 3] = Math.min(255, sd[src4 + 3] + mag * 3);
-      }
-    }
-
-    ctx.putImageData(output, 0, 0);
-    s.animId = requestAnimationFrame(tick);
+    return () => {
+      isAlive = false;
+      container._rippleCleanup?.();
+    };
   }, []);
 
-  // ── autonomous ambient drips ────────────────────────────────────────────────
-  const ambientDrip = useCallback(() => {
-    const s = stateRef.current;
-    if (!s) return;
-    const now = performance.now();
-    // random drip every 1.2–2.8 s
-    if (now - s.lastDrop > 1200 + Math.random() * 1600) {
-      drop(
-        Math.random() * s.w,
-        Math.random() * s.h,
-        6 + Math.random() * 10,
-        60 + Math.random() * 100,
-      );
-      s.lastDrop = now;
-    }
-  }, [drop]);
-
-  // wrap tick so ambient drips fire every frame without coupling tick↔drop
-  const frame = useCallback(() => {
-    ambientDrip();
-    tick();
-  }, [ambientDrip, tick]);
-
-  // ── mount / unmount ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    init(canvas);
-
-    // start loop
-    stateRef.current.animId = requestAnimationFrame(frame);
-
-    // ── pointer interaction ────────────────────────────────────────
-    let isDown = false;
-
-    const getPos = (e, rect) => {
-      const src = e.touches ? e.touches[0] : e;
-      return {
-        x: (src.clientX - rect.left) * (canvas.width  / rect.width),
-        y: (src.clientY - rect.top)  * (canvas.height / rect.height),
-      };
-    };
-
-    const onMove = (e) => {
-      if (!isDown && e.type === 'mousemove') {
-        // hover — tiny gentle drip
-        const rect = canvas.getBoundingClientRect();
-        const { x, y } = getPos(e, rect);
-        drop(x, y, 8, 40);
-        return;
-      }
-      if (isDown || e.type === 'touchmove') {
-        const rect = canvas.getBoundingClientRect();
-        const { x, y } = getPos(e, rect);
-        drop(x, y, 14, 130);
-      }
-    };
-    const onDown = (e) => {
-      isDown = true;
-      const rect = canvas.getBoundingClientRect();
-      const { x, y } = getPos(e, rect);
-      drop(x, y, 22, 280);
-    };
-    const onUp = () => { isDown = false; };
-
-    canvas.addEventListener('mousemove',  onMove, { passive: true });
-    canvas.addEventListener('mousedown',  onDown, { passive: true });
-    canvas.addEventListener('mouseup',    onUp);
-    canvas.addEventListener('mouseleave', onUp);
-    canvas.addEventListener('touchstart', onDown, { passive: true });
-    canvas.addEventListener('touchmove',  onMove, { passive: true });
-    canvas.addEventListener('touchend',   onUp);
-
-    // ── resize ────────────────────────────────────────────────────
-    const onResize = () => {
-      cancelAnimationFrame(stateRef.current?.animId);
-      init(canvas);
-      stateRef.current.animId = requestAnimationFrame(frame);
-    };
-    window.addEventListener('resize', onResize);
-
-    return () => {
-      cancelAnimationFrame(stateRef.current?.animId);
-      canvas.removeEventListener('mousemove',  onMove);
-      canvas.removeEventListener('mousedown',  onDown);
-      canvas.removeEventListener('mouseup',    onUp);
-      canvas.removeEventListener('mouseleave', onUp);
-      canvas.removeEventListener('touchstart', onDown);
-      canvas.removeEventListener('touchmove',  onMove);
-      canvas.removeEventListener('touchend',   onUp);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [init, frame, drop]);
-
   return (
-    <canvas
-      ref={canvasRef}
-      className={`absolute inset-0 w-full h-full pointer-events-auto ${className}`}
-      style={{ mixBlendMode: 'screen', opacity: 0.55 }}
+    <div
+      ref={mountRef}
+      className={`absolute inset-0 w-full h-full pointer-events-none ${className}`}
     />
   );
 }
