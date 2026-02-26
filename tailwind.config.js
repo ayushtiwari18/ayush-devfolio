@@ -55,6 +55,21 @@ module.exports = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: 'hsl(var(--muted-foreground))',
+            a: { color: 'hsl(var(--primary))' },
+            strong: { color: 'hsl(var(--foreground))' },
+            h1: { color: 'hsl(var(--foreground))' },
+            h2: { color: 'hsl(var(--foreground))' },
+            h3: { color: 'hsl(var(--foreground))' },
+            h4: { color: 'hsl(var(--foreground))' },
+            code: { color: 'hsl(var(--primary))' },
+            blockquote: { color: 'hsl(var(--muted-foreground))' },
+          },
+        },
+      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
@@ -100,5 +115,7 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 };
