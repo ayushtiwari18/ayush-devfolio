@@ -12,19 +12,17 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
   const animationIdRef  = useRef(null);
   const planetsRef      = useRef([]);
   const orbitPathsRef   = useRef([]);
+  const asteroidBeltRef = useRef(null);
   const timeRef         = useRef(0);
   const starsRef        = useRef(null);
-  const asteroidBeltRef = useRef(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
+    let active = true;
 
-    let isSubscribed = true;
-
-    // Both imports are dynamic — three is never touched server-side
     import('@/lib/solarSystemUtils')
-      .then(async (utilsModule) => {
-        if (!isSubscribed || !mountRef.current) return;
+      .then(async (utils) => {
+        if (!active || !mountRef.current) return;
 
         const {
           initThreeJS,
@@ -32,13 +30,12 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
           createPlanets,
           createAsteroidBelt,
           updatePlanets,
-        } = utilsModule;
+          updateAsteroidBelt,
+        } = utils;
 
-        // initThreeJS is now async (lazy-loads three + addons internally)
         const { scene, camera, renderer, composer, controls } =
           await initThreeJS(mountRef.current);
-
-        if (!isSubscribed) return;
+        if (!active) return;
 
         sceneRef.current    = scene;
         cameraRef.current   = camera;
@@ -47,61 +44,53 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
         controlsRef.current = controls;
 
         starsRef.current = createStarfield(scene);
-
         const { planetObjects, orbitPaths } = createPlanets(scene);
         planetsRef.current    = planetObjects;
         orbitPathsRef.current = orbitPaths;
-
-        // Apply initial orbit visibility
         orbitPaths.forEach(o => { o.visible = showOrbits; });
-
         asteroidBeltRef.current = createAsteroidBelt(scene);
 
         const animate = () => {
-          if (!isSubscribed) return;
-          timeRef.current += 0.01;
+          if (!active) return;
+          timeRef.current += 0.008;
 
           updatePlanets(planetsRef.current, timeRef.current, autoRotate);
+          updateAsteroidBelt(asteroidBeltRef.current);
 
-          if (asteroidBeltRef.current) asteroidBeltRef.current.rotation.z += 0.001;
+          // Slow star drift
           if (starsRef.current) {
-            starsRef.current.rotation.x += 0.0001;
-            starsRef.current.rotation.y += 0.0001;
+            starsRef.current.rotation.y += 0.00005;
           }
+
           if (controlsRef.current) controlsRef.current.update();
           if (composerRef.current) composerRef.current.render();
-
           animationIdRef.current = requestAnimationFrame(animate);
         };
-
         animate();
       })
-      .catch((err) => console.error('Solar System init failed:', err));
+      .catch((err) => console.error('[SolarSystem] init failed:', err));
 
-    const handleResize = () => {
-      if (!mountRef.current || !cameraRef.current || !rendererRef.current || !composerRef.current) return;
+    const onResize = () => {
+      if (!mountRef.current || !cameraRef.current) return;
       const w = mountRef.current.clientWidth;
       const h = mountRef.current.clientHeight;
       cameraRef.current.aspect = w / h;
       cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(w, h);
-      composerRef.current.setSize(w, h);
+      rendererRef.current?.setSize(w, h);
+      composerRef.current?.setSize(w, h);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', onResize);
 
     return () => {
-      isSubscribed = false;
-      window.removeEventListener('resize', handleResize);
-      if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
+      active = false;
+      window.removeEventListener('resize', onResize);
+      cancelAnimationFrame(animationIdRef.current);
       if (rendererRef.current) {
-        if (rendererRef.current.domElement?.parentNode) {
-          try { rendererRef.current.domElement.parentNode.removeChild(rendererRef.current.domElement); } catch (_) {}
-        }
+        try { rendererRef.current.domElement?.parentNode?.removeChild(rendererRef.current.domElement); } catch (_) {}
         rendererRef.current.dispose();
       }
       if (sceneRef.current) {
-        while (sceneRef.current.children.length > 0)
-          sceneRef.current.remove(sceneRef.current.children[0]);
+        sceneRef.current.clear();
       }
     };
   }, [autoRotate]);
