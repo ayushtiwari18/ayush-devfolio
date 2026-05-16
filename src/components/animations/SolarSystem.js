@@ -52,14 +52,14 @@ export default function SolarSystem({ showOrbits, autoRotate }) {
 
         const animate = () => {
           if (!active) return;
-          timeRef.current += 0.008;
+          timeRef.current += 0.007;
 
           updatePlanets(planetsRef.current, timeRef.current, autoRotate);
           updateAsteroidBelt(asteroidBeltRef.current);
 
           // Slow star drift
           if (starsRef.current) {
-            starsRef.current.rotation.y += 0.00005;
+            starsRef.current.rotation.y += 0.000035;
           }
 
           if (controlsRef.current) controlsRef.current.update();
