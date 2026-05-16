@@ -33,15 +33,7 @@
     --ring: 221.2 83% 53.3%;
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* sidebar-* tokens removed — no sidebar in this portfolio (Commit 3 CSS purge) */
   }
 
   .dark {
@@ -72,15 +64,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 217.2 91.2% 59.8%;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* sidebar-* tokens removed — no sidebar in this portfolio (Commit 3 CSS purge) */
   }
 }
 
@@ -160,26 +144,35 @@
     background-clip: padding-box, border-box;
   }
 
-  .animated-gradient {
-    background: linear-gradient(
-      -45deg,
-      hsl(var(--primary) / 0.1),
-      hsl(var(--accent) / 0.1),
-      hsl(var(--primary) / 0.1),
-      hsl(var(--accent) / 0.1)
-    );
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+  /*
+   * animated-gradient — scoped behind prefers-reduced-motion: no-preference
+   * Previously ran unconditionally, burning GPU on every page load.
+   * Now only activates for users who have NOT requested reduced motion.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .animated-gradient {
+      background: linear-gradient(
+        -45deg,
+        hsl(var(--primary) / 0.1),
+        hsl(var(--accent) / 0.1),
+        hsl(var(--primary) / 0.1),
+        hsl(var(--accent) / 0.1)
+      );
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+    }
+
+    @keyframes gradient {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
   }
 
-  @keyframes gradient {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
+  /* hover-lift — promote to compositor layer ahead of time */
   .hover-lift {
     @apply transition-transform duration-300;
+    will-change: transform;
   }
 
   .hover-lift:hover {
@@ -187,21 +180,62 @@
   }
 
   /* ==========================================================
-     TIMELINE — Phase 2
-     All timeline-specific CSS lives in this block.
-     Do NOT scatter timeline styles across other sections.
+     PROFILE IMAGE — Commit 3 CSS animation replacements
+     Replaces 6 Framer Motion infinite loops with compositor-
+     thread CSS animations. Zero JS main-thread cost.
+     All animations respect prefers-reduced-motion via the
+     global override at the bottom of this file.
      ========================================================== */
 
-  /**
-   * VideoPreview ripple overlay
-   * ---------------------------
-   * The SVG feTurbulence filter is applied inline via style prop
-   * when data-ripple="active". This class handles the opacity
-   * transition so the effect fades in/out smoothly.
-   *
-   * GPU path: filter is compositor-only (no layout/paint cost).
-   * The transition only runs on desktop pointer devices.
-   */
+  /* Glow pulse — replaces glowVariants (opacity + scale, 3s, Infinity) */
+  @keyframes profile-glow {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%       { opacity: 0.8; transform: scale(1.1); }
+  }
+  .profile-glow-pulse {
+    animation: profile-glow 3s ease-in-out infinite;
+  }
+
+  /* CW ring — replaces animate={{ rotate: 360 }} duration:20 */
+  @keyframes ring-cw {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .profile-ring-cw {
+    animation: ring-cw 20s linear infinite;
+  }
+
+  /* CCW ring — replaces animate={{ rotate: -360 }} duration:15 */
+  @keyframes ring-ccw {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(-360deg); }
+  }
+  .profile-ring-ccw {
+    animation: ring-ccw 15s linear infinite;
+  }
+
+  /* Shine pulse — replaces animate={{ opacity: [0.2,0.4,0.2] }} duration:4 */
+  @keyframes profile-shine {
+    0%, 100% { opacity: 0.2; }
+    50%       { opacity: 0.4; }
+  }
+  .profile-shine {
+    animation: profile-shine 4s ease-in-out infinite;
+  }
+
+  /* Dot pulse — replaces scale+opacity pulse, duration:2 */
+  @keyframes dot-pulse {
+    0%, 100% { transform: scale(1);   opacity: 0.7; }
+    50%       { transform: scale(1.2); opacity: 1;   }
+  }
+  .profile-dot-pulse {
+    animation: dot-pulse 2s ease-in-out infinite;
+  }
+
+  /* ==========================================================
+     TIMELINE — Phase 2
+     ========================================================== */
+
   .ripple-overlay {
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -213,59 +247,29 @@
     opacity: 1;
   }
 
-  /**
-   * Mobile override — coarse pointer (touchscreen)
-   * Ripple filter disabled. VideoPreview falls back to
-   * a simple opacity reveal of the video on tap.
-   * This prevents SVG filter jank on low-power mobile GPUs.
-   */
   @media (pointer: coarse) {
     .ripple-overlay {
       display: none;
     }
-
     .video-preview-wrapper {
-      /* On mobile tap: fade transition instead of ripple */
       transition: opacity 0.2s ease;
     }
   }
 
-  /**
-   * Timeline event entrance — no-JS fallback
-   * TimelineEvent sets opacity/transform via Framer Motion.
-   * This rule ensures content is visible if JS fails to hydrate.
-   * Framer Motion overrides this once JS is active.
-   */
   .timeline-event-wrapper {
     opacity: 1;
   }
 
   /* ==========================================================
      PROJECT HERO — Phase 3
-     SVG ripple overlay for /projects/[slug] hero section.
-     Same compositor-thread approach as Timeline Phase 2.
-     Do NOT add JS to the hover loop — CSS owns this.
      ========================================================== */
 
-  /**
-   * project-ripple-overlay
-   * ----------------------
-   * Distortion layer inside ProjectHero.
-   * opacity + filter controlled via inline style from ProjectHero useState.
-   * will-change: filter keeps this on GPU compositor thread.
-   * transition: opacity 0.35s — smooth fade in/out on hover.
-   */
   .project-ripple-overlay {
     pointer-events: none;
     will-change: filter, opacity;
     transition: opacity 0.35s ease;
   }
 
-  /**
-   * Mobile override — coarse pointer (touchscreen)
-   * Ripple entirely hidden on touch devices.
-   * Static hero image shown without distortion.
-   */
   @media (pointer: coarse) {
     .project-ripple-overlay {
       display: none;
@@ -287,12 +291,17 @@
     display: none;
   }
 
-  /**
+  /*
    * Reduced motion — global override
-   * Covers Phase 2 Timeline + Phase 3 Project Hero.
-   * CSS-layer fallback: disables transitions if JS hasn't loaded.
+   * Covers all CSS animations added in Commit 3 (profile-* classes),
+   * plus Phase 2 Timeline and Phase 3 Project Hero.
    */
   @media (prefers-reduced-motion: reduce) {
+    .profile-glow-pulse,
+    .profile-ring-cw,
+    .profile-ring-ccw,
+    .profile-shine,
+    .profile-dot-pulse,
     .ripple-overlay,
     .project-ripple-overlay,
     .video-preview-wrapper,
