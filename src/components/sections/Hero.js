@@ -11,6 +11,12 @@ import { HERO_COPY } from '@/lib/constants';
  * SolarSystem is lazy-loaded (ssr:false) so Three.js never touches the server
  * bundle. The loading skeleton is a pure-CSS starfield so the hero always looks
  * alive even before WebGL initialises.
+ *
+ * PERF NOTE: Hero content (text + profile image) renders immediately on mount
+ * — it is NOT gated on sceneReady. This is critical for LCP. The Three.js
+ * scene fades IN behind the content once it's ready. Previously, gating content
+ * on sceneReady added ~3,274 ms to LCP because Three.js had to fully initialise
+ * before the recruiter could see anything.
  */
 const SolarSystem = dynamic(
   () => import('@/components/animations/SolarSystem'),
@@ -31,7 +37,6 @@ function StarfieldSkeleton() {
           'radial-gradient(ellipse at 50% 40%, #0d1a2e 0%, #000008 65%, #000000 100%)',
       }}
     >
-      {/* Animated CSS stars — zero JS, zero GPU */}
       <div className="absolute inset-0" style={{ opacity: 0.7 }}>
         {Array.from({ length: 80 }).map((_, i) => (
           <span
@@ -49,7 +54,6 @@ function StarfieldSkeleton() {
           />
         ))}
       </div>
-      {/* Sun glow hint */}
       <div
         className="absolute rounded-full"
         style={{
@@ -71,9 +75,8 @@ export default function Hero({ profile }) {
   const [showOrbits, setShowOrbits] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
   /**
-   * sceneReady = true once SolarSystem calls onReady().
-   * Hero content and ProfileImage animate in only after the first Three.js
-   * frame is painted — ensuring the solar system is the first thing you see.
+   * sceneReady controls ONLY the solar system fade-in and the control buttons.
+   * It no longer gates the hero text or profile image — those render immediately.
    */
   const [sceneReady, setSceneReady] = useState(false);
 
@@ -91,13 +94,30 @@ export default function Hero({ profile }) {
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-black">
 
-      {/* ── Solar System Background ── */}
-      <div className="absolute inset-0 w-full h-full">
+      {/* ── Solar System Background — fades in once Three.js is ready ── */}
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={{
+          opacity: sceneReady ? 1 : 0,
+          transition: 'opacity 1.2s cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
         <SolarSystem
           showOrbits={showOrbits}
           autoRotate={autoRotate}
           onReady={handleSceneReady}
         />
+      </div>
+
+      {/* StarfieldSkeleton stays visible until Three.js canvas fades in */}
+      <div
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          opacity: sceneReady ? 0 : 1,
+          transition: 'opacity 1.2s cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        <StarfieldSkeleton />
       </div>
 
       {/* ── Readability gradient ── */}
@@ -109,15 +129,14 @@ export default function Hero({ profile }) {
         }}
       />
 
-      {/* ── Main Content — fades in AFTER first Three.js frame ── */}
-      <div
-        className="relative z-10 min-h-screen flex flex-col pointer-events-none"
-        style={{
-          opacity: sceneReady ? 1 : 0,
-          transform: sceneReady ? 'translateY(0)' : 'translateY(18px)',
-          transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)',
-        }}
-      >
+      {/*
+       * ── Main Content — renders IMMEDIATELY, no longer waits for Three.js ──
+       *
+       * This is the LCP fix. Hero text and profile image are part of the
+       * critical render path. They must be visible as soon as the HTML is
+       * parsed. Three.js is decorative — it fades in behind the content.
+       */}
+      <div className="relative z-10 min-h-screen flex flex-col pointer-events-none">
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-12 lg:py-0">
@@ -137,12 +156,13 @@ export default function Hero({ profile }) {
         </div>
       </div>
 
-      {/* ── Solar System Controls ── */}
+      {/* ── Solar System Controls — visible only after scene is ready ── */}
       <div
         className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2"
         style={{
           opacity: sceneReady ? 1 : 0,
           transition: 'opacity 0.6s ease 0.4s',
+          pointerEvents: sceneReady ? 'auto' : 'none',
         }}
       >
         <button

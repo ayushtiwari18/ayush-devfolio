@@ -3,7 +3,25 @@ import '../styles/globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
-const inter = Inter({ subsets: ['latin'] });
+/**
+ * Load Inter with only the weights actually used in the design:
+ * - 400 (body text)
+ * - 500 (medium, UI labels)
+ * - 600 (semibold, card titles)
+ * - 700 (bold, headings)
+ *
+ * display: 'swap' ensures text is visible with a system font while
+ * Inter downloads — prevents invisible text contributing to LCP.
+ *
+ * subsets: ['latin'] keeps the font file small (no Cyrillic/Greek/etc).
+ */
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+  weight: ['400', '500', '600', '700'],
+  preload: true,
+});
 
 export const metadata = {
   metadataBase: new URL('https://ayush-devfolio.vercel.app'),
@@ -69,8 +87,25 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="scroll-smooth dark">
+    <html lang="en" className={`scroll-smooth dark ${inter.variable}`}>
       <head>
+        {/*
+         * ── Resource hints — tell the browser what to connect to early ──
+         *
+         * preconnect: establishes TCP + TLS handshake before the browser
+         * has parsed enough HTML to know it needs the resource.
+         *
+         * dns-prefetch: lighter fallback — just resolves DNS, no TLS.
+         * Use for origins where full preconnect would waste a connection.
+         */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+        {/* Supabase — data fetches start here */}
+        <link rel="dns-prefetch" href="https://supabase.co" />
+        <link rel="dns-prefetch" href="https://xnlndzezjfcllcwiqtbf.supabase.co" />
+
         {/* Person Schema — identity + social profiles */}
         <script
           type="application/ld+json"
@@ -144,9 +179,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} relative`}>
-        {/* Skip to main content — WCAG 2.1 AA required.
-            Visually hidden until focused via keyboard (Tab).
-            Must be the very first focusable element in the DOM. */}
+        {/*
+         * Skip to main content — WCAG 2.1 AA required.
+         * Visually hidden until focused via keyboard (Tab).
+         * Must be the very first focusable element in the DOM.
+         */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium focus:shadow-lg focus:outline-none"
@@ -154,7 +191,7 @@ export default function RootLayout({ children }) {
           Skip to main content
         </a>
 
-        {/* Solid dark background — ParticleField removed from global layout. */}
+        {/* Solid dark background — no particle system at layout level */}
         <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
 
         <Navbar />

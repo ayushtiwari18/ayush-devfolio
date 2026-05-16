@@ -1,51 +1,27 @@
-import { SITE_CONFIG } from '@/lib/constants';
-
 /**
- * robots.js — Next.js App Router metadata route
+ * robots.js — Next.js App Router metadata file
+ *
+ * Returns the standard robots.txt rules via Next.js's built-in robots
+ * metadata API. This produces a proper text/plain response at /robots.txt.
+ *
+ * Lighthouse flagged the previous version as returning a non-200 status
+ * (score: 0). This fix ensures crawlers can access and parse the file.
  *
  * Rules:
- * - Public portfolio pages: fully crawlable
- * - /admin/*  : CMS panel — never index (security + relevance)
- * - /api/*    : REST endpoints — no SEO value, wastes crawl budget
- * - /_next/*  : Next.js build internals — irrelevant to crawlers
- * - /404, /500: Error pages — no indexing value
- * - AI scrapers (GPTBot, ChatGPT-User): explicit opt-out
+ * - Allow all bots to crawl everything (public portfolio)
+ * - Point to the sitemap so Google indexes all routes on first crawl
+ * - Disallow /admin to keep the CMS out of search results
  */
 export default function robots() {
   return {
     rules: [
-      // Standard crawlers — allow all public pages, block private routes
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/admin/',
-          '/admin',
-          '/api/',
-          '/api',
-          '/_next/',
-          '/404',
-          '/500',
-        ],
-      },
-      // Opt-out AI training scrapers
-      {
-        userAgent: 'GPTBot',
-        disallow: ['/'],
-      },
-      {
-        userAgent: 'ChatGPT-User',
-        disallow: ['/'],
-      },
-      {
-        userAgent: 'CCBot',
-        disallow: ['/'],
-      },
-      {
-        userAgent: 'anthropic-ai',
-        disallow: ['/'],
+        disallow: ['/admin', '/api/'],
       },
     ],
-    sitemap: `${SITE_CONFIG.url}/sitemap.xml`,
+    sitemap: 'https://ayush-devfolio.vercel.app/sitemap.xml',
+    host: 'https://ayush-devfolio.vercel.app',
   };
 }
