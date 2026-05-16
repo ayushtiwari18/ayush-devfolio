@@ -2,66 +2,22 @@ import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import ParticleField from '@/components/animations/ParticleField';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   metadataBase: new URL('https://ayush-devfolio.vercel.app'),
   title: {
-    default: 'Ayush Tiwari - Full Stack Developer | Freelance Web Developer | MERN Stack Expert',
+    default: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js | Node.js',
     template: '%s | Ayush Tiwari',
   },
-  description: 'Ayush Tiwari - Professional Full Stack Developer & Freelance Web Developer specializing in MERN Stack, React.js, Node.js, Next.js. Available for freelance projects. Based in Jabalpur, India. 655+ DSA problems solved, LeetCode 1657 rating.',
-  keywords: [
-    // Primary Keywords
-    'Ayush Tiwari',
-    'Ayush Tiwari Developer',
-    'Ayush Tiwari Full Stack Developer',
-    'Ayush Tiwari Freelance Developer',
-    
-    // Job Titles
-    'Full Stack Developer',
-    'Freelance Developer',
-    'Freelance Web Developer',
-    'MERN Stack Developer',
-    'React Developer',
-    'Node.js Developer',
-    'Next.js Developer',
-    'JavaScript Developer',
-    
-    // Skills
-    'React.js Expert',
-    'Node.js Expert',
-    'MongoDB Developer',
-    'Express.js Developer',
-    'TypeScript Developer',
-    'Tailwind CSS Developer',
-    
-    // Services
-    'Web Development',
-    'Full Stack Development',
-    'Frontend Development',
-    'Backend Development',
-    'API Development',
-    'Freelance Web Development',
-    
-    // Location
-    'Developer Jabalpur',
-    'Freelance Developer India',
-    'Web Developer India',
-    
-    // Specific
-    'LeetCode 1657',
-    'Competitive Programmer',
-    'GGITS Student',
-    'Gyan Ganga Institute',
-  ],
+  description:
+    'Ayush Tiwari — Full Stack Developer building production-grade web systems. MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. 5,600+ GitHub commits. Based in Jabalpur, India.',
   authors: [
-    { 
+    {
       name: 'Ayush Tiwari',
       url: 'https://ayush-devfolio.vercel.app',
-    }
+    },
   ],
   creator: 'Ayush Tiwari',
   publisher: 'Ayush Tiwari',
@@ -75,8 +31,9 @@ export const metadata = {
     locale: 'en_US',
     url: 'https://ayush-devfolio.vercel.app',
     siteName: 'Ayush Tiwari Portfolio',
-    title: 'Ayush Tiwari - Full Stack Developer | Freelance Web Developer',
-    description: 'Professional Full Stack Developer specializing in MERN Stack, React.js, Node.js, Next.js. Available for freelance projects. LeetCode 1657 rating, 655+ problems solved.',
+    title: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js',
+    description:
+      'Full Stack Developer building production-grade web systems. MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. 5,600+ GitHub commits.',
     images: [
       {
         url: '/og-image.png',
@@ -88,9 +45,10 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ayush Tiwari - Full Stack Developer | Freelance Web Developer',
-    description: 'Professional Full Stack Developer specializing in MERN Stack. Available for freelance projects.',
-    creator: '@ayushtiwari',
+    title: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js',
+    description:
+      'Full Stack Developer building production-grade web systems. AWS certified. Springer-published researcher.',
+    creator: '@ayushtiwari18',
     images: ['/og-image.png'],
   },
   robots: {
@@ -105,9 +63,6 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
-  alternates: {
-    canonical: 'https://ayush-devfolio.vercel.app',
-  },
   category: 'technology',
   classification: 'Web Development Portfolio',
 };
@@ -116,18 +71,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="scroll-smooth dark">
       <head>
-        {/* Additional SEO Meta Tags */}
-        <meta name="author" content="Ayush Tiwari" />
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-        <meta name="googlebot" content="index, follow" />
-        <meta name="bingbot" content="index, follow" />
-        <meta name="language" content="English" />
-        <meta name="revisit-after" content="7 days" />
-        <meta name="distribution" content="global" />
-        <meta name="rating" content="general" />
-        <link rel="canonical" href="https://ayush-devfolio.vercel.app" />
-        
-        {/* Structured Data - Person Schema */}
+        {/* Person Schema — identity + social profiles */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -169,12 +113,19 @@ export default function RootLayout({ children }) {
                 'MERN Stack',
                 'Web Development',
                 'API Development',
+                'Three.js',
+                'WebGL',
+                'AWS',
+                'Cloud Computing',
+                'Network Security',
+                'WAF',
+                'IDS',
               ],
             }),
           }}
         />
-        
-        {/* Structured Data - Professional Service */}
+
+        {/* ProfessionalService Schema */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -182,7 +133,8 @@ export default function RootLayout({ children }) {
               '@context': 'https://schema.org',
               '@type': 'ProfessionalService',
               name: 'Ayush Tiwari - Full Stack Development Services',
-              description: 'Professional Full Stack Web Development and Freelance Development Services',
+              description:
+                'Production-grade Full Stack Web Development, API Engineering, and Cloud Architecture services',
               url: 'https://ayush-devfolio.vercel.app',
               serviceType: 'Web Development',
               areaServed: 'Worldwide',
@@ -192,12 +144,12 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} relative`}>
-        {/* Animated background throughout the site */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          <ParticleField />
-          <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
-        </div>
-        
+        {/* Solid dark background — ParticleField removed from global layout.
+            The hero section manages its own Three.js + animation layers.
+            Running a GPU animation on every page (blog, contact, certs)
+            was wasting battery with zero UX benefit. */}
+        <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
+
         <Navbar />
         <div className="pt-16 relative z-10">{children}</div>
         <Footer />
