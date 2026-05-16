@@ -144,14 +144,23 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} relative`}>
-        {/* Solid dark background — ParticleField removed from global layout.
-            The hero section manages its own Three.js + animation layers.
-            Running a GPU animation on every page (blog, contact, certs)
-            was wasting battery with zero UX benefit. */}
+        {/* Skip to main content — WCAG 2.1 AA required.
+            Visually hidden until focused via keyboard (Tab).
+            Must be the very first focusable element in the DOM. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium focus:shadow-lg focus:outline-none"
+        >
+          Skip to main content
+        </a>
+
+        {/* Solid dark background — ParticleField removed from global layout. */}
         <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
 
         <Navbar />
-        <div className="pt-16 relative z-10">{children}</div>
+        <main id="main-content" className="pt-16 relative z-10">
+          {children}
+        </main>
         <Footer />
       </body>
     </html>
