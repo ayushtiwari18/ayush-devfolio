@@ -1,32 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import HeroContent from './HeroContent';
 import ProfileImage from './ProfileImage';
 import ScrollIndicator from './ScrollIndicator';
 import { HERO_COPY } from '@/lib/constants';
 
-// Lazy load Solar System (heavy Three.js component — never touches SSR)
-const SolarSystem = dynamic(() => import('@/components/animations/SolarSystem'), {
-  ssr: false,
-  loading: () => (
-    <div className="absolute inset-0 flex items-center justify-center bg-black">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-14 h-14 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-primary/80 text-sm font-medium tracking-wide">Initialising universe…</p>
-      </div>
-    </div>
-  ),
-});
+/**
+ * SolarSystem is lazy-loaded (ssr:false) so Three.js never touches the server
+ * bundle. The loading skeleton is a pure-CSS starfield so the hero always looks
+ * alive even before WebGL initialises.
+ */
+const SolarSystem = dynamic(
+  () => import('@/components/animations/SolarSystem'),
+  {
+    ssr: false,
+    loading: () => <StarfieldSkeleton />,
+  }
+);
 
-// WaterRipple intentionally removed — was killing readability + performance
+/** Pure-CSS loading state — visible only while Three.js chunk downloads */
+function StarfieldSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 bg-black overflow-hidden"
+      style={{
+        background:
+          'radial-gradient(ellipse at 50% 40%, #0d1a2e 0%, #000008 65%, #000000 100%)',
+      }}
+    >
+      {/* Animated CSS stars — zero JS, zero GPU */}
+      <div className="absolute inset-0" style={{ opacity: 0.7 }}>
+        {Array.from({ length: 80 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute rounded-full bg-white"
+            style={{
+              width: Math.random() * 2 + 0.5 + 'px',
+              height: Math.random() * 2 + 0.5 + 'px',
+              top: Math.random() * 100 + '%',
+              left: Math.random() * 100 + '%',
+              opacity: 0.4 + Math.random() * 0.5,
+              animation: `pulse ${1.5 + Math.random() * 2}s ease-in-out infinite`,
+              animationDelay: Math.random() * 2 + 's',
+            }}
+          />
+        ))}
+      </div>
+      {/* Sun glow hint */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: 120,
+          height: 120,
+          top: '50%',
+          left: '38%',
+          transform: 'translate(-50%, -50%)',
+          background:
+            'radial-gradient(circle, rgba(255,200,60,0.35) 0%, rgba(255,100,0,0.12) 45%, transparent 70%)',
+          filter: 'blur(8px)',
+        }}
+      />
+    </div>
+  );
+}
 
 export default function Hero({ profile }) {
   const [showOrbits, setShowOrbits] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
+  /**
+   * sceneReady = true once SolarSystem calls onReady().
+   * Hero content and ProfileImage animate in only after the first Three.js
+   * frame is painted — ensuring the solar system is the first thing you see.
+   */
+  const [sceneReady, setSceneReady] = useState(false);
 
-  // Merge Supabase profile with HERO_COPY fallbacks so hero copy is never blank
+  const handleSceneReady = useCallback(() => {
+    setSceneReady(true);
+  }, []);
+
   const resolvedProfile = {
     name: profile?.name || HERO_COPY.name,
     title: profile?.title || HERO_COPY.title,
@@ -39,14 +93,31 @@ export default function Hero({ profile }) {
 
       {/* ── Solar System Background ── */}
       <div className="absolute inset-0 w-full h-full">
-        <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} />
+        <SolarSystem
+          showOrbits={showOrbits}
+          autoRotate={autoRotate}
+          onReady={handleSceneReady}
+        />
       </div>
 
-      {/* ── Readability gradient (no WaterRipple) ── */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/75 pointer-events-none" />
+      {/* ── Readability gradient ── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.30) 50%, rgba(0,0,0,0.72) 100%)',
+        }}
+      />
 
-      {/* ── Main Content ── */}
-      <div className="relative z-10 min-h-screen flex flex-col pointer-events-none">
+      {/* ── Main Content — fades in AFTER first Three.js frame ── */}
+      <div
+        className="relative z-10 min-h-screen flex flex-col pointer-events-none"
+        style={{
+          opacity: sceneReady ? 1 : 0,
+          transform: sceneReady ? 'translateY(0)' : 'translateY(18px)',
+          transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-12 lg:py-0">
@@ -67,7 +138,13 @@ export default function Hero({ profile }) {
       </div>
 
       {/* ── Solar System Controls ── */}
-      <div className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2">
+      <div
+        className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2"
+        style={{
+          opacity: sceneReady ? 1 : 0,
+          transition: 'opacity 0.6s ease 0.4s',
+        }}
+      >
         <button
           onClick={() => setShowOrbits(v => !v)}
           aria-label={showOrbits ? 'Hide orbit paths' : 'Show orbit paths'}
@@ -102,7 +179,10 @@ export default function Hero({ profile }) {
 
       {/* ── Subtle ambient glows ── */}
       <div className="absolute top-1/4 left-6 w-40 h-40 bg-primary/8 rounded-full blur-3xl animate-pulse pointer-events-none" />
-      <div className="absolute bottom-1/4 right-6 w-48 h-48 bg-accent/8 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1.2s' }} />
+      <div
+        className="absolute bottom-1/4 right-6 w-48 h-48 bg-accent/8 rounded-full blur-3xl animate-pulse pointer-events-none"
+        style={{ animationDelay: '1.2s' }}
+      />
     </section>
   );
 }
