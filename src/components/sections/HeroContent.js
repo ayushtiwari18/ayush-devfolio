@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/constants';
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, Mail, FileDown } from 'lucide-react';
 
 // Animation variants for content
 const contentVariants = {
@@ -19,6 +19,10 @@ const contentVariants = {
     },
   }),
 };
+
+// Resume URL — place your CV at /public/resume.pdf
+// Update this constant if hosting on Google Drive, Notion, etc.
+const RESUME_URL = '/resume.pdf';
 
 export default function HeroContent({ profile }) {
   return (
@@ -46,7 +50,7 @@ export default function HeroContent({ profile }) {
         custom={1}
         variants={contentVariants}
       >
-        Hi, I'm{' '}
+        Hi, I&apos;m{' '}
         <span className="block sm:inline mt-2 sm:mt-0">
           <span className="gradient-text">
             {profile?.name || 'Ayush Tiwari'}
@@ -79,6 +83,7 @@ export default function HeroContent({ profile }) {
         custom={4}
         variants={contentVariants}
       >
+        {/* PRIMARY CTA — View My Work */}
         <Link href={ROUTES.PROJECTS} className="w-full sm:w-auto">
           <Button
             size="lg"
@@ -88,6 +93,8 @@ export default function HeroContent({ profile }) {
             <ArrowRight className="ml-2" size={20} />
           </Button>
         </Link>
+
+        {/* SECONDARY CTA — Get In Touch */}
         <Link href={ROUTES.CONTACT} className="w-full sm:w-auto">
           <Button
             size="lg"
@@ -98,6 +105,24 @@ export default function HeroContent({ profile }) {
             Get In Touch
           </Button>
         </Link>
+
+        {/* TERTIARY CTA — Download Resume (opens in new tab) */}
+        <a
+          href={RESUME_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Download Ayush Tiwari's resume (opens in new tab)"
+          className="w-full sm:w-auto"
+        >
+          <Button
+            size="lg"
+            variant="ghost"
+            className="w-full sm:w-auto border border-white/15 bg-white/5 backdrop-blur-sm text-gray-300 hover:text-white hover:bg-white/10 hover:border-white/30 px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold rounded-xl transition-all hover:scale-105"
+          >
+            <FileDown className="mr-2" size={20} />
+            Resume
+          </Button>
+        </a>
       </motion.div>
     </motion.div>
   );
