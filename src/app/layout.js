@@ -12,34 +12,40 @@ const inter = Inter({
   preload: true,
 });
 
+const BASE_URL = 'https://ayush-devfolio.vercel.app';
+
 export const metadata = {
-  metadataBase: new URL('https://ayush-devfolio.vercel.app'),
+  metadataBase: new URL(BASE_URL),
   title: {
     default: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js | Node.js',
     template: '%s | Ayush Tiwari',
   },
   description:
     'Ayush Tiwari — Full Stack Developer building production-grade web systems. MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. 5,600+ GitHub commits. Based in Jabalpur, India.',
-  authors: [{ name: 'Ayush Tiwari', url: 'https://ayush-devfolio.vercel.app' }],
+  authors: [{ name: 'Ayush Tiwari', url: BASE_URL }],
   creator: 'Ayush Tiwari',
   publisher: 'Ayush Tiwari',
   formatDetection: { email: false, address: false, telephone: false },
+  // S6 FIX: Root-level canonical — individual pages override this with their own
+  alternates: {
+    canonical: BASE_URL,
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://ayush-devfolio.vercel.app',
+    url: BASE_URL,
     siteName: 'Ayush Tiwari Portfolio',
     title: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js',
     description:
       'Full Stack Developer building production-grade web systems. MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. 5,600+ GitHub commits.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Ayush Tiwari - Full Stack Developer' }],
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Ayush Tiwari - Full Stack Developer' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js',
     description: 'Full Stack Developer building production-grade web systems. AWS certified. Springer-published researcher.',
     creator: '@ayushtiwari18',
-    images: ['/og-image.png'],
+    images: ['/opengraph-image'],
   },
   robots: {
     index: true, follow: true, nocache: false,
@@ -58,6 +64,7 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://supabase.co" />
         <link rel="dns-prefetch" href="https://xnlndzezjfcllcwiqtbf.supabase.co" />
+        {/* S5 FIX: Person schema with corrected LinkedIn handle + sameAs URLs */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -65,12 +72,14 @@ export default function RootLayout({ children }) {
               '@context': 'https://schema.org',
               '@type': 'Person',
               name: 'Ayush Tiwari',
-              url: 'https://ayush-devfolio.vercel.app',
+              url: BASE_URL,
+              // S5: Verify your actual LinkedIn URL — update the handle if different
               sameAs: [
                 'https://github.com/ayushtiwari18',
-                'https://linkedin.com/in/ayush-tiwari',
+                'https://www.linkedin.com/in/ayushtiwari18',
                 'https://leetcode.com/aayush03',
                 'https://www.codechef.com/users/ayush_03',
+                'https://twitter.com/ayushtiwari18',
               ],
               jobTitle: 'Full Stack Developer',
               worksFor: { '@type': 'Organization', name: 'Freelance' },
@@ -88,7 +97,7 @@ export default function RootLayout({ children }) {
               '@type': 'ProfessionalService',
               name: 'Ayush Tiwari - Full Stack Development Services',
               description: 'Production-grade Full Stack Web Development, API Engineering, and Cloud Architecture services',
-              url: 'https://ayush-devfolio.vercel.app',
+              url: BASE_URL,
               serviceType: 'Web Development',
               areaServed: 'Worldwide',
               availableLanguage: 'English',
@@ -97,21 +106,16 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} relative`}>
-        {/* bfcache: disconnects Supabase WebSocket on pagehide — enables bfcache */}
         <BfCacheManager />
-
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium focus:shadow-lg focus:outline-none"
         >
           Skip to main content
         </a>
-
         <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
         <Navbar />
-        <main id="main-content" className="pt-16 relative z-10">
-          {children}
-        </main>
+        <main id="main-content" className="pt-16 relative z-10">{children}</main>
         <Footer />
       </body>
     </html>
