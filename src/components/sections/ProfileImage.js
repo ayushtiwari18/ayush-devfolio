@@ -14,7 +14,7 @@ const imageVariants = {
 
 export default function ProfileImage({ imageUrl }) {
   // Fallback chain: DB url -> local optimised photo -> generic SVG
-  const src = imageUrl || '/images/profile.jpg';
+  const src = imageUrl || '/profile.png';
 
   return (
     <div className="relative flex items-center justify-center w-full">
