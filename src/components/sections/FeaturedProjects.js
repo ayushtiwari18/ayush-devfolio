@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
-import { Github } from 'lucide-react/dist/esm/icons/github';
-import { ExternalLink } from 'lucide-react/dist/esm/icons/external-link';
+import { ArrowRight, ExternalLink } from 'lucide-react';
+import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 
 export default function FeaturedProjects({ projects }) {
@@ -55,7 +54,7 @@ export default function FeaturedProjects({ projects }) {
                       <a href={project.github_url} target="_blank" rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className="text-muted-foreground hover:text-primary transition-colors">
-                        <Github size={18} />
+                        <GitHubIcon size={18} />
                       </a>
                     )}
                     {project.live_url && (

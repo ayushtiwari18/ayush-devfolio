@@ -1,9 +1,6 @@
 import Link from 'next/link';
-import { Github } from 'lucide-react/dist/esm/icons/github';
-import { Linkedin } from 'lucide-react/dist/esm/icons/linkedin';
-import { Twitter } from 'lucide-react/dist/esm/icons/twitter';
-import { Mail } from 'lucide-react/dist/esm/icons/mail';
-import { Heart } from 'lucide-react/dist/esm/icons/heart';
+import { Mail, Heart } from 'lucide-react';
+import { GitHubIcon, LinkedInIcon, TwitterXIcon } from '@/components/icons/BrandIcons';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -18,10 +15,10 @@ export default function Footer() {
       { label: 'Contact',  href: '/#contact' },
     ],
     social: [
-      { icon: Github,   href: 'https://github.com/ayushtiwari18',           label: 'GitHub'   },
-      { icon: Linkedin, href: 'https://www.linkedin.com/in/ayushtiwari18',  label: 'LinkedIn' },
-      { icon: Twitter,  href: 'https://twitter.com/ayushtiwari18',          label: 'Twitter'  },
-      { icon: Mail,     href: 'mailto:ayushtiwari10201@gmail.com',           label: 'Email'    },
+      { icon: GitHubIcon,    href: 'https://github.com/ayushtiwari18',          label: 'GitHub'   },
+      { icon: LinkedInIcon,  href: 'https://www.linkedin.com/in/ayushtiwari18', label: 'LinkedIn' },
+      { icon: TwitterXIcon,  href: 'https://twitter.com/ayushtiwari18',         label: 'Twitter'  },
+      { icon: Mail,          href: 'mailto:ayushtiwari10201@gmail.com',          label: 'Email'    },
     ],
   };
 
@@ -29,6 +26,7 @@ export default function Footer() {
     <footer className="bg-card border-t border-border mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+
           {/* Brand */}
           <div>
             <div className="flex items-center space-x-2 mb-4">
