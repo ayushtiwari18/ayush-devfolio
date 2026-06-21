@@ -28,6 +28,9 @@ export const metadata = {
   publisher: 'Ayush Tiwari',
   formatDetection: { email: false, address: false, telephone: false },
   alternates: { canonical: BASE_URL },
+  verification: {
+    google: 'LMliRi04tiYL0NYuVuXjMFxj4bNUXCzDCVOLZ8zLPa0',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
