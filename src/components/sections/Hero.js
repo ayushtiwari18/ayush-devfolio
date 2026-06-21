@@ -7,34 +7,18 @@ import ProfileImage from './ProfileImage';
 import ScrollIndicator from './ScrollIndicator';
 import { HERO_COPY } from '@/lib/constants';
 
-/**
- * SolarSystem is lazy-loaded (ssr:false) so Three.js never touches the server
- * bundle. The loading skeleton is a pure-CSS starfield so the hero always looks
- * alive even before WebGL initialises.
- *
- * PERF NOTE: Hero content (text + profile image) renders immediately on mount
- * — it is NOT gated on sceneReady. This is critical for LCP. The Three.js
- * scene fades IN behind the content once it's ready. Previously, gating content
- * on sceneReady added ~3,274 ms to LCP because Three.js had to fully initialise
- * before the recruiter could see anything.
- */
 const SolarSystem = dynamic(
   () => import('@/components/animations/SolarSystem'),
-  {
-    ssr: false,
-    loading: () => <StarfieldSkeleton />,
-  }
+  { ssr: false, loading: () => <StarfieldSkeleton /> }
 );
 
-/** Pure-CSS loading state — visible only while Three.js chunk downloads */
 function StarfieldSkeleton() {
   return (
     <div
       aria-hidden="true"
       className="absolute inset-0 bg-black overflow-hidden"
       style={{
-        background:
-          'radial-gradient(ellipse at 50% 40%, #0d1a2e 0%, #000008 65%, #000000 100%)',
+        background: 'radial-gradient(ellipse at 50% 40%, #0d1a2e 0%, #000008 65%, #000000 100%)',
       }}
     >
       <div className="absolute inset-0" style={{ opacity: 0.7 }}>
@@ -57,13 +41,10 @@ function StarfieldSkeleton() {
       <div
         className="absolute rounded-full"
         style={{
-          width: 120,
-          height: 120,
-          top: '50%',
-          left: '38%',
+          width: 120, height: 120,
+          top: '50%', left: '38%',
           transform: 'translate(-50%, -50%)',
-          background:
-            'radial-gradient(circle, rgba(255,200,60,0.35) 0%, rgba(255,100,0,0.12) 45%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255,200,60,0.35) 0%, rgba(255,100,0,0.12) 45%, transparent 70%)',
           filter: 'blur(8px)',
         }}
       />
@@ -71,30 +52,37 @@ function StarfieldSkeleton() {
   );
 }
 
+/**
+ * revealPhase controls the orchestrated reveal sequence:
+ *   0 = solar system loading (skeleton visible)
+ *   1 = solar system ready -> profile image fades in (400ms after onReady)
+ *   2 = text + buttons slide in (600ms after phase 1)
+ */
 export default function Hero({ profile }) {
-  const [showOrbits, setShowOrbits] = useState(false);
-  const [autoRotate, setAutoRotate] = useState(true);
-  /**
-   * sceneReady controls ONLY the solar system fade-in and the control buttons.
-   * It no longer gates the hero text or profile image — those render immediately.
-   */
-  const [sceneReady, setSceneReady] = useState(false);
+  const [showOrbits,  setShowOrbits]  = useState(false);
+  const [autoRotate,  setAutoRotate]  = useState(true);
+  const [sceneReady,  setSceneReady]  = useState(false);
+  const [revealPhase, setRevealPhase] = useState(0);
 
   const handleSceneReady = useCallback(() => {
     setSceneReady(true);
+    // Phase 1: image reveals 400ms after solar system is ready
+    setTimeout(() => setRevealPhase(1), 400);
+    // Phase 2: text + buttons reveal 1000ms after solar system
+    setTimeout(() => setRevealPhase(2), 1000);
   }, []);
 
   const resolvedProfile = {
-    name: profile?.name || HERO_COPY.name,
-    title: profile?.title || HERO_COPY.title,
+    name:        profile?.name        || HERO_COPY.name,
+    title:       profile?.title       || HERO_COPY.title,
     description: profile?.description || HERO_COPY.description,
-    image_url: profile?.image_url || null,
+    image_url:   profile?.image_url   || null,
   };
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-black">
 
-      {/* ── Solar System Background — fades in once Three.js is ready ── */}
+      {/* Solar System background */}
       <div
         className="absolute inset-0 w-full h-full"
         style={{
@@ -102,14 +90,10 @@ export default function Hero({ profile }) {
           transition: 'opacity 1.2s cubic-bezier(0.16,1,0.3,1)',
         }}
       >
-        <SolarSystem
-          showOrbits={showOrbits}
-          autoRotate={autoRotate}
-          onReady={handleSceneReady}
-        />
+        <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} onReady={handleSceneReady} />
       </div>
 
-      {/* StarfieldSkeleton stays visible until Three.js canvas fades in */}
+      {/* Skeleton stays until solar system fades in */}
       <div
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
@@ -120,43 +104,60 @@ export default function Hero({ profile }) {
         <StarfieldSkeleton />
       </div>
 
-      {/* ── Readability gradient ── */}
+      {/* Subtle readability gradient - very light so planets stay visible */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background:
-            'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.30) 50%, rgba(0,0,0,0.72) 100%)',
+          background: 'linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.0) 100%)',
         }}
       />
 
-      {/*
-       * ── Main Content — renders IMMEDIATELY, no longer waits for Three.js ──
-       *
-       * This is the LCP fix. Hero text and profile image are part of the
-       * critical render path. They must be visible as soon as the HTML is
-       * parsed. Three.js is decorative — it fades in behind the content.
-       */}
+      {/* Main content layout */}
       <div className="relative z-10 min-h-screen flex flex-col pointer-events-none">
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-12 lg:py-0">
-              <div className="flex justify-center lg:justify-end lg:order-2 lg:flex-1">
-                <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[400px] pointer-events-auto">
+
+              {/* Profile image — Phase 1 reveal */}
+              <div
+                className="flex justify-center lg:justify-end lg:order-2 lg:flex-1"
+                style={{
+                  opacity:   revealPhase >= 1 ? 1 : 0,
+                  transform: revealPhase >= 1 ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.94)',
+                  transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)',
+                }}
+              >
+                <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[360px] pointer-events-auto">
                   <ProfileImage imageUrl={resolvedProfile.image_url} />
                 </div>
               </div>
-              <div className="lg:order-1 lg:flex-1 pointer-events-auto">
+
+              {/* Text — Phase 2 reveal */}
+              <div
+                className="lg:order-1 lg:flex-1 pointer-events-auto"
+                style={{
+                  opacity:   revealPhase >= 2 ? 1 : 0,
+                  transform: revealPhase >= 2 ? 'translateX(0)' : 'translateX(-24px)',
+                  transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)',
+                }}
+              >
                 <HeroContent profile={resolvedProfile} />
               </div>
             </div>
           </div>
         </div>
-        <div className="pb-8 lg:pb-12 flex justify-center pointer-events-auto">
+
+        <div className="pb-8 lg:pb-12 flex justify-center pointer-events-auto"
+          style={{
+            opacity: revealPhase >= 2 ? 1 : 0,
+            transition: 'opacity 0.6s ease 0.4s',
+          }}
+        >
           <ScrollIndicator />
         </div>
       </div>
 
-      {/* ── Solar System Controls — visible only after scene is ready ── */}
+      {/* Controls */}
       <div
         className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2"
         style={{
@@ -177,7 +178,6 @@ export default function Hero({ profile }) {
           <span className="hidden sm:inline">{showOrbits ? '✓ Orbits ON' : 'Show Orbits'}</span>
           <span className="sm:hidden">{showOrbits ? '✓' : '🔭'}</span>
         </button>
-
         <button
           onClick={() => setAutoRotate(v => !v)}
           aria-label={autoRotate ? 'Pause rotation' : 'Resume rotation'}
@@ -190,19 +190,15 @@ export default function Hero({ profile }) {
           <span className="hidden sm:inline">{autoRotate ? '⏸ Playing' : '▶ Paused'}</span>
           <span className="sm:hidden">{autoRotate ? '⏸' : '▶'}</span>
         </button>
-
         <div className="hidden sm:flex items-center justify-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-xs text-gray-400 border border-white/10">
           <div className={`w-2 h-2 rounded-full ${autoRotate ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
           <span>{autoRotate ? 'Live' : 'Paused'}</span>
         </div>
       </div>
 
-      {/* ── Subtle ambient glows ── */}
+      {/* Ambient glows */}
       <div className="absolute top-1/4 left-6 w-40 h-40 bg-primary/8 rounded-full blur-3xl animate-pulse pointer-events-none" />
-      <div
-        className="absolute bottom-1/4 right-6 w-48 h-48 bg-accent/8 rounded-full blur-3xl animate-pulse pointer-events-none"
-        style={{ animationDelay: '1.2s' }}
-      />
+      <div className="absolute bottom-1/4 right-6 w-48 h-48 bg-accent/8 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1.2s' }} />
     </section>
   );
 }
