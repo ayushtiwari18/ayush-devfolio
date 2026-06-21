@@ -1,10 +1,10 @@
 /**
  * ProjectCTASection — SERVER COMPONENT
- * --------------------------------------
  * Bottom CTA: GitHub + Live Demo buttons.
  * Renders nothing if both URLs are absent.
  */
-import { Github, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -29,7 +29,7 @@ export default function ProjectCTASection({ githubUrl, liveUrl, title }) {
         {githubUrl && (
           <a href={githubUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
-              <Github className="mr-2" size={16} />
+              <GitHubIcon className="mr-2" size={16} />
               View Source Code
             </Button>
           </a>
