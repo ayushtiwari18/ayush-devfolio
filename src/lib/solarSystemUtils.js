@@ -1,14 +1,10 @@
 // solarSystemUtils.js
-// Exact 1:1 port of pixel-persona-flow/src/components/sections/hero/solarSystemUtils.ts
-// Adaptations for ayush-devfolio (Next.js):
-//   1. async lazy loadThree() — no static top-level THREE import (SSR crash)
-//   2. alpha: false on renderer — alpha:true + UnrealBloomPass kills non-emissive planets
-//   3. PointLight at Sun — planets need directional light to be visible
+// Visual polish pass — brighter sun, denser stars, better camera, bloom tuning
 
-let _THREE          = null;
-let _OrbitControls  = null;
-let _EffectComposer = null;
-let _RenderPass     = null;
+let _THREE           = null;
+let _OrbitControls   = null;
+let _EffectComposer  = null;
+let _RenderPass      = null;
 let _UnrealBloomPass = null;
 
 async function loadThree() {
@@ -24,62 +20,73 @@ async function loadThree() {
   _UnrealBloomPass = ub.UnrealBloomPass;
 }
 
-// Planet data — exact copy from pixel-persona-flow
 export const planets = [
-  { name: 'Sun',     size: 40,   color: 0xffff00, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true },
-  { name: 'Mercury', size: 3.2,  color: 0xaaaaaa, orbitRadius: 60,  orbitSpeed: 1.6,  rotationSpeed: 0.004 },
-  { name: 'Venus',   size: 6,    color: 0xe6a760, orbitRadius: 85,  orbitSpeed: 1.17, rotationSpeed: 0.002 },
-  { name: 'Earth',   size: 6.3,  color: 0x6b93d6, orbitRadius: 120, orbitSpeed: 1,    rotationSpeed: 0.02  },
-  { name: 'Mars',    size: 3.4,  color: 0xd5704e, orbitRadius: 180, orbitSpeed: 0.8,  rotationSpeed: 0.018 },
-  { name: 'Jupiter', size: 22,   color: 0xe0be95, orbitRadius: 250, orbitSpeed: 0.43, rotationSpeed: 0.04  },
-  { name: 'Saturn',  size: 18.5, color: 0xe0d7a4, orbitRadius: 320, orbitSpeed: 0.32, rotationSpeed: 0.038, hasRing: true },
-  { name: 'Uranus',  size: 8,    color: 0xa5f2f3, orbitRadius: 390, orbitSpeed: 0.23, rotationSpeed: 0.03  },
-  { name: 'Neptune', size: 7.7,  color: 0x517cff, orbitRadius: 460, orbitSpeed: 0.18, rotationSpeed: 0.031 },
+  { name: 'Sun',     size: 42,   color: 0xfff4a0, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true,  emissiveIntensity: 3.5 },
+  { name: 'Mercury', size: 5,    color: 0xb5b5b5, orbitRadius: 70,  orbitSpeed: 1.6,  rotationSpeed: 0.004 },
+  { name: 'Venus',   size: 8,    color: 0xf0b060, orbitRadius: 100, orbitSpeed: 1.17, rotationSpeed: 0.002 },
+  { name: 'Earth',   size: 9,    color: 0x4f8fd6, orbitRadius: 140, orbitSpeed: 1,    rotationSpeed: 0.02  },
+  { name: 'Mars',    size: 6,    color: 0xd9603a, orbitRadius: 195, orbitSpeed: 0.8,  rotationSpeed: 0.018 },
+  { name: 'Jupiter', size: 26,   color: 0xe8c89a, orbitRadius: 275, orbitSpeed: 0.43, rotationSpeed: 0.04  },
+  { name: 'Saturn',  size: 21,   color: 0xe8dfa0, orbitRadius: 355, orbitSpeed: 0.32, rotationSpeed: 0.038, hasRing: true },
+  { name: 'Uranus',  size: 12,   color: 0x7de8e8, orbitRadius: 430, orbitSpeed: 0.23, rotationSpeed: 0.03  },
+  { name: 'Neptune', size: 11,   color: 0x3a5fff, orbitRadius: 500, orbitSpeed: 0.18, rotationSpeed: 0.031 },
 ];
 
-// Create starfield — exact from pixel-persona-flow
 export const createStarfield = (scene) => {
   const THREE = _THREE;
   const starGeometry = new THREE.BufferGeometry();
+
+  // Two layers: many small dim stars + fewer bright stars
+  const starVertices = [];
+  const starSizes    = [];
+
+  for (let i = 0; i < 18000; i++) {
+    starVertices.push(
+      (Math.random() - 0.5) * 2400,
+      (Math.random() - 0.5) * 2400,
+      (Math.random() - 0.5) * 2400
+    );
+    // Varied sizes: most small, some bright
+    starSizes.push(Math.random() < 0.08 ? 2.5 + Math.random() * 1.5 : 0.8 + Math.random() * 0.8);
+  }
+
+  starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
   const starMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
-    size: 0.7,
+    size: 1.1,
     transparent: true,
+    opacity: 0.88,
+    sizeAttenuation: true,
   });
-  const starVertices = [];
-  for (let i = 0; i < 10000; i++) {
-    starVertices.push(
-      (Math.random() - 0.5) * 2000,
-      (Math.random() - 0.5) * 2000,
-      (Math.random() - 0.5) * 2000
-    );
-  }
-  starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
   const stars = new THREE.Points(starGeometry, starMaterial);
   scene.add(stars);
   return stars;
 };
 
-// Create planets — exact from pixel-persona-flow
 export const createPlanets = (scene) => {
   const THREE = _THREE;
   const planetObjects = [];
-  const orbitPaths = [];
+  const orbitPaths    = [];
 
   planets.forEach((planet) => {
-    const geometry = new THREE.SphereGeometry(planet.size, 32, 32);
+    const geometry = new THREE.SphereGeometry(planet.size, 36, 36);
     let material;
 
     if (planet.emissive) {
       material = new THREE.MeshStandardMaterial({
-        color: planet.color,
-        emissive: planet.color,
-        emissiveIntensity: 2,
+        color:             planet.color,
+        emissive:          planet.color,
+        emissiveIntensity: planet.emissiveIntensity ?? 3.5,
+        roughness: 0.2,
+        metalness: 0.0,
       });
     } else {
       material = new THREE.MeshPhongMaterial({
-        color: planet.color,
-        shininess: 10,
+        color:     planet.color,
+        shininess: 30,
+        specular:  new THREE.Color(0x444444),
       });
     }
 
@@ -87,30 +94,25 @@ export const createPlanets = (scene) => {
     mesh.name = planet.name;
 
     if (planet.orbitRadius > 0) {
-      const planetOrbitAngle = Math.random() * Math.PI * 2;
-      mesh.position.x = Math.cos(planetOrbitAngle) * planet.orbitRadius;
-      mesh.position.z = Math.sin(planetOrbitAngle) * planet.orbitRadius;
+      const angle = Math.random() * Math.PI * 2;
+      mesh.position.x = Math.cos(angle) * planet.orbitRadius;
+      mesh.position.z = Math.sin(angle) * planet.orbitRadius;
 
-      const orbitGeometry = new THREE.BufferGeometry();
+      // Orbit path
       const orbitPoints = [];
-      const segments = 128;
-      for (let i = 0; i <= segments; i++) {
-        const angle = (i / segments) * Math.PI * 2;
-        orbitPoints.push(
-          Math.cos(angle) * planet.orbitRadius,
-          0,
-          Math.sin(angle) * planet.orbitRadius
-        );
+      for (let i = 0; i <= 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        orbitPoints.push(Math.cos(a) * planet.orbitRadius, 0, Math.sin(a) * planet.orbitRadius);
       }
-      orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
-      const orbitMaterial = new THREE.LineBasicMaterial({
-        color: 0xaaaaaa,
+      const orbitGeo = new THREE.BufferGeometry();
+      orbitGeo.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
+      const orbitMat = new THREE.LineBasicMaterial({
+        color:       0x6688aa,
         transparent: true,
-        opacity: 0.3,
-        linewidth: 1,
+        opacity:     0.25,
       });
-      const orbit = new THREE.Line(orbitGeometry, orbitMaterial);
-      orbit.rotation.x = Math.PI / 2;
+      const orbit = new THREE.Line(orbitGeo, orbitMat);
+      orbit.rotation.x      = Math.PI / 2;
       orbit.userData.isOrbit = true;
       scene.add(orbit);
       orbitPaths.push(orbit);
@@ -124,14 +126,17 @@ export const createPlanets = (scene) => {
       orbitRadius:   planet.orbitRadius,
     });
 
+    // Saturn ring — wider, more visible
     if (planet.hasRing) {
-      const ringGeometry = new THREE.RingGeometry(planet.size + 5, planet.size + 12, 32);
-      const ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0xe0d7a4,
-        side: THREE.DoubleSide,
+      const ringGeo = new THREE.RingGeometry(planet.size + 6, planet.size + 18, 64);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color:       0xd4c87a,
+        side:        THREE.DoubleSide,
+        transparent: true,
+        opacity:     0.75,
       });
-      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.rotation.x = Math.PI / 3;
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2.8;
       mesh.add(ring);
     }
   });
@@ -139,22 +144,10 @@ export const createPlanets = (scene) => {
   return { planetObjects, orbitPaths };
 };
 
-// Create asteroid belt — exact from pixel-persona-flow
-export const createAsteroidBelt = (scene) => {
-  const THREE = _THREE;
-  const asteroidGeometry = new THREE.TorusGeometry(240, 40, 16, 100);
-  const asteroidMaterial = new THREE.MeshBasicMaterial({
-    color: 0x888888,
-    transparent: true,
-    opacity: 0.2,
-  });
-  const asteroidBelt = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
-  asteroidBelt.rotation.x = Math.PI / 2;
-  scene.add(asteroidBelt);
-  return asteroidBelt;
-};
+// Asteroid belt REMOVED — was rendering as an ugly grey flat disk
+// that dominated the scene visually.
+export const createAsteroidBelt = (_scene) => null;
 
-// Update planets — exact from pixel-persona-flow
 export const updatePlanets = (planetObjects, time, autoRotate) => {
   planetObjects.forEach((planet) => {
     if (planet.orbitRadius > 0) {
@@ -165,53 +158,58 @@ export const updatePlanets = (planetObjects, time, autoRotate) => {
   });
 };
 
-// Initialize Three.js — pixel-persona-flow values, with 2 Next.js fixes
 export const initThreeJS = async (mount) => {
   await loadThree();
   const THREE = _THREE;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(0x00000a);
 
-  const camera = new THREE.PerspectiveCamera(75, mount.clientWidth / mount.clientHeight, 0.1, 10000);
-  camera.position.set(0, 200, 500);
+  const w = mount.clientWidth;
+  const h = mount.clientHeight;
 
-  // FIX B2: alpha: false — alpha:true makes UnrealBloomPass kill non-emissive planets
-  // With alpha:true the bloom pass composites against transparent = planets invisible.
-  // alpha:false lets scene.background = black own the background, bloom works correctly.
+  const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 10000);
+  // Pulled back & higher so all planets + Saturn ring fit in frame
+  camera.position.set(0, 320, 650);
+
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setSize(mount.clientWidth, mount.clientHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping        = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
   mount.appendChild(renderer.domElement);
 
-  // Bloom — exact values from pixel-persona-flow
+  // Bloom — lower threshold so more objects glow, higher strength
   const renderScene = new _RenderPass(scene, camera);
   const bloomPass   = new _UnrealBloomPass(
-    new THREE.Vector2(mount.clientWidth, mount.clientHeight),
-    1.5,  // strength
-    0.4,  // radius
-    0.85  // threshold
+    new THREE.Vector2(w, h),
+    1.8,   // strength  (was 1.5)
+    0.5,   // radius    (was 0.4)
+    0.28   // threshold (was 0.85) — lower = more objects bloom
   );
   const composer = new _EffectComposer(renderer);
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
 
-  // Controls — exact from pixel-persona-flow
   const controls = new _OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.minDistance   = 50;
-  controls.maxDistance   = 1000;
+  controls.minDistance   = 80;
+  controls.maxDistance   = 1200;
 
-  // FIX B3: AmbientLight alone (0x404040) leaves planets very dark.
-  // PointLight at Sun position provides directional illumination so
-  // MeshPhongMaterial planets have a lit side and look 3D.
-  const ambientLight = new THREE.AmbientLight(0x404040);
+  // Ambient: slightly warmer so planets aren't blue-cold
+  const ambientLight = new THREE.AmbientLight(0x111122, 1.0);
   scene.add(ambientLight);
 
-  const sunLight = new THREE.PointLight(0xffffff, 2, 2000);
+  // Sun point light — stronger, farther reach so outer planets are lit
+  const sunLight = new THREE.PointLight(0xfff4e0, 3, 3000);
   sunLight.position.set(0, 0, 0);
   scene.add(sunLight);
+
+  // Subtle fill light from opposite side (so night side isn't pure black)
+  const fillLight = new THREE.PointLight(0x112244, 0.4, 2000);
+  fillLight.position.set(0, 0, -600);
+  scene.add(fillLight);
 
   return { scene, camera, renderer, composer, controls };
 };
