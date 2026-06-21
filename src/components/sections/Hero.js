@@ -53,10 +53,12 @@ function StarfieldSkeleton() {
 }
 
 /**
- * revealPhase controls the orchestrated reveal sequence:
- *   0 = solar system loading (skeleton visible)
- *   1 = solar system ready -> profile image fades in (400ms after onReady)
- *   2 = text + buttons slide in (600ms after phase 1)
+ * Reveal sequence (all times relative to onReady firing):
+ *   0ms   — solar system fade-in begins (1.2s CSS transition)
+ *   500ms — nothing extra, let the solar system fully settle visually
+ *   1500ms — TEXT slides in from left
+ *   2200ms — IMAGE fades up from right
+ *   2500ms — scroll indicator appears
  */
 export default function Hero({ profile }) {
   const [showOrbits,  setShowOrbits]  = useState(false);
@@ -66,10 +68,10 @@ export default function Hero({ profile }) {
 
   const handleSceneReady = useCallback(() => {
     setSceneReady(true);
-    // Phase 1: image reveals 400ms after solar system is ready
-    setTimeout(() => setRevealPhase(1), 400);
-    // Phase 2: text + buttons reveal 1000ms after solar system
-    setTimeout(() => setRevealPhase(2), 1000);
+    // Phase 1: text — 1500ms after solar system ready
+    setTimeout(() => setRevealPhase(1), 1500);
+    // Phase 2: image — 2200ms after solar system ready
+    setTimeout(() => setRevealPhase(2), 2200);
   }, []);
 
   const resolvedProfile = {
@@ -93,7 +95,7 @@ export default function Hero({ profile }) {
         <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} onReady={handleSceneReady} />
       </div>
 
-      {/* Skeleton stays until solar system fades in */}
+      {/* Skeleton visible until solar system fades in */}
       <div
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
@@ -104,27 +106,27 @@ export default function Hero({ profile }) {
         <StarfieldSkeleton />
       </div>
 
-      {/* Subtle readability gradient - very light so planets stay visible */}
+      {/* Left-side gradient for text readability — leaves center/right clear */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.0) 100%)',
+          background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.0) 100%)',
         }}
       />
 
-      {/* Main content layout */}
+      {/* Main content */}
       <div className="relative z-10 min-h-screen flex flex-col pointer-events-none">
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-12 lg:py-0">
 
-              {/* Profile image — Phase 1 reveal */}
+              {/* Profile image — Phase 2 reveal (after text) */}
               <div
                 className="flex justify-center lg:justify-end lg:order-2 lg:flex-1"
                 style={{
-                  opacity:   revealPhase >= 1 ? 1 : 0,
-                  transform: revealPhase >= 1 ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.94)',
-                  transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)',
+                  opacity:    revealPhase >= 2 ? 1 : 0,
+                  transform:  revealPhase >= 2 ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.93)',
+                  transition: 'opacity 1s cubic-bezier(0.16,1,0.3,1), transform 1s cubic-bezier(0.16,1,0.3,1)',
                 }}
               >
                 <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[360px] pointer-events-auto">
@@ -132,13 +134,13 @@ export default function Hero({ profile }) {
                 </div>
               </div>
 
-              {/* Text — Phase 2 reveal */}
+              {/* Text — Phase 1 reveal (first after solar) */}
               <div
                 className="lg:order-1 lg:flex-1 pointer-events-auto"
                 style={{
-                  opacity:   revealPhase >= 2 ? 1 : 0,
-                  transform: revealPhase >= 2 ? 'translateX(0)' : 'translateX(-24px)',
-                  transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)',
+                  opacity:    revealPhase >= 1 ? 1 : 0,
+                  transform:  revealPhase >= 1 ? 'translateX(0)' : 'translateX(-28px)',
+                  transition: 'opacity 1s cubic-bezier(0.16,1,0.3,1), transform 1s cubic-bezier(0.16,1,0.3,1)',
                 }}
               >
                 <HeroContent profile={resolvedProfile} />
@@ -147,10 +149,12 @@ export default function Hero({ profile }) {
           </div>
         </div>
 
-        <div className="pb-8 lg:pb-12 flex justify-center pointer-events-auto"
+        {/* Scroll indicator — after image */}
+        <div
+          className="pb-8 lg:pb-12 flex justify-center pointer-events-auto"
           style={{
-            opacity: revealPhase >= 2 ? 1 : 0,
-            transition: 'opacity 0.6s ease 0.4s',
+            opacity:    revealPhase >= 2 ? 1 : 0,
+            transition: 'opacity 0.8s ease 0.3s',
           }}
         >
           <ScrollIndicator />
@@ -162,7 +166,7 @@ export default function Hero({ profile }) {
         className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2"
         style={{
           opacity: sceneReady ? 1 : 0,
-          transition: 'opacity 0.6s ease 0.4s',
+          transition: 'opacity 0.6s ease 1.2s',
           pointerEvents: sceneReady ? 'auto' : 'none',
         }}
       >
