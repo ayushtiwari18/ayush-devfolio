@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { GithubIcon, LinkedinIcon, TwitterIcon, Mail, Heart } from 'lucide-react';
+import { Github } from 'lucide-react/dist/esm/icons/github';
+import { Linkedin } from 'lucide-react/dist/esm/icons/linkedin';
+import { Twitter } from 'lucide-react/dist/esm/icons/twitter';
+import { Mail } from 'lucide-react/dist/esm/icons/mail';
+import { Heart } from 'lucide-react/dist/esm/icons/heart';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -14,10 +18,10 @@ export default function Footer() {
       { label: 'Contact',  href: '/#contact' },
     ],
     social: [
-      { icon: GithubIcon,   href: 'https://github.com/ayushtiwari18',            label: 'GitHub'   },
-      { icon: LinkedinIcon, href: 'https://www.linkedin.com/in/ayushtiwari18',   label: 'LinkedIn' },
-      { icon: TwitterIcon,  href: 'https://twitter.com/ayushtiwari18',           label: 'Twitter'  },
-      { icon: Mail,         href: 'mailto:ayushtiwari10201@gmail.com',            label: 'Email'    },
+      { icon: Github,   href: 'https://github.com/ayushtiwari18',           label: 'GitHub'   },
+      { icon: Linkedin, href: 'https://www.linkedin.com/in/ayushtiwari18',  label: 'LinkedIn' },
+      { icon: Twitter,  href: 'https://twitter.com/ayushtiwari18',          label: 'Twitter'  },
+      { icon: Mail,     href: 'mailto:ayushtiwari10201@gmail.com',           label: 'Email'    },
     ],
   };
 

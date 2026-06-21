@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, GithubIcon, ExternalLink } from 'lucide-react';
+import { ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
+import { Github } from 'lucide-react/dist/esm/icons/github';
+import { ExternalLink } from 'lucide-react/dist/esm/icons/external-link';
 import { Button } from '@/components/ui/button';
 
 export default function FeaturedProjects({ projects }) {
-  if (!projects || projects.length === 0) {
-    return null;
-  }
+  if (!projects || projects.length === 0) return null;
 
   return (
     <section id="projects" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
@@ -21,7 +21,7 @@ export default function FeaturedProjects({ projects }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {projects.map((project, index) => (
+          {projects.map((project) => (
             <Link key={project.id} href={`/projects/${project.slug}`} className="group">
               <div className="bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all h-full">
                 {project.cover_image && (
@@ -41,7 +41,7 @@ export default function FeaturedProjects({ projects }) {
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                     {project.description}
                   </p>
-                  {project.technologies && project.technologies.length > 0 && (
+                  {project.technologies?.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {project.technologies.slice(0, 3).map((tech, i) => (
                         <span key={i} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
@@ -52,24 +52,16 @@ export default function FeaturedProjects({ projects }) {
                   )}
                   <div className="flex items-center gap-3">
                     {project.github_url && (
-                      <a
-                        href={project.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <a href={project.github_url} target="_blank" rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <GithubIcon size={18} />
+                        className="text-muted-foreground hover:text-primary transition-colors">
+                        <Github size={18} />
                       </a>
                     )}
                     {project.live_url && (
-                      <a
-                        href={project.live_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <a href={project.live_url} target="_blank" rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
+                        className="text-muted-foreground hover:text-primary transition-colors">
                         <ExternalLink size={18} />
                       </a>
                     )}
