@@ -1,21 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
-  // ── Compiler ──────────────────────────────────────────────
-  // SWC minifier is enabled by default in Next.js 13+.
-  // Explicitly confirm here for clarity.
   swcMinify: true,
+  poweredByHeader: false, // Remove X-Powered-By: Next.js header (minor security + bytes)
+  compress: true,         // Enable gzip/brotli compression on responses
 
   // ── Package Import Optimisation ───────────────────────────
-  // Tells Next.js to only bundle the specific named exports you import
-  // from these packages — prevents the full library landing in the chunk.
-  // This is especially critical for framer-motion (saves ~400 KB).
+  // Tells Next.js/webpack to only bundle named exports you actually import.
+  // Critical for framer-motion (~400KB saved) and lucide-react (~200KB saved).
   experimental: {
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',
       '@radix-ui/react-icons',
+      'three',  // Added: tree-shake Three.js namespace imports
     ],
   },
 
@@ -23,43 +21,20 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Immutable cache for all Next.js static assets (_next/static)
-        // These are content-hashed, so they can be cached forever.
         source: '/_next/static/(.*)',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
+          { key: 'X-DNS-Prefetch-Control',  value: 'on' },
+          { key: 'X-Frame-Options',          value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options',   value: 'nosniff' },
+          { key: 'Referrer-Policy',          value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy',       value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security',value: 'max-age=63072000; includeSubDomains; preload' },
         ],
       },
     ];
@@ -68,29 +43,41 @@ const nextConfig = {
   // ── Images ────────────────────────────────────────────────
   images: {
     formats: ['image/avif', 'image/webp'],
-    // Serve images at optimal sizes. deviceSizes covers common breakpoints.
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.supabase.co',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.supabase.in',
-      },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.supabase.in' },
     ],
   },
 
-  // ── Webpack: prevent Three.js from crashing SSR build ─────
-  // three is a client-only library. Aliasing to false on the server
-  // ensures it is completely excluded from the server bundle.
+  // ── Webpack ───────────────────────────────────────────────
   webpack: (config, { isServer }) => {
     if (isServer) {
+      // Three.js is client-only — completely exclude from server bundle
       config.resolve.alias = {
         ...config.resolve.alias,
         three: false,
+        'three/src/scenes/Scene.js': false,
+        'three/src/math/Color.js': false,
+        'three/src/cameras/PerspectiveCamera.js': false,
+        'three/src/renderers/WebGLRenderer.js': false,
+        'three/src/core/BufferGeometry.js': false,
+        'three/src/core/BufferAttribute.js': false,
+        'three/src/geometries/SphereGeometry.js': false,
+        'three/src/geometries/RingGeometry.js': false,
+        'three/src/materials/MeshStandardMaterial.js': false,
+        'three/src/materials/MeshBasicMaterial.js': false,
+        'three/src/materials/LineBasicMaterial.js': false,
+        'three/src/materials/PointsMaterial.js': false,
+        'three/src/objects/Mesh.js': false,
+        'three/src/objects/Line.js': false,
+        'three/src/objects/Points.js': false,
+        'three/src/lights/AmbientLight.js': false,
+        'three/src/lights/PointLight.js': false,
+        'three/src/math/Vector2.js': false,
+        'three/src/math/Vector3.js': false,
+        'three/src/constants.js': false,
         'three/addons/controls/OrbitControls.js': false,
         'three/addons/postprocessing/EffectComposer.js': false,
         'three/addons/postprocessing/RenderPass.js': false,
@@ -99,9 +86,6 @@ const nextConfig = {
       };
     }
 
-    // Split three.js into its own chunk so it doesn't inflate app/page.js.
-    // This allows the main page JS to load faster while three.js downloads
-    // in parallel (but off the critical path).
     if (!isServer) {
       config.optimization = {
         ...config.optimization,
