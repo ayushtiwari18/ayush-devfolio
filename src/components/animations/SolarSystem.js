@@ -2,15 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 
-/**
- * SolarSystem — classic bloom version (restored from Feb 2026)
- *
- * Props:
- *   showOrbits  {boolean} — toggle orbit path visibility
- *   autoRotate  {boolean} — toggle planet self-rotation
- *   onReady     {function} — called once Three.js scene is initialised
- *                            (used by Hero.js to fade in the canvas)
- */
 export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
   const mountRef        = useRef(null);
   const sceneRef        = useRef(null);
@@ -25,6 +16,17 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
   const starsRef        = useRef(null);
   const asteroidBeltRef = useRef(null);
 
+  // Refs so the animation loop always reads latest values
+  // without needing to re-run (and re-init) the entire effect.
+  const autoRotateRef   = useRef(autoRotate);
+  const onReadyFiredRef = useRef(false);
+
+  // Keep autoRotateRef in sync on every render — zero re-init cost.
+  autoRotateRef.current = autoRotate;
+
+  // Main init effect — runs ONCE on mount (empty deps).
+  // StrictMode will double-invoke in dev, but onReadyFiredRef
+  // ensures onReady() is called exactly once across both runs.
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -45,7 +47,8 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
         const { scene, camera, renderer, composer, controls } =
           await initThreeJS(mountRef.current);
 
-        if (!isSubscribed) return;
+        // Re-check after the await — StrictMode cleanup may have run.
+        if (!isSubscribed || !mountRef.current) return;
 
         sceneRef.current    = scene;
         cameraRef.current   = camera;
@@ -58,19 +61,16 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
         const { planetObjects, orbitPaths } = createPlanets(scene);
         planetsRef.current    = planetObjects;
         orbitPathsRef.current = orbitPaths;
-
         orbitPaths.forEach((o) => { o.visible = showOrbits; });
 
         asteroidBeltRef.current = createAsteroidBelt(scene);
-
-        // Notify Hero.js that the scene is ready — triggers canvas fade-in
-        if (onReady) onReady();
 
         const animate = () => {
           if (!isSubscribed) return;
           timeRef.current += 0.01;
 
-          updatePlanets(planetsRef.current, timeRef.current, autoRotate);
+          // Read from ref — always latest value, no re-init needed.
+          updatePlanets(planetsRef.current, timeRef.current, autoRotateRef.current);
 
           if (asteroidBeltRef.current) asteroidBeltRef.current.rotation.z += 0.001;
           if (starsRef.current) {
@@ -84,6 +84,14 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
         };
 
         animate();
+
+        // Fire onReady AFTER animate() starts and ONLY ONCE ever.
+        // onReadyFiredRef prevents StrictMode 2nd run from firing it
+        // again (which would be a no-op but is cleaner to guard).
+        if (onReady && !onReadyFiredRef.current) {
+          onReadyFiredRef.current = true;
+          onReady();
+        }
       })
       .catch((err) => console.error('Solar System init failed:', err));
 
@@ -122,7 +130,8 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
           sceneRef.current.remove(sceneRef.current.children[0]);
       }
     };
-  }, [autoRotate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps — init runs once. autoRotate changes handled via ref.
 
   useEffect(() => {
     orbitPathsRef.current.forEach((o) => { o.visible = showOrbits; });
