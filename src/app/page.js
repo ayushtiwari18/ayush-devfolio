@@ -12,10 +12,12 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen">
-      {/* Hero consumes Supabase profile data internally, but always falls back
-          to HERO_COPY.description so the hero is never generic even when the
-          database is empty. */}
-      <Hero fallbackProfile={HERO_COPY} />
+      {/*
+       * B1 FIX: was fallbackProfile={HERO_COPY} — Hero.js destructures { profile }
+       * so the old prop name was silently ignored. profile was always undefined.
+       * Now passes as `profile` so HeroContent + ProfileImage get real data.
+       */}
+      <Hero profile={HERO_COPY} />
       <CodingStats />
     </main>
   );
