@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Github, ExternalLink, Code2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Code2 } from 'lucide-react';
+import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 import { getPublishedProjects } from '@/services/projects.service';
 
 export const metadata = {
   title: 'Projects - Ayush Tiwari',
   description: 'Browse all my projects — full-stack web apps, open source tools, and creative builds.',
+  alternates: { canonical: 'https://ayush-devfolio.vercel.app/projects' },
 };
 
 export default async function ProjectsPage() {
@@ -16,13 +18,11 @@ export default async function ProjectsPage() {
     projects = await getPublishedProjects();
   } catch (err) {
     console.error('Failed to load projects:', err);
-    // Graceful degradation — show empty state, don't crash
   }
 
   return (
     <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Back Button */}
         <Link href="/">
           <Button variant="outline" className="mb-8 hover:bg-primary/10 hover:border-primary">
             <ArrowLeft className="mr-2" size={18} />
@@ -30,7 +30,6 @@ export default async function ProjectsPage() {
           </Button>
         </Link>
 
-        {/* Page Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-4">
             My <span className="gradient-text">Projects</span>
@@ -40,7 +39,6 @@ export default async function ProjectsPage() {
           </p>
         </div>
 
-        {/* Projects Grid */}
         {projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
@@ -48,7 +46,6 @@ export default async function ProjectsPage() {
                 key={project.id}
                 className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
               >
-                {/* Cover Image */}
                 <div className="relative w-full h-48 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
                   {project.cover_image ? (
                     <Image
@@ -64,7 +61,6 @@ export default async function ProjectsPage() {
                   )}
                 </div>
 
-                {/* Card Content */}
                 <div className="p-6">
                   <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                     {project.title}
@@ -73,14 +69,10 @@ export default async function ProjectsPage() {
                     {project.description}
                   </p>
 
-                  {/* Technologies */}
                   {project.technologies && project.technologies.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {project.technologies.slice(0, 4).map((tech, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md border border-primary/20"
-                        >
+                        <span key={i} className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md border border-primary/20">
                           {tech}
                         </span>
                       ))}
@@ -92,32 +84,21 @@ export default async function ProjectsPage() {
                     </div>
                   )}
 
-                  {/* Links */}
                   <div className="flex items-center gap-3 pt-2 border-t border-border">
                     <Link href={`/projects/${project.slug}`} className="flex-1">
-                      <Button size="sm" className="w-full">
-                        View Details
-                      </Button>
+                      <Button size="sm" className="w-full">View Details</Button>
                     </Link>
                     {project.github_url && (
-                      <a
-                        href={project.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${project.title} GitHub repository`}
-                      >
+                      <a href={project.github_url} target="_blank" rel="noopener noreferrer"
+                        aria-label={`${project.title} GitHub repository`}>
                         <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:border-primary">
-                          <Github size={16} />
+                          <GitHubIcon size={16} />
                         </Button>
                       </a>
                     )}
                     {project.live_url && (
-                      <a
-                        href={project.live_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${project.title} live demo`}
-                      >
+                      <a href={project.live_url} target="_blank" rel="noopener noreferrer"
+                        aria-label={`${project.title} live demo`}>
                         <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:border-primary">
                           <ExternalLink size={16} />
                         </Button>
@@ -135,15 +116,13 @@ export default async function ProjectsPage() {
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">Projects Coming Soon!</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              I'm currently adding my projects to the database. Check back soon for exciting work including GameON, Marine Minds, and more!
+              I’m currently adding my projects to the database. Check back soon!
             </p>
             <div className="flex gap-4 justify-center">
               <a href="https://github.com/ayushtiwari18" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline">View GitHub</Button>
               </a>
-              <Link href="/">
-                <Button>Back to Home</Button>
-              </Link>
+              <Link href="/"><Button>Back to Home</Button></Link>
             </div>
           </div>
         )}

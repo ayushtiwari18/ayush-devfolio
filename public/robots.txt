@@ -1,6 +1,12 @@
-# https://www.robotstxt.org/robotstxt.html
+# B2 FIX: This file intentionally defers to src/app/robots.js (Next.js dynamic robots).
+# Next.js serves robots.js output at /robots.txt with correct Content-Type: text/plain.
+# A static public/robots.txt would OVERRIDE robots.js and block the dynamic disallow rules.
+# Solution: Keep this file minimal and harmless — robots.js takes precedence in Next.js
+# when BOTH exist only if using next export. In SSR/ISR mode, Next.js routes /robots.txt
+# to the robots.js handler first. To be safe, we align this file with robots.js rules.
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
-# Sitemaps
 Sitemap: https://ayush-devfolio.vercel.app/sitemap.xml

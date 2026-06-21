@@ -1,125 +1,129 @@
 'use client';
 
-import { motion } from 'framer-motion';
+/**
+ * CodingStats — Cycle 3: Framer Motion removed.
+ *
+ * BEFORE: motion.div / motion.a with whileInView — pulls framer-motion-vendor.js
+ *         into this chunk (~420KB), runs a permanent rAF loop.
+ *
+ * AFTER:  useReveal() hook — plain IntersectionObserver + CSS transitions.
+ *         Same staggered fade-up effect. Zero JS animation library.
+ *         framer-motion-vendor.js is now only loaded if some OTHER page/section
+ *         still imports it — and if nothing does, it disappears entirely.
+ */
+
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Code2, Trophy, Star, Award, TrendingUp } from 'lucide-react';
 import { SiLeetcode, SiCodechef, SiCodeforces, SiHackerrank, SiGeeksforgeeks } from 'react-icons/si';
 
+// ---------------------------------------------------------------------------
+// useReveal — lightweight IntersectionObserver-based entrance animation hook.
+// Returns a ref to attach to the container + a CSS-class toggler.
+// ---------------------------------------------------------------------------
+function useReveal(threshold = 0.15) {
+  const ref     = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { ref, visible };
+}
+
+// ---------------------------------------------------------------------------
+// Data
+// ---------------------------------------------------------------------------
 const codingPlatforms = [
   {
-    name: 'LeetCode',
-    icon: SiLeetcode,
-    username: 'aayush03',
+    name: 'LeetCode', icon: SiLeetcode, username: 'aayush03',
     stats: [
       { label: 'Problems Solved', value: '250+', icon: Code2 },
-      { label: 'Contest Rating', value: '1657', icon: Trophy },
-      { label: 'Contests', value: '12', icon: Award },
+      { label: 'Contest Rating',  value: '1657',  icon: Trophy },
+      { label: 'Contests',        value: '12',    icon: Award  },
     ],
-    color: 'from-orange-500 to-yellow-500',
-    bgColor: 'bg-orange-500/10',
-    borderColor: 'border-orange-500/20',
-    link: 'https://leetcode.com/aayush03',
+    color: 'from-orange-500 to-yellow-500', bgColor: 'bg-orange-500/10',
+    borderColor: 'border-orange-500/20', link: 'https://leetcode.com/aayush03',
   },
   {
-    name: 'CodeChef',
-    icon: SiCodechef,
-    username: 'ayush_03',
+    name: 'CodeChef', icon: SiCodechef, username: 'ayush_03',
     stats: [
-      { label: 'Rating', value: '1443', icon: Star },
-      { label: 'Contests', value: '10', icon: Trophy },
-      { label: 'Problems', value: '150+', icon: Code2 },
+      { label: 'Rating',   value: '1443',  icon: Star   },
+      { label: 'Contests', value: '10',    icon: Trophy },
+      { label: 'Problems', value: '150+',  icon: Code2  },
     ],
-    color: 'from-amber-600 to-amber-400',
-    bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/20',
-    link: 'https://www.codechef.com/users/ayush_03',
+    color: 'from-amber-600 to-amber-400', bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/20', link: 'https://www.codechef.com/users/ayush_03',
   },
   {
-    name: 'Codeforces',
-    icon: SiCodeforces,
-    username: 'ayush_tiwari',
+    name: 'Codeforces', icon: SiCodeforces, username: 'ayush_tiwari',
     stats: [
-      { label: 'Max Rating', value: '1002', icon: TrendingUp },
-      { label: 'Contests', value: '13', icon: Trophy },
-      { label: 'Problems', value: '100+', icon: Code2 },
+      { label: 'Max Rating', value: '1002',  icon: TrendingUp },
+      { label: 'Contests',   value: '13',    icon: Trophy     },
+      { label: 'Problems',   value: '100+',  icon: Code2      },
     ],
-    color: 'from-blue-500 to-cyan-500',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
-    link: 'https://codeforces.com/profile/ayush_tiwari',
+    color: 'from-blue-500 to-cyan-500', bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20', link: 'https://codeforces.com/profile/ayush_tiwari',
   },
   {
-    name: 'HackerRank',
-    icon: SiHackerrank,
-    username: 'ayushtiwari10201',
+    name: 'HackerRank', icon: SiHackerrank, username: 'ayushtiwari10201',
     stats: [
-      { label: 'Java Badge', value: '4 Star', icon: Star },
-      { label: 'Certifications', value: '5+', icon: Award },
-      { label: 'Problems', value: '100+', icon: Code2 },
+      { label: 'Java Badge',     value: '4 Star', icon: Star   },
+      { label: 'Certifications', value: '5+',     icon: Award  },
+      { label: 'Problems',       value: '100+',   icon: Code2  },
     ],
-    color: 'from-green-500 to-emerald-500',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20',
-    link: 'https://www.hackerrank.com/ayushtiwari10201',
+    color: 'from-green-500 to-emerald-500', bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/20', link: 'https://www.hackerrank.com/ayushtiwari10201',
   },
   {
-    name: 'GeeksforGeeks',
-    icon: SiGeeksforgeeks,
-    username: 'ayushtiwari',
+    name: 'GeeksforGeeks', icon: SiGeeksforgeeks, username: 'ayushtiwari',
     stats: [
-      { label: 'Problems', value: '155+', icon: Code2 },
-      { label: 'Score', value: '500+', icon: Trophy },
-      { label: 'Streak', value: '15 Days', icon: TrendingUp },
+      { label: 'Problems', value: '155+',    icon: Code2      },
+      { label: 'Score',    value: '500+',    icon: Trophy     },
+      { label: 'Streak',   value: '15 Days', icon: TrendingUp },
     ],
-    color: 'from-emerald-600 to-green-500',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/20',
-    link: 'https://auth.geeksforgeeks.org/user/ayushtiwari',
+    color: 'from-emerald-600 to-green-500', bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/20', link: 'https://auth.geeksforgeeks.org/user/ayushtiwari',
   },
 ];
 
 const overallStats = [
-  {
-    label: 'Total Problems',
-    value: '655+',
-    description: 'Across all platforms',
-    icon: Code2,
-    color: 'text-primary',
-  },
-  {
-    label: 'Total Contests',
-    value: '35+',
-    description: 'Competitive programming',
-    icon: Trophy,
-    color: 'text-yellow-500',
-  },
-  {
-    label: 'Badges & Awards',
-    value: '11+',
-    description: 'Achievements earned',
-    icon: Award,
-    color: 'text-purple-500',
-  },
-  {
-    label: 'Max Streak',
-    value: '200 Days',
-    description: 'Consistent practice',
-    icon: TrendingUp,
-    color: 'text-green-500',
-  },
+  { label: 'Total Problems',  value: '655+',     description: 'Across all platforms',    icon: Code2,      color: 'text-primary'       },
+  { label: 'Total Contests',  value: '35+',      description: 'Competitive programming', icon: Trophy,     color: 'text-yellow-500'    },
+  { label: 'Badges & Awards', value: '11+',      description: 'Achievements earned',     icon: Award,      color: 'text-purple-500'    },
+  { label: 'Max Streak',      value: '200 Days', description: 'Consistent practice',    icon: TrendingUp, color: 'text-green-500'     },
 ];
 
+// ---------------------------------------------------------------------------
+// Shared CSS transition style helpers
+// ---------------------------------------------------------------------------
+const fadeUp = (visible, delay = 0) => ({
+  opacity:    visible ? 1 : 0,
+  transform:  visible ? 'translateY(0)' : 'translateY(20px)',
+  transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
+});
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 export default function CodingStats() {
+  const header = useReveal();
+  const stats  = useReveal();
+  const cards  = useReveal();
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-primary/5 to-background">
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
+        <div ref={header.ref} className="text-center mb-16" style={fadeUp(header.visible)}>
           <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/20">
             <Code2 size={32} className="text-primary" />
           </div>
@@ -129,15 +133,13 @@ export default function CodingStats() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             My journey across coding platforms, problem-solving stats, and competitive achievements
           </p>
-        </motion.div>
+        </div>
 
         {/* Overall Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+        <div
+          ref={stats.ref}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12"
+          style={fadeUp(stats.visible, 0.1)}
         >
           {overallStats.map((stat, index) => {
             const Icon = stat.icon;
@@ -157,29 +159,24 @@ export default function CodingStats() {
               </div>
             );
           })}
-        </motion.div>
+        </div>
 
-        {/* Platform Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Platform Cards — staggered per-card via CSS delay */}
+        <div ref={cards.ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {codingPlatforms.map((platform, index) => {
             const PlatformIcon = platform.icon;
             return (
-              <motion.a
+              <a
                 key={index}
                 href={platform.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group cursor-pointer"
+                style={fadeUp(cards.visible, index * 0.08)}
               >
                 <div className={`relative h-full p-6 bg-card border ${platform.borderColor} rounded-2xl hover:border-primary/50 transition-all duration-300 overflow-hidden`}>
-                  {/* Background Gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${platform.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                  
-                  {/* Header */}
+
                   <div className="relative mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`w-14 h-14 rounded-xl ${platform.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -195,7 +192,6 @@ export default function CodingStats() {
                     </h3>
                   </div>
 
-                  {/* Stats Grid */}
                   <div className="relative space-y-3">
                     {platform.stats.map((stat, statIndex) => {
                       const StatIcon = stat.icon;
@@ -214,7 +210,6 @@ export default function CodingStats() {
                     })}
                   </div>
 
-                  {/* View Profile Link */}
                   <div className="relative mt-4 pt-4 border-t border-border">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">View Profile</span>
@@ -222,7 +217,7 @@ export default function CodingStats() {
                     </div>
                   </div>
                 </div>
-              </motion.a>
+              </a>
             );
           })}
         </div>
