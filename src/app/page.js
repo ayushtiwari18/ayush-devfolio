@@ -1,6 +1,29 @@
 import Hero from '@/components/sections/Hero';
-import CodingStats from '@/components/sections/CodingStats';
+import dynamic from 'next/dynamic';
 import { HERO_COPY } from '@/lib/constants';
+
+// CodingStats and FeaturedProjects are below the fold — lazy load them.
+// Each becomes its own JS chunk, not included in the initial apppage.js bundle.
+// ssr:false because these components use client hooks / Supabase client.
+const CodingStats = dynamic(
+  () => import('@/components/sections/CodingStats'),
+  { ssr: false, loading: () => <div className="min-h-[200px]" /> }
+);
+
+const FeaturedProjects = dynamic(
+  () => import('@/components/sections/FeaturedProjects'),
+  { ssr: false, loading: () => <div className="min-h-[200px]" /> }
+);
+
+const LatestBlog = dynamic(
+  () => import('@/components/sections/LatestBlog'),
+  { ssr: false, loading: () => <div className="min-h-[200px]" /> }
+);
+
+const Skills = dynamic(
+  () => import('@/components/sections/Skills'),
+  { ssr: false, loading: () => <div className="min-h-[200px]" /> }
+);
 
 export const metadata = {
   title: 'Ayush Tiwari - Full Stack Developer',
@@ -12,13 +35,11 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen">
-      {/*
-       * B1 FIX: was fallbackProfile={HERO_COPY} — Hero.js destructures { profile }
-       * so the old prop name was silently ignored. profile was always undefined.
-       * Now passes as `profile` so HeroContent + ProfileImage get real data.
-       */}
       <Hero profile={HERO_COPY} />
       <CodingStats />
+      <FeaturedProjects />
+      <LatestBlog />
+      <Skills />
     </main>
   );
 }
