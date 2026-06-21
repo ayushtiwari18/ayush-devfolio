@@ -1,46 +1,40 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  poweredByHeader: false, // Remove X-Powered-By: Next.js header (minor security + bytes)
-  compress: true,         // Enable gzip/brotli compression on responses
+  // B8 FIX: swcMinify was deprecated in Next.js 14+ (it's on by default).
+  // Explicitly setting it caused build warnings. Removed.
+  poweredByHeader: false,
+  compress: true,
 
-  // ── Package Import Optimisation ───────────────────────────
-  // Tells Next.js/webpack to only bundle named exports you actually import.
-  // Critical for framer-motion (~400KB saved) and lucide-react (~200KB saved).
   experimental: {
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',
       '@radix-ui/react-icons',
-      'three',  // Added: tree-shake Three.js namespace imports
+      'three',
     ],
   },
 
-  // ── Security & Cache Headers ──────────────────────────────
   async headers() {
     return [
       {
         source: '/_next/static/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-DNS-Prefetch-Control',  value: 'on' },
-          { key: 'X-Frame-Options',          value: 'SAMEORIGIN' },
-          { key: 'X-Content-Type-Options',   value: 'nosniff' },
-          { key: 'Referrer-Policy',          value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy',       value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Strict-Transport-Security',value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-DNS-Prefetch-Control',   value: 'on' },
+          { key: 'X-Frame-Options',           value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options',    value: 'nosniff' },
+          { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy',        value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
       },
     ];
   },
 
-  // ── Images ────────────────────────────────────────────────
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
@@ -51,10 +45,8 @@ const nextConfig = {
     ],
   },
 
-  // ── Webpack ───────────────────────────────────────────────
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Three.js is client-only — completely exclude from server bundle
       config.resolve.alias = {
         ...config.resolve.alias,
         three: false,
@@ -111,7 +103,6 @@ const nextConfig = {
         },
       };
     }
-
     return config;
   },
 };
