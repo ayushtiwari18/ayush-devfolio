@@ -3,6 +3,7 @@ import '../styles/globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BfCacheManager from '@/components/BfCacheManager';
+import AdminKeyTrigger from '@/components/AdminKeyTrigger';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,10 +27,7 @@ export const metadata = {
   creator: 'Ayush Tiwari',
   publisher: 'Ayush Tiwari',
   formatDetection: { email: false, address: false, telephone: false },
-  // S6 FIX: Root-level canonical — individual pages override this with their own
-  alternates: {
-    canonical: BASE_URL,
-  },
+  alternates: { canonical: BASE_URL },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -64,7 +62,6 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://supabase.co" />
         <link rel="dns-prefetch" href="https://xnlndzezjfcllcwiqtbf.supabase.co" />
-        {/* S5 FIX: Person schema with corrected LinkedIn handle + sameAs URLs */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -73,7 +70,6 @@ export default function RootLayout({ children }) {
               '@type': 'Person',
               name: 'Ayush Tiwari',
               url: BASE_URL,
-              // S5: Verify your actual LinkedIn URL — update the handle if different
               sameAs: [
                 'https://github.com/ayushtiwari18',
                 'https://www.linkedin.com/in/ayushtiwari18',
@@ -106,6 +102,8 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} relative`}>
+        {/* Global admin key trigger — invisible, no UI */}
+        <AdminKeyTrigger />
         <BfCacheManager />
         <a
           href="#main-content"
