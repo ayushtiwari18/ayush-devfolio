@@ -1,6 +1,4 @@
 // solarSystemUtils.js
-// Visual polish pass — brighter sun, denser stars, better camera, bloom tuning
-
 let _THREE           = null;
 let _OrbitControls   = null;
 let _EffectComposer  = null;
@@ -21,37 +19,31 @@ async function loadThree() {
 }
 
 export const planets = [
-  { name: 'Sun',     size: 42,   color: 0xfff4a0, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true,  emissiveIntensity: 3.5 },
-  { name: 'Mercury', size: 5,    color: 0xb5b5b5, orbitRadius: 70,  orbitSpeed: 1.6,  rotationSpeed: 0.004 },
-  { name: 'Venus',   size: 8,    color: 0xf0b060, orbitRadius: 100, orbitSpeed: 1.17, rotationSpeed: 0.002 },
-  { name: 'Earth',   size: 9,    color: 0x4f8fd6, orbitRadius: 140, orbitSpeed: 1,    rotationSpeed: 0.02  },
-  { name: 'Mars',    size: 6,    color: 0xd9603a, orbitRadius: 195, orbitSpeed: 0.8,  rotationSpeed: 0.018 },
-  { name: 'Jupiter', size: 26,   color: 0xe8c89a, orbitRadius: 275, orbitSpeed: 0.43, rotationSpeed: 0.04  },
-  { name: 'Saturn',  size: 21,   color: 0xe8dfa0, orbitRadius: 355, orbitSpeed: 0.32, rotationSpeed: 0.038, hasRing: true },
-  { name: 'Uranus',  size: 12,   color: 0x7de8e8, orbitRadius: 430, orbitSpeed: 0.23, rotationSpeed: 0.03  },
-  { name: 'Neptune', size: 11,   color: 0x3a5fff, orbitRadius: 500, orbitSpeed: 0.18, rotationSpeed: 0.031 },
+  // emissiveIntensity on planets = self-illumination so they're visible
+  // regardless of distance from PointLight. Space games use this trick.
+  { name: 'Sun',     size: 42,  color: 0xfff4a0, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true,  emissiveIntensity: 3.5 },
+  { name: 'Mercury', size: 5,   color: 0xb5b5b5, orbitRadius: 70,  orbitSpeed: 1.6,  rotationSpeed: 0.004, emissiveIntensity: 0.2  },
+  { name: 'Venus',   size: 8,   color: 0xf0b060, orbitRadius: 100, orbitSpeed: 1.17, rotationSpeed: 0.002, emissiveIntensity: 0.2  },
+  { name: 'Earth',   size: 9,   color: 0x4f8fd6, orbitRadius: 140, orbitSpeed: 1,    rotationSpeed: 0.02,  emissiveIntensity: 0.22 },
+  { name: 'Mars',    size: 6,   color: 0xd9603a, orbitRadius: 195, orbitSpeed: 0.8,  rotationSpeed: 0.018, emissiveIntensity: 0.2  },
+  { name: 'Jupiter', size: 26,  color: 0xe8c89a, orbitRadius: 275, orbitSpeed: 0.43, rotationSpeed: 0.04,  emissiveIntensity: 0.18 },
+  { name: 'Saturn',  size: 21,  color: 0xe8dfa0, orbitRadius: 355, orbitSpeed: 0.32, rotationSpeed: 0.038, emissiveIntensity: 0.18, hasRing: true },
+  { name: 'Uranus',  size: 12,  color: 0x7de8e8, orbitRadius: 430, orbitSpeed: 0.23, rotationSpeed: 0.03,  emissiveIntensity: 0.2  },
+  { name: 'Neptune', size: 11,  color: 0x3a5fff, orbitRadius: 500, orbitSpeed: 0.18, rotationSpeed: 0.031, emissiveIntensity: 0.22 },
 ];
 
 export const createStarfield = (scene) => {
   const THREE = _THREE;
   const starGeometry = new THREE.BufferGeometry();
-
-  // Two layers: many small dim stars + fewer bright stars
   const starVertices = [];
-  const starSizes    = [];
-
   for (let i = 0; i < 18000; i++) {
     starVertices.push(
       (Math.random() - 0.5) * 2400,
       (Math.random() - 0.5) * 2400,
       (Math.random() - 0.5) * 2400
     );
-    // Varied sizes: most small, some bright
-    starSizes.push(Math.random() < 0.08 ? 2.5 + Math.random() * 1.5 : 0.8 + Math.random() * 0.8);
   }
-
   starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-
   const starMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
     size: 1.1,
@@ -59,7 +51,6 @@ export const createStarfield = (scene) => {
     opacity: 0.88,
     sizeAttenuation: true,
   });
-
   const stars = new THREE.Points(starGeometry, starMaterial);
   scene.add(stars);
   return stars;
@@ -74,19 +65,23 @@ export const createPlanets = (scene) => {
     const geometry = new THREE.SphereGeometry(planet.size, 36, 36);
     let material;
 
-    if (planet.emissive) {
+    if (planet.emissive && planet.name === 'Sun') {
+      // Sun: pure emissive, no lighting needed
       material = new THREE.MeshStandardMaterial({
         color:             planet.color,
         emissive:          planet.color,
-        emissiveIntensity: planet.emissiveIntensity ?? 3.5,
+        emissiveIntensity: planet.emissiveIntensity,
         roughness: 0.2,
         metalness: 0.0,
       });
     } else {
-      material = new THREE.MeshPhongMaterial({
-        color:     planet.color,
-        shininess: 30,
-        specular:  new THREE.Color(0x444444),
+      // Planets: Phong + small emissive so they glow their own color subtly
+      material = new THREE.MeshStandardMaterial({
+        color:             new THREE.Color(planet.color),
+        emissive:          new THREE.Color(planet.color),
+        emissiveIntensity: planet.emissiveIntensity ?? 0.2,
+        roughness: 0.7,
+        metalness: 0.0,
       });
     }
 
@@ -98,7 +93,6 @@ export const createPlanets = (scene) => {
       mesh.position.x = Math.cos(angle) * planet.orbitRadius;
       mesh.position.z = Math.sin(angle) * planet.orbitRadius;
 
-      // Orbit path
       const orbitPoints = [];
       for (let i = 0; i <= 128; i++) {
         const a = (i / 128) * Math.PI * 2;
@@ -109,10 +103,10 @@ export const createPlanets = (scene) => {
       const orbitMat = new THREE.LineBasicMaterial({
         color:       0x6688aa,
         transparent: true,
-        opacity:     0.25,
+        opacity:     0.3,
       });
       const orbit = new THREE.Line(orbitGeo, orbitMat);
-      orbit.rotation.x      = Math.PI / 2;
+      orbit.rotation.x       = Math.PI / 2;
       orbit.userData.isOrbit = true;
       scene.add(orbit);
       orbitPaths.push(orbit);
@@ -126,7 +120,6 @@ export const createPlanets = (scene) => {
       orbitRadius:   planet.orbitRadius,
     });
 
-    // Saturn ring — wider, more visible
     if (planet.hasRing) {
       const ringGeo = new THREE.RingGeometry(planet.size + 6, planet.size + 18, 64);
       const ringMat = new THREE.MeshBasicMaterial({
@@ -144,8 +137,6 @@ export const createPlanets = (scene) => {
   return { planetObjects, orbitPaths };
 };
 
-// Asteroid belt REMOVED — was rendering as an ugly grey flat disk
-// that dominated the scene visually.
 export const createAsteroidBelt = (_scene) => null;
 
 export const updatePlanets = (planetObjects, time, autoRotate) => {
@@ -169,23 +160,23 @@ export const initThreeJS = async (mount) => {
   const h = mount.clientHeight;
 
   const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 10000);
-  // Pulled back & higher so all planets + Saturn ring fit in frame
   camera.position.set(0, 320, 650);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.toneMapping        = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  // LinearToneMapping — neutral, does NOT crush dim planet luminance
+  // ACES was darkening planets below the bloom threshold → invisible
+  renderer.toneMapping         = THREE.LinearToneMapping;
+  renderer.toneMappingExposure = 0.9;
   mount.appendChild(renderer.domElement);
 
-  // Bloom — lower threshold so more objects glow, higher strength
   const renderScene = new _RenderPass(scene, camera);
   const bloomPass   = new _UnrealBloomPass(
     new THREE.Vector2(w, h),
-    1.8,   // strength  (was 1.5)
-    0.5,   // radius    (was 0.4)
-    0.28   // threshold (was 0.85) — lower = more objects bloom
+    1.6,   // strength
+    0.5,   // radius
+    0.15   // threshold — low so planets with emissiveIntensity 0.18-0.22 catch bloom
   );
   const composer = new _EffectComposer(renderer);
   composer.addPass(renderScene);
@@ -197,18 +188,17 @@ export const initThreeJS = async (mount) => {
   controls.minDistance   = 80;
   controls.maxDistance   = 1200;
 
-  // Ambient: slightly warmer so planets aren't blue-cold
-  const ambientLight = new THREE.AmbientLight(0x111122, 1.0);
-  scene.add(ambientLight);
+  // Ambient — slightly warm base so night sides aren't pure black
+  scene.add(new THREE.AmbientLight(0x111122, 1.2));
 
-  // Sun point light — stronger, farther reach so outer planets are lit
-  const sunLight = new THREE.PointLight(0xfff4e0, 3, 3000);
+  // Sun light — intensity 8, distance 0 (infinite) so all planets lit
+  const sunLight = new THREE.PointLight(0xfff4e0, 8, 0);
   sunLight.position.set(0, 0, 0);
   scene.add(sunLight);
 
-  // Subtle fill light from opposite side (so night side isn't pure black)
-  const fillLight = new THREE.PointLight(0x112244, 0.4, 2000);
-  fillLight.position.set(0, 0, -600);
+  // Cool fill from opposite side — prevents pitch-black night sides
+  const fillLight = new THREE.PointLight(0x1a2a66, 1.5, 0);
+  fillLight.position.set(0, 100, -800);
   scene.add(fillLight);
 
   return { scene, camera, renderer, composer, controls };
