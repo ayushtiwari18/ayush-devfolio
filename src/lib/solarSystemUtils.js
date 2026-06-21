@@ -19,8 +19,6 @@ async function loadThree() {
 }
 
 export const planets = [
-  // emissiveIntensity on planets = self-illumination so they're visible
-  // regardless of distance from PointLight. Space games use this trick.
   { name: 'Sun',     size: 42,  color: 0xfff4a0, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true,  emissiveIntensity: 3.5 },
   { name: 'Mercury', size: 5,   color: 0xb5b5b5, orbitRadius: 70,  orbitSpeed: 1.6,  rotationSpeed: 0.004, emissiveIntensity: 0.2  },
   { name: 'Venus',   size: 8,   color: 0xf0b060, orbitRadius: 100, orbitSpeed: 1.17, rotationSpeed: 0.002, emissiveIntensity: 0.2  },
@@ -65,8 +63,7 @@ export const createPlanets = (scene) => {
     const geometry = new THREE.SphereGeometry(planet.size, 36, 36);
     let material;
 
-    if (planet.emissive && planet.name === 'Sun') {
-      // Sun: pure emissive, no lighting needed
+    if (planet.name === 'Sun') {
       material = new THREE.MeshStandardMaterial({
         color:             planet.color,
         emissive:          planet.color,
@@ -75,7 +72,6 @@ export const createPlanets = (scene) => {
         metalness: 0.0,
       });
     } else {
-      // Planets: Phong + small emissive so they glow their own color subtly
       material = new THREE.MeshStandardMaterial({
         color:             new THREE.Color(planet.color),
         emissive:          new THREE.Color(planet.color),
@@ -101,9 +97,7 @@ export const createPlanets = (scene) => {
       const orbitGeo = new THREE.BufferGeometry();
       orbitGeo.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
       const orbitMat = new THREE.LineBasicMaterial({
-        color:       0x6688aa,
-        transparent: true,
-        opacity:     0.3,
+        color: 0x6688aa, transparent: true, opacity: 0.3,
       });
       const orbit = new THREE.Line(orbitGeo, orbitMat);
       orbit.rotation.x       = Math.PI / 2;
@@ -123,10 +117,7 @@ export const createPlanets = (scene) => {
     if (planet.hasRing) {
       const ringGeo = new THREE.RingGeometry(planet.size + 6, planet.size + 18, 64);
       const ringMat = new THREE.MeshBasicMaterial({
-        color:       0xd4c87a,
-        side:        THREE.DoubleSide,
-        transparent: true,
-        opacity:     0.75,
+        color: 0xd4c87a, side: THREE.DoubleSide, transparent: true, opacity: 0.75,
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = Math.PI / 2.8;
@@ -165,8 +156,6 @@ export const initThreeJS = async (mount) => {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  // LinearToneMapping — neutral, does NOT crush dim planet luminance
-  // ACES was darkening planets below the bloom threshold → invisible
   renderer.toneMapping         = THREE.LinearToneMapping;
   renderer.toneMappingExposure = 0.9;
   mount.appendChild(renderer.domElement);
@@ -176,7 +165,7 @@ export const initThreeJS = async (mount) => {
     new THREE.Vector2(w, h),
     1.6,   // strength
     0.5,   // radius
-    0.15   // threshold — low so planets with emissiveIntensity 0.18-0.22 catch bloom
+    0.15   // threshold
   );
   const composer = new _EffectComposer(renderer);
   composer.addPass(renderScene);
@@ -188,18 +177,13 @@ export const initThreeJS = async (mount) => {
   controls.minDistance   = 80;
   controls.maxDistance   = 1200;
 
-  // Ambient — slightly warm base so night sides aren't pure black
-  scene.add(new THREE.AmbientLight(0x111122, 1.2));
+  // Neutral ambient so night sides of planets aren't pitch black
+  scene.add(new THREE.AmbientLight(0x222233, 1.5));
 
-  // Sun light — intensity 8, distance 0 (infinite) so all planets lit
-  const sunLight = new THREE.PointLight(0xfff4e0, 8, 0);
+  // Single Sun point light — no fill light (fill light caused giant blue bloom blob)
+  const sunLight = new THREE.PointLight(0xfff4e0, 6, 0);
   sunLight.position.set(0, 0, 0);
   scene.add(sunLight);
-
-  // Cool fill from opposite side — prevents pitch-black night sides
-  const fillLight = new THREE.PointLight(0x1a2a66, 1.5, 0);
-  fillLight.position.set(0, 100, -800);
-  scene.add(fillLight);
 
   return { scene, camera, renderer, composer, controls };
 };
