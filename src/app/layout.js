@@ -13,7 +13,7 @@ const inter = Inter({
   preload: true,
 });
 
-const BASE_URL = 'https://ayush-devfolio.vercel.app';
+const BASE_URL = 'https://ayush-devfolio-nine.vercel.app';
 
 export const metadata = {
   metadataBase: new URL(BASE_URL),

@@ -1,7 +1,7 @@
 import { getPublishedProjectSlugs } from '@/services/projects.service';
 import { supabase } from '@/lib/supabase';
 
-const baseUrl = 'https://ayush-devfolio.vercel.app';
+const baseUrl = 'https://ayush-devfolio-nine.vercel.app';
 
 /**
  * M5 FIX: Static ISO dates instead of new Date().
@@ -57,7 +57,6 @@ export default async function sitemap() {
     const posts = await getPublishedBlogSlugs();
     blogRoutes = posts.map((p) => ({
       url: `${baseUrl}/blog/${p.slug}`,
-      // Use actual DB updated_at if available, else fallback to static date
       lastModified: p.updated_at ? p.updated_at.split('T')[0] : LAST_UPDATED.blog,
       changeFrequency: 'monthly',
       priority: 0.7,
