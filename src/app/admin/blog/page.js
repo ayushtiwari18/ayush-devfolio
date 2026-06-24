@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminBlogPage() {
@@ -26,14 +27,15 @@ export default function AdminBlogPage() {
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState(null);
 
-  // ── Filter state
+  // Confirm modal state
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, title }
+
+  // Filter state
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
 
-  useEffect(() => {
-    getBlogPosts();
-  }, []);
+  useEffect(() => { getBlogPosts(); }, []);
 
   const getBlogPosts = async () => {
     setLoading(true);
@@ -53,17 +55,14 @@ export default function AdminBlogPage() {
     }
   };
 
-  // ── Delete with confirmation
-  const handleDelete = async (id, title) => {
-    const confirmed = window.confirm(
-      `Delete "${title}"?\n\nThis will permanently remove it. This cannot be undone.`
-    );
-    if (!confirmed) return;
-    setDeletingId(id);
+  const handleConfirmedDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
     try {
-      const { error } = await supabase.from('blog_posts').delete().eq('id', id);
+      const { error } = await supabase.from('blog_posts').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      setPosts(prev => prev.filter(p => p.id !== id));
+      setPosts(prev => prev.filter(p => p.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err) {
       console.error('Error deleting post:', err);
       alert('Failed to delete post. Please try again.');
@@ -72,25 +71,22 @@ export default function AdminBlogPage() {
     }
   };
 
-  // ── Derive unique tags from all posts for the filter dropdown
+  // Derive unique tags from all posts
   const allTags = [...new Set(posts.flatMap(p => p.tags || []))].sort();
 
-  // ── Client-side filtering
+  // Client-side filtering
   const filtered = posts.filter(p => {
     const matchesSearch =
       !search ||
       p.title?.toLowerCase().includes(search.toLowerCase()) ||
       p.excerpt?.toLowerCase().includes(search.toLowerCase()) ||
       (p.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()));
-
     const matchesStatus =
       statusFilter === 'all' ||
       (statusFilter === 'published' && p.published) ||
       (statusFilter === 'draft' && !p.published);
-
     const matchesTag =
       tagFilter === 'all' || (p.tags || []).includes(tagFilter);
-
     return matchesSearch && matchesStatus && matchesTag;
   });
 
@@ -114,18 +110,28 @@ export default function AdminBlogPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Blog Post?"
+        description={deleteTarget ? `"${deleteTarget.title}" will be permanently removed. This cannot be undone.` : ''}
+        confirmLabel="Delete Post"
+        danger
+        loading={!!deletingId}
+        onConfirm={handleConfirmedDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Blog Posts</h1>
-          <p className="text-muted-foreground">
-            {filtered.length} of {posts.length} posts
-          </p>
+          <p className="text-muted-foreground">{filtered.length} of {posts.length} posts</p>
         </div>
         <Link href="/admin/blog/new">
           <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2" size={18} />
-            Write New Post
+            <Plus className="mr-2" size={18} />Write New Post
           </Button>
         </Link>
       </div>
@@ -160,9 +166,7 @@ export default function AdminBlogPage() {
             className="px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Tags</option>
-            {allTags.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
+            {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
           {(search || statusFilter !== 'all' || tagFilter !== 'all') && (
             <Button
@@ -176,7 +180,7 @@ export default function AdminBlogPage() {
         </div>
       </div>
 
-      {/* Blog Posts List */}
+      {/* Posts List */}
       {filtered.length === 0 ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center">
           <div className="max-w-md mx-auto">
@@ -194,8 +198,7 @@ export default function AdminBlogPage() {
             {posts.length === 0 && (
               <Link href="/admin/blog/new">
                 <Button className="bg-primary hover:bg-primary/90">
-                  <Plus className="mr-2" size={18} />
-                  Write First Post
+                  <Plus className="mr-2" size={18} />Write First Post
                 </Button>
               </Link>
             )}
@@ -204,19 +207,13 @@ export default function AdminBlogPage() {
       ) : (
         <div className="space-y-4">
           {filtered.map(post => (
-            <div
-              key={post.id}
-              className="bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all"
-            >
+            <div key={post.id} className="bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all">
               <div className="flex flex-col md:flex-row">
-                {/* Image */}
                 {post.cover_image && (
                   <div className="relative w-full md:w-64 h-48 bg-muted flex-shrink-0">
                     <Image src={post.cover_image} alt={post.title} fill className="object-cover" />
                   </div>
                 )}
-
-                {/* Content */}
                 <div className="flex-1 p-6">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
@@ -238,24 +235,18 @@ export default function AdminBlogPage() {
                     </div>
                   </div>
 
-                  {/* Tags */}
                   {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4 items-center">
                       <Tag size={14} className="text-muted-foreground" />
-                      {post.tags.slice(0, 4).map((tag, index) => (
-                        <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
-                          {tag}
-                        </span>
+                      {post.tags.slice(0, 4).map((tag, i) => (
+                        <span key={i} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">{tag}</span>
                       ))}
                       {post.tags.length > 4 && (
-                        <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
-                          +{post.tags.length - 4} more
-                        </span>
+                        <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">+{post.tags.length - 4} more</span>
                       )}
                     </div>
                   )}
 
-                  {/* Meta & Actions */}
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
@@ -263,32 +254,23 @@ export default function AdminBlogPage() {
                         <span>{new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                       </div>
                       {post.reading_time && (
-                        <div className="flex items-center gap-1">
-                          <Clock size={14} />
-                          <span>{post.reading_time} min read</span>
-                        </div>
+                        <div className="flex items-center gap-1"><Clock size={14} /><span>{post.reading_time} min read</span></div>
                       )}
                       {post.views !== undefined && (
-                        <div className="flex items-center gap-1">
-                          <Eye size={14} />
-                          <span>{post.views} views</span>
-                        </div>
+                        <div className="flex items-center gap-1"><Eye size={14} /><span>{post.views} views</span></div>
                       )}
                     </div>
-
                     <div className="flex items-center gap-2">
                       <Link href={`/admin/blog/${post.id}/edit`}>
                         <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
                           <Edit size={16} className="mr-2" />Edit
                         </Button>
                       </Link>
-
-                      {/* FUNC-1 FIX: wired delete */}
                       <Button
                         variant="outline"
                         size="sm"
                         disabled={deletingId === post.id}
-                        onClick={() => handleDelete(post.id, post.title)}
+                        onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
                         className="border-red-500 text-red-500 hover:bg-red-500/10 disabled:opacity-50"
                       >
                         {deletingId === post.id
@@ -296,12 +278,9 @@ export default function AdminBlogPage() {
                           : <Trash2 size={16} />
                         }
                       </Button>
-
                       {post.slug && (
                         <Link href={`/blog/${post.slug}`} target="_blank">
-                          <Button variant="outline" size="sm" className="hover:bg-primary/10">
-                            <Eye size={16} />
-                          </Button>
+                          <Button variant="outline" size="sm" className="hover:bg-primary/10"><Eye size={16} /></Button>
                         </Link>
                       )}
                     </div>
