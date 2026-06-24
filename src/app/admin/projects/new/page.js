@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, X, Plus, Github, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, ExternalLink, Loader2 } from 'lucide-react';
+import { GitHubIcon } from '@/components/icons/BrandIcons';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -53,7 +54,6 @@ export default function NewProjectPage() {
     setFormData(next);
   };
 
-  // Technologies
   const addTech = () => {
     if (techInput.trim() && !formData.technologies.includes(techInput.trim())) {
       setFormData(p => ({ ...p, technologies: [...p.technologies, techInput.trim()] }));
@@ -62,7 +62,6 @@ export default function NewProjectPage() {
   };
   const removeTech = (t) => setFormData(p => ({ ...p, technologies: p.technologies.filter(x => x !== t) }));
 
-  // Tags
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData(p => ({ ...p, tags: [...p.tags, tagInput.trim()] }));
@@ -71,7 +70,6 @@ export default function NewProjectPage() {
   };
   const removeTag = (t) => setFormData(p => ({ ...p, tags: p.tags.filter(x => x !== t) }));
 
-  // Strategies
   const addStrategy = () => {
     if (strategyInput.title.trim()) {
       setFormData(p => ({ ...p, strategies: [...p.strategies, { ...strategyInput }] }));
@@ -80,7 +78,6 @@ export default function NewProjectPage() {
   };
   const removeStrategy = (i) => setFormData(p => ({ ...p, strategies: p.strategies.filter((_, idx) => idx !== i) }));
 
-  // Challenges
   const addChallenge = () => {
     if (challengeInput.problem.trim()) {
       setFormData(p => ({ ...p, challenges: [...p.challenges, { ...challengeInput }] }));
@@ -95,7 +92,7 @@ export default function NewProjectPage() {
     try {
       const payload = {
         ...formData,
-        image: formData.cover_image, // keep old NOT NULL column in sync
+        image: formData.cover_image,
         order: Number(formData.order) || 0,
         date: formData.date || null,
       };
@@ -149,7 +146,7 @@ export default function NewProjectPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* ── Basic Info ── */}
+        {/* Basic Info */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Basic Information</h2>
           <div className="space-y-4">
@@ -169,7 +166,7 @@ export default function NewProjectPage() {
           </div>
         </section>
 
-        {/* ── Technologies ── */}
+        {/* Technologies */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Technologies</h2>
           <div className="flex gap-2">
@@ -182,7 +179,7 @@ export default function NewProjectPage() {
           <TagList items={formData.technologies} onRemove={removeTech} />
         </section>
 
-        {/* ── Tags ── */}
+        {/* Tags */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Tags</h2>
           <div className="flex gap-2">
@@ -195,7 +192,7 @@ export default function NewProjectPage() {
           <TagList items={formData.tags} onRemove={removeTag} color="secondary" />
         </section>
 
-        {/* ── Media & Links ── */}
+        {/* Media & Links */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Media &amp; Links</h2>
           <div className="space-y-5">
@@ -207,13 +204,17 @@ export default function NewProjectPage() {
               hint="Recommended: 1280×720px. Shown as the project thumbnail."
             />
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2"><Github size={16} /> GitHub URL</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <span className="flex items-center gap-2"><GitHubIcon size={16} /> GitHub URL</span>
+              </label>
               <input type="url" name="github_url" value={formData.github_url} onChange={handleChange}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="https://github.com/username/repo" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2"><ExternalLink size={16} /> Live Demo URL</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <span className="flex items-center gap-2"><ExternalLink size={16} /> Live Demo URL</span>
+              </label>
               <input type="url" name="live_url" value={formData.live_url} onChange={handleChange}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="https://myproject.com" />
@@ -221,7 +222,7 @@ export default function NewProjectPage() {
           </div>
         </section>
 
-        {/* ── Case Study ── */}
+        {/* Case Study */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Case Study</h2>
           <div className="space-y-4">
@@ -237,7 +238,7 @@ export default function NewProjectPage() {
           </div>
         </section>
 
-        {/* ── Strategies ── */}
+        {/* Strategies */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Key Strategies</h2>
           <div className="space-y-3 mb-4">
@@ -260,7 +261,7 @@ export default function NewProjectPage() {
           ))}
         </section>
 
-        {/* ── Challenges ── */}
+        {/* Challenges */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Challenges &amp; Fixes</h2>
           <div className="space-y-3 mb-4">
@@ -283,7 +284,7 @@ export default function NewProjectPage() {
           ))}
         </section>
 
-        {/* ── Settings ── */}
+        {/* Settings */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Settings</h2>
           <div className="space-y-4">
@@ -304,7 +305,7 @@ export default function NewProjectPage() {
           </div>
         </section>
 
-        {/* ── Actions ── */}
+        {/* Actions */}
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={loading} className="flex-1 bg-primary hover:bg-primary/90">
             {loading ? <><Loader2 size={18} className="animate-spin mr-2" />Creating…</> : <><Save size={18} className="mr-2" />Create Project</>}
