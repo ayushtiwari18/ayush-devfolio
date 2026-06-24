@@ -2,18 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, X, Plus, ExternalLink, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, ExternalLink, Loader2, Trash2, ImageIcon } from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import ImageUploader from '@/components/admin/ImageUploader';
+import FallbackImage from '@/components/ui/FallbackImage';
+import { supabase } from '@/lib/supabase';
+
+// ── Defined OUTSIDE component — stable refs, no remount / focus loss ──
+function Field({ label, name, type = 'text', placeholder = '', required = false, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">{label}{required && ' *'}</label>
+      <input type={type} name={name} value={value ?? ''} onChange={onChange} required={required}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+    </div>
+  );
+}
+
+function TextArea({ label, name, rows = 4, placeholder = '', value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
+      <textarea name={name} value={value ?? ''} onChange={onChange} rows={rows} placeholder={placeholder}
+        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
+    </div>
+  );
+}
 
 export default function EditProjectPage() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [techInput, setTechInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [strategyInput, setStrategyInput] = useState({ title: '', description: '' });
@@ -29,11 +55,11 @@ export default function EditProjectPage() {
       setFormData({
         ...data,
         technologies: data.technologies || [],
-        tags: data.tags || [],
-        strategies: data.strategies || [],
-        challenges: data.challenges || [],
-        order: data.order ?? 0,
-        date: data.date ? data.date.split('T')[0] : '',
+        tags:         data.tags         || [],
+        strategies:   data.strategies   || [],
+        challenges:   data.challenges   || [],
+        order_index:  data.order_index  ?? 0,
+        date:         data.date ? data.date.split('T')[0] : '',
       });
     } catch (err) {
       alert('Error loading project: ' + err.message);
@@ -53,7 +79,7 @@ export default function EditProjectPage() {
       setTechInput('');
     }
   };
-  const removeTech = (t) => setFormData(p => ({ ...p, technologies: p.technologies.filter(x => x !== t) }));
+  const removeTech = t => setFormData(p => ({ ...p, technologies: p.technologies.filter(x => x !== t) }));
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
@@ -61,7 +87,7 @@ export default function EditProjectPage() {
       setTagInput('');
     }
   };
-  const removeTag = (t) => setFormData(p => ({ ...p, tags: p.tags.filter(x => x !== t) }));
+  const removeTag = t => setFormData(p => ({ ...p, tags: p.tags.filter(x => x !== t) }));
 
   const addStrategy = () => {
     if (strategyInput.title.trim()) {
@@ -69,7 +95,7 @@ export default function EditProjectPage() {
       setStrategyInput({ title: '', description: '' });
     }
   };
-  const removeStrategy = (i) => setFormData(p => ({ ...p, strategies: p.strategies.filter((_, idx) => idx !== i) }));
+  const removeStrategy = i => setFormData(p => ({ ...p, strategies: p.strategies.filter((_, idx) => idx !== i) }));
 
   const addChallenge = () => {
     if (challengeInput.problem.trim()) {
@@ -77,18 +103,38 @@ export default function EditProjectPage() {
       setChallengeInput({ problem: '', fix: '' });
     }
   };
-  const removeChallenge = (i) => setFormData(p => ({ ...p, challenges: p.challenges.filter((_, idx) => idx !== i) }));
+  const removeChallenge = i => setFormData(p => ({ ...p, challenges: p.challenges.filter((_, idx) => idx !== i) }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const payload = {
-        ...formData,
-        image: formData.cover_image,
-        order: Number(formData.order) || 0,
-        date: formData.date || null,
-        updated_at: new Date().toISOString(),
+        title:               formData.title,
+        slug:                formData.slug,
+        description:         formData.description,
+        cover_image:         formData.cover_image,
+        technologies:        formData.technologies,
+        tags:                formData.tags,
+        github_url:          formData.github_url,
+        live_url:            formData.live_url,
+        featured:            formData.featured,
+        published:           formData.published,
+        order_index:         Number(formData.order_index) || 0,
+        duration:            formData.duration || null,
+        date:                formData.date || null,
+        problem_statement:   formData.problem_statement || null,
+        solution:            formData.solution || null,
+        architecture_plan:   formData.architecture_plan || null,
+        code_structure:      formData.code_structure || null,
+        performance_notes:   formData.performance_notes || null,
+        trade_offs:          formData.trade_offs || null,
+        lessons_learned:     formData.lessons_learned || null,
+        future_improvements: formData.future_improvements || null,
+        security_notes:      formData.security_notes || null,
+        strategies:          formData.strategies,
+        challenges:          formData.challenges,
+        updated_at:          new Date().toISOString(),
       };
       const { error } = await supabase.from('projects').update(payload).eq('id', params.id);
       if (error) throw error;
@@ -100,14 +146,17 @@ export default function EditProjectPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Delete this project? This cannot be undone.')) return;
+  const handleConfirmedDelete = async () => {
+    setDeleting(true);
     try {
       const { error } = await supabase.from('projects').delete().eq('id', params.id);
       if (error) throw error;
       router.push('/admin/projects');
     } catch (err) {
       alert('Error deleting: ' + err.message);
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -117,25 +166,19 @@ export default function EditProjectPage() {
     </div>
   );
 
-  const Field = ({ label, name, type = 'text', placeholder = '', required = false }) => (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-2">{label}{required && ' *'}</label>
-      <input type={type} name={name} value={formData[name] ?? ''} onChange={handleChange} required={required}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
-    </div>
-  );
-
-  const TextArea = ({ label, name, rows = 4, placeholder = '' }) => (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
-      <textarea name={name} value={formData[name] ?? ''} onChange={handleChange} rows={rows} placeholder={placeholder}
-        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
-    </div>
-  );
-
   return (
     <div className="max-w-4xl mx-auto pb-12">
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Project?"
+        description={`"${formData.title}" will be permanently removed from your portfolio. This cannot be undone.`}
+        confirmLabel="Delete Project"
+        danger
+        loading={deleting}
+        onConfirm={handleConfirmedDelete}
+        onCancel={() => setShowDeleteModal(false)}
+      />
+
       <div className="mb-8">
         <Link href="/admin/projects">
           <Button variant="outline" className="mb-4"><ArrowLeft className="mr-2" size={18} />Back to Projects</Button>
@@ -145,7 +188,8 @@ export default function EditProjectPage() {
             <h1 className="text-3xl font-bold text-foreground">Edit Project</h1>
             <p className="text-muted-foreground mt-1">Update project information</p>
           </div>
-          <Button variant="outline" onClick={handleDelete} className="border-red-500 text-red-500 hover:bg-red-500/10">
+          <Button variant="outline" onClick={() => setShowDeleteModal(true)}
+            className="border-red-500 text-red-500 hover:bg-red-500/10">
             <Trash2 size={18} className="mr-2" />Delete
           </Button>
         </div>
@@ -157,19 +201,19 @@ export default function EditProjectPage() {
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Basic Information</h2>
           <div className="space-y-4">
-            <Field label="Project Title" name="title" required />
+            <Field label="Project Title" name="title" required value={formData.title} onChange={handleChange} />
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">URL Slug *</label>
               <input type="text" name="slug" value={formData.slug ?? ''} onChange={handleChange} required
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
               <p className="text-xs text-muted-foreground mt-1">/projects/{formData.slug || 'slug'}</p>
             </div>
-            <TextArea label="Short Description" name="description" />
+            <TextArea label="Short Description" name="description" value={formData.description} onChange={handleChange} />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Duration" name="duration" placeholder="Jan 2025 – Present" />
-              <Field label="Date" name="date" type="date" />
+              <Field label="Duration" name="duration" placeholder="Jan 2025 – Present" value={formData.duration} onChange={handleChange} />
+              <Field label="Date" name="date" type="date" value={formData.date} onChange={handleChange} />
             </div>
-            <Field label="Display Order" name="order" type="number" />
+            <Field label="Display Order" name="order_index" type="number" value={formData.order_index} onChange={handleChange} />
           </div>
         </section>
 
@@ -218,15 +262,20 @@ export default function EditProjectPage() {
             <ImageUploader
               label="Cover Image"
               value={formData.cover_image}
-              onChange={url => setFormData(p => ({ ...p, cover_image: url, image: url }))}
+              onChange={url => setFormData(p => ({ ...p, cover_image: url }))}
               folder="projects"
-              hint="Recommended: 1280×720px. Shown as the project thumbnail."
+              hint="Recommended: 1280×720px."
             />
+            {formData.cover_image && (
+              <div className="relative h-40 rounded-xl overflow-hidden bg-muted border border-border">
+                <FallbackImage src={formData.cover_image} alt="Cover preview" fill className="object-cover" unoptimized
+                  fallback={<div className="flex flex-col items-center gap-2 text-muted-foreground"><ImageIcon size={32} /><span className="text-xs">Image failed to load</span></div>}
+                  containerClassName="absolute inset-0 flex items-center justify-center bg-muted" />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                <span className="flex items-center gap-2">
-                  <GitHubIcon size={16} /> GitHub URL
-                </span>
+                <span className="flex items-center gap-2"><GitHubIcon size={16} /> GitHub URL</span>
               </label>
               <input type="url" name="github_url" value={formData.github_url ?? ''} onChange={handleChange}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -234,9 +283,7 @@ export default function EditProjectPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                <span className="flex items-center gap-2">
-                  <ExternalLink size={16} /> Live Demo URL
-                </span>
+                <span className="flex items-center gap-2"><ExternalLink size={16} /> Live Demo URL</span>
               </label>
               <input type="url" name="live_url" value={formData.live_url ?? ''} onChange={handleChange}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -249,15 +296,15 @@ export default function EditProjectPage() {
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Case Study</h2>
           <div className="space-y-4">
-            <TextArea label="Problem Statement" name="problem_statement" rows={4} />
-            <TextArea label="Solution" name="solution" rows={4} />
-            <TextArea label="Architecture Plan" name="architecture_plan" rows={4} />
-            <TextArea label="Code Structure" name="code_structure" rows={4} />
-            <TextArea label="Performance Notes" name="performance_notes" rows={3} />
-            <TextArea label="Trade-offs" name="trade_offs" rows={3} />
-            <TextArea label="Lessons Learned" name="lessons_learned" rows={3} />
-            <TextArea label="Future Improvements" name="future_improvements" rows={3} />
-            <TextArea label="Security Notes" name="security_notes" rows={3} />
+            <TextArea label="Problem Statement" name="problem_statement" rows={4} value={formData.problem_statement} onChange={handleChange} />
+            <TextArea label="Solution" name="solution" rows={4} value={formData.solution} onChange={handleChange} />
+            <TextArea label="Architecture Plan" name="architecture_plan" rows={4} value={formData.architecture_plan} onChange={handleChange} />
+            <TextArea label="Code Structure" name="code_structure" rows={4} value={formData.code_structure} onChange={handleChange} />
+            <TextArea label="Performance Notes" name="performance_notes" rows={3} value={formData.performance_notes} onChange={handleChange} />
+            <TextArea label="Trade-offs" name="trade_offs" rows={3} value={formData.trade_offs} onChange={handleChange} />
+            <TextArea label="Lessons Learned" name="lessons_learned" rows={3} value={formData.lessons_learned} onChange={handleChange} />
+            <TextArea label="Future Improvements" name="future_improvements" rows={3} value={formData.future_improvements} onChange={handleChange} />
+            <TextArea label="Security Notes" name="security_notes" rows={3} value={formData.security_notes} onChange={handleChange} />
           </div>
         </section>
 
@@ -316,16 +363,12 @@ export default function EditProjectPage() {
           </div>
         </section>
 
-        {/* Actions */}
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={loading} className="flex-1 bg-primary hover:bg-primary/90">
             {loading ? <><Loader2 size={18} className="animate-spin mr-2" />Saving…</> : <><Save size={18} className="mr-2" />Save Changes</>}
           </Button>
-          <Link href="/admin/projects">
-            <Button type="button" variant="outline">Cancel</Button>
-          </Link>
+          <Link href="/admin/projects"><Button type="button" variant="outline">Cancel</Button></Link>
         </div>
-
       </form>
     </div>
   );
