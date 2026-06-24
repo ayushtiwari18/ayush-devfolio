@@ -36,6 +36,55 @@ const EMPTY_FORM = {
   challenges: [],
 };
 
+// ── Defined OUTSIDE component so they are stable references across renders ──
+function Field({ label, name, type = 'text', placeholder = '', required = false, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">{label}{required && ' *'}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+  );
+}
+
+function TextArea({ label, name, rows = 4, placeholder = '', value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        rows={rows}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+      />
+    </div>
+  );
+}
+
+function TagList({ items, onRemove, color = 'primary' }) {
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map((t, i) => (
+        <span key={i} className={`px-3 py-1 bg-${color}/10 text-${color} text-sm rounded-full border border-${color}/20 flex items-center gap-2`}>
+          {typeof t === 'string' ? t : t.title || t.problem}
+          <button type="button" onClick={() => onRemove(typeof t === 'string' ? t : i)}>
+            <X size={14} />
+          </button>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function NewProjectPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -106,34 +155,6 @@ export default function NewProjectPage() {
     }
   };
 
-  const Field = ({ label, name, type = 'text', placeholder = '', required = false }) => (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-2">{label}{required && ' *'}</label>
-      <input type={type} name={name} value={formData[name]} onChange={handleChange} required={required}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
-    </div>
-  );
-
-  const TextArea = ({ label, name, rows = 4, placeholder = '' }) => (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
-      <textarea name={name} value={formData[name]} onChange={handleChange} rows={rows} placeholder={placeholder}
-        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
-    </div>
-  );
-
-  const TagList = ({ items, onRemove, color = 'primary' }) => (
-    <div className="flex flex-wrap gap-2 mt-2">
-      {items.map((t, i) => (
-        <span key={i} className={`px-3 py-1 bg-${color}/10 text-${color} text-sm rounded-full border border-${color}/20 flex items-center gap-2`}>
-          {typeof t === 'string' ? t : t.title || t.problem}
-          <button type="button" onClick={() => onRemove(typeof t === 'string' ? t : i)}><X size={14} /></button>
-        </span>
-      ))}
-    </div>
-  );
-
   return (
     <div className="max-w-4xl mx-auto pb-12">
       <div className="mb-8">
@@ -150,19 +171,19 @@ export default function NewProjectPage() {
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Basic Information</h2>
           <div className="space-y-4">
-            <Field label="Project Title" name="title" required placeholder="My Awesome Project" />
+            <Field label="Project Title" name="title" required placeholder="My Awesome Project" value={formData.title} onChange={handleChange} />
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">URL Slug *</label>
               <input type="text" name="slug" value={formData.slug} onChange={handleChange} required
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
               <p className="text-xs text-muted-foreground mt-1">/projects/{formData.slug || 'slug'}</p>
             </div>
-            <TextArea label="Short Description" name="description" placeholder="One paragraph overview shown on the project card." />
+            <TextArea label="Short Description" name="description" placeholder="One paragraph overview shown on the project card." value={formData.description} onChange={handleChange} />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Duration" name="duration" placeholder="Jan 2025 – Present" />
-              <Field label="Date" name="date" type="date" />
+              <Field label="Duration" name="duration" placeholder="Jan 2025 – Present" value={formData.duration} onChange={handleChange} />
+              <Field label="Date" name="date" type="date" value={formData.date} onChange={handleChange} />
             </div>
-            <Field label="Display Order" name="order" type="number" placeholder="0" />
+            <Field label="Display Order" name="order" type="number" placeholder="0" value={formData.order} onChange={handleChange} />
           </div>
         </section>
 
@@ -226,15 +247,15 @@ export default function NewProjectPage() {
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Case Study</h2>
           <div className="space-y-4">
-            <TextArea label="Problem Statement" name="problem_statement" rows={4} placeholder="What problem does this solve?" />
-            <TextArea label="Solution" name="solution" rows={4} placeholder="How did you solve it?" />
-            <TextArea label="Architecture Plan" name="architecture_plan" rows={4} placeholder="Client → Server → DB flow…" />
-            <TextArea label="Code Structure" name="code_structure" rows={4} placeholder="Folder / module breakdown…" />
-            <TextArea label="Performance Notes" name="performance_notes" rows={3} placeholder="Benchmarks, load times, optimisations…" />
-            <TextArea label="Trade-offs" name="trade_offs" rows={3} placeholder="Why X over Y?" />
-            <TextArea label="Lessons Learned" name="lessons_learned" rows={3} placeholder="What would you do differently?" />
-            <TextArea label="Future Improvements" name="future_improvements" rows={3} placeholder="Roadmap / planned features…" />
-            <TextArea label="Security Notes" name="security_notes" rows={3} placeholder="Auth, CORS, rate limiting…" />
+            <TextArea label="Problem Statement" name="problem_statement" rows={4} placeholder="What problem does this solve?" value={formData.problem_statement} onChange={handleChange} />
+            <TextArea label="Solution" name="solution" rows={4} placeholder="How did you solve it?" value={formData.solution} onChange={handleChange} />
+            <TextArea label="Architecture Plan" name="architecture_plan" rows={4} placeholder="Client → Server → DB flow…" value={formData.architecture_plan} onChange={handleChange} />
+            <TextArea label="Code Structure" name="code_structure" rows={4} placeholder="Folder / module breakdown…" value={formData.code_structure} onChange={handleChange} />
+            <TextArea label="Performance Notes" name="performance_notes" rows={3} placeholder="Benchmarks, load times, optimisations…" value={formData.performance_notes} onChange={handleChange} />
+            <TextArea label="Trade-offs" name="trade_offs" rows={3} placeholder="Why X over Y?" value={formData.trade_offs} onChange={handleChange} />
+            <TextArea label="Lessons Learned" name="lessons_learned" rows={3} placeholder="What would you do differently?" value={formData.lessons_learned} onChange={handleChange} />
+            <TextArea label="Future Improvements" name="future_improvements" rows={3} placeholder="Roadmap / planned features…" value={formData.future_improvements} onChange={handleChange} />
+            <TextArea label="Security Notes" name="security_notes" rows={3} placeholder="Auth, CORS, rate limiting…" value={formData.security_notes} onChange={handleChange} />
           </div>
         </section>
 
@@ -308,7 +329,10 @@ export default function NewProjectPage() {
         {/* Actions */}
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={loading} className="flex-1 bg-primary hover:bg-primary/90">
-            {loading ? <><Loader2 size={18} className="animate-spin mr-2" />Creating…</> : <><Save size={18} className="mr-2" />Create Project</>}
+            {loading
+              ? <><Loader2 size={18} className="animate-spin mr-2" />Creating…</>
+              : <><Save size={18} className="mr-2" />Create Project</>
+            }
           </Button>
           <Link href="/admin/projects">
             <Button type="button" variant="outline">Cancel</Button>
