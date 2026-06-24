@@ -309,10 +309,9 @@ export default function AdminProjectsPage() {
                   )}
                 </div>
 
-                {/* Actions */}
+                {/* Actions — edit route is /[id]/edit (confirmed correct) */}
                 <div className="flex items-center gap-2">
-                  {/* FUNC-10 FIX: route is /admin/projects/[id] not /[id]/edit */}
-                  <Link href={`/admin/projects/${project.id}`} className="flex-1">
+                  <Link href={`/admin/projects/${project.id}/edit`} className="flex-1">
                     <Button
                       variant="outline"
                       className="w-full border-primary text-primary hover:bg-primary/10"
@@ -322,7 +321,7 @@ export default function AdminProjectsPage() {
                     </Button>
                   </Link>
 
-                  {/* FUNC-1 FIX: wired delete with confirmation */}
+                  {/* FUNC-1: wired delete with confirmation + spinner */}
                   <Button
                     variant="outline"
                     disabled={deletingId === project.id}
