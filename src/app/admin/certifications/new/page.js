@@ -2,132 +2,158 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Upload, Award } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import ImageUploader from '@/components/admin/ImageUploader';
+import FallbackImage from '@/components/ui/FallbackImage';
+
+const EMPTY = {
+  title: '',
+  issuer: '',
+  description: '',
+  image_url: '',
+  certificate_url: '',
+  issued_date: new Date().toISOString().split('T')[0],
+  expiry_date: '',
+  credential_id: '',
+  published: true,
+};
 
 export default function NewCertificationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
-  const [formData, setFormData] = useState({
-    title: '',
-    issuer: '',
-    image: '',
-    url: '',
-    date: new Date().toISOString().split('T')[0],
-  });
+  const [formData, setFormData] = useState(EMPTY);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleImageChange = (e) => {
-    const url = e.target.value;
-    setFormData({ ...formData, image: url });
-    setImagePreview(url);
+    const { name, value, type, checked } = e.target;
+    setFormData(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const { error } = await supabase.from('certifications').insert([formData]);
+      const payload = {
+        title:           formData.title,
+        issuer:          formData.issuer,
+        description:     formData.description || null,
+        image_url:       formData.image_url || null,
+        certificate_url: formData.certificate_url || null,
+        issued_date:     formData.issued_date,
+        expiry_date:     formData.expiry_date || null,
+        credential_id:   formData.credential_id || null,
+        published:       formData.published,
+      };
+      const { error } = await supabase.from('certifications').insert([payload]);
       if (error) throw error;
       router.push('/admin/certifications');
-    } catch (error) {
-      alert('Error: ' + error.message);
+    } catch (err) {
+      alert('Error creating certification: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto pb-12">
       <div className="mb-8">
         <Link href="/admin/certifications">
-          <Button variant="outline" className="mb-4">
-            <ArrowLeft className="mr-2" size={18} />
-            Back
-          </Button>
+          <Button variant="outline" className="mb-4"><ArrowLeft className="mr-2" size={18} />Back</Button>
         </Link>
         <h1 className="text-3xl font-bold text-foreground">Add Certification</h1>
+        <p className="text-muted-foreground mt-1">Add a new professional certification or credential</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-card border border-border rounded-xl p-6 card-glow">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-foreground mb-2">Title *</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="AWS Certified Solutions Architect"
-            />
-          </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-foreground mb-2">Issuer *</label>
-            <input
-              type="text"
-              name="issuer"
-              value={formData.issuer}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Amazon Web Services"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-foreground mb-2">Date *</label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-foreground mb-2">Certificate URL</label>
-            <input
-              type="url"
-              name="url"
-              value={formData.url}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="https://..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Image URL</label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={handleImageChange}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-3"
-              placeholder="https://..."
-            />
-            {imagePreview && (
-              <div className="relative h-48 rounded-lg overflow-hidden bg-muted">
-                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+        {/* Core Details */}
+        <section className="bg-card border border-border rounded-xl p-6">
+          <h2 className="text-xl font-bold text-foreground mb-6">Details</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Title *</label>
+              <input type="text" name="title" value={formData.title} onChange={handleChange} required
+                placeholder="AWS Certified Solutions Architect"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Issuer *</label>
+              <input type="text" name="issuer" value={formData.issuer} onChange={handleChange} required
+                placeholder="Amazon Web Services"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Description</label>
+              <textarea name="description" value={formData.description} onChange={handleChange} rows={3}
+                placeholder="Brief description of what this certification covers..."
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Issued Date *</label>
+                <input type="date" name="issued_date" value={formData.issued_date} onChange={handleChange} required
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
-            )}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Expiry Date <span className="text-muted-foreground">(optional)</span></label>
+                <input type="date" name="expiry_date" value={formData.expiry_date} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Credential ID <span className="text-muted-foreground">(optional)</span></label>
+              <input type="text" name="credential_id" value={formData.credential_id} onChange={handleChange}
+                placeholder="ABC-123-XYZ"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Certificate URL <span className="text-muted-foreground">(optional)</span></label>
+              <input type="url" name="certificate_url" value={formData.certificate_url} onChange={handleChange}
+                placeholder="https://..."
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="flex gap-4">
-          <Button type="submit" disabled={loading} className="flex-1">
-            {loading ? 'Saving...' : 'Add Certification'}
+        {/* Image */}
+        <section className="bg-card border border-border rounded-xl p-6">
+          <h2 className="text-xl font-bold text-foreground mb-6">Certificate Image</h2>
+          <ImageUploader
+            label="Certificate Image"
+            value={formData.image_url}
+            onChange={url => setFormData(p => ({ ...p, image_url: url }))}
+            folder="certifications"
+            hint="Upload the certificate badge or thumbnail image."
+          />
+          {formData.image_url && (
+            <div className="relative h-40 mt-4 rounded-xl overflow-hidden bg-muted border border-border">
+              <FallbackImage src={formData.image_url} alt="Certificate preview" fill className="object-contain" unoptimized
+                fallback={<div className="flex flex-col items-center gap-2 text-muted-foreground"><ImageIcon size={32} /><span className="text-xs">Image failed to load</span></div>}
+                containerClassName="absolute inset-0 flex items-center justify-center bg-muted" />
+            </div>
+          )}
+        </section>
+
+        {/* Settings */}
+        <section className="bg-card border border-border rounded-xl p-6">
+          <h2 className="text-xl font-bold text-foreground mb-4">Settings</h2>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="published" checked={formData.published} onChange={handleChange} className="w-5 h-5 accent-primary" />
+            <div>
+              <p className="font-medium text-foreground">Publish Certification</p>
+              <p className="text-sm text-muted-foreground">Make visible on your public portfolio</p>
+            </div>
+          </label>
+        </section>
+
+        <div className="flex items-center gap-4">
+          <Button type="submit" disabled={loading} className="flex-1 bg-primary hover:bg-primary/90">
+            {loading
+              ? <><Loader2 size={18} className="animate-spin mr-2" />Adding…</>
+              : <><Save size={18} className="mr-2" />Add Certification</>
+            }
           </Button>
           <Link href="/admin/certifications">
             <Button type="button" variant="outline">Cancel</Button>
