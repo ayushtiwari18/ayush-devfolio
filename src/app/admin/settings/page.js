@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button';
 
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
 
+// Matches real DB columns exactly
 const SOCIAL_FIELDS = [
-  { key: 'email',    label: 'Email',       type: 'email', icon: '✉' },
-  { key: 'github',   label: 'GitHub URL',  type: 'url',   icon: '🐙' },
-  { key: 'linkedin', label: 'LinkedIn URL',type: 'url',   icon: '💼' },
-  { key: 'twitter',  label: 'Twitter URL', type: 'url',   icon: '🐦' },
-  { key: 'website',  label: 'Website URL', type: 'url',   icon: '🌐' },
+  { key: 'github_url',    label: 'GitHub URL',    type: 'url',   icon: '🐙', placeholder: 'https://github.com/username' },
+  { key: 'linkedin_url', label: 'LinkedIn URL',  type: 'url',   icon: '💼', placeholder: 'https://linkedin.com/in/username' },
+  { key: 'twitter_url',  label: 'Twitter / X URL',type: 'url',  icon: '🐦', placeholder: 'https://twitter.com/username' },
+  { key: 'resume_url',   label: 'Resume URL',    type: 'url',   icon: '📄', placeholder: 'https://drive.google.com/...' },
+  { key: 'form_endpoint',label: 'Contact Form Endpoint', type: 'url', icon: '✉', placeholder: 'https://formspree.io/f/...' },
 ];
 
 const inputClass =
@@ -97,22 +98,22 @@ export default function AdminSettingsPage() {
           'x-admin-secret': ADMIN_SECRET,
         },
         body: JSON.stringify({
-          id:          profile.id,
-          name:        profile.name        || null,
-          title:       profile.title       || null,
-          description: profile.description || null,
-          image_url:   profile.image_url   || null,
-          // Social links — all 5 included in payload
-          email:       profile.email       || null,
-          github:      profile.github      || null,
-          linkedin:    profile.linkedin    || null,
-          twitter:     profile.twitter     || null,
-          website:     profile.website     || null,
+          id:           profile.id,
+          name:         profile.name         || null,
+          title:        profile.title        || null,
+          description:  profile.description  || null,
+          image_url:    profile.image_url    || null,
+          // Exact DB column names
+          github_url:   profile.github_url   || null,
+          linkedin_url: profile.linkedin_url || null,
+          twitter_url:  profile.twitter_url  || null,
+          resume_url:   profile.resume_url   || null,
+          form_endpoint:profile.form_endpoint|| null,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Save failed');
-      showToast('success', 'Profile updated! Changes go live on next visit.');
+      showToast('success', 'Profile saved! Hero section reflects changes on next visit.');
     } catch (err) {
       showToast('error', `Save failed: ${err.message}`);
     } finally {
@@ -130,7 +131,7 @@ export default function AdminSettingsPage() {
     <div className="space-y-8 max-w-4xl">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border backdrop-blur-sm transition-all ${
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border backdrop-blur-sm ${
           toast.type === 'success'
             ? 'bg-green-950/90 border-green-700 text-green-200'
             : 'bg-red-950/90 border-red-700 text-red-200'
@@ -145,8 +146,8 @@ export default function AdminSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">Hero Settings</h1>
-          <p className="text-muted-foreground text-sm">Update your profile image and hero content. Changes go live after saving.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1">Hero &amp; Profile Settings</h1>
+          <p className="text-muted-foreground text-sm">Changes go live after saving and a page refresh.</p>
         </div>
         <button onClick={fetchProfile} className="text-muted-foreground hover:text-foreground transition" title="Refresh from database">
           <RefreshCw size={18} />
@@ -154,7 +155,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Image */}
+        {/* Image uploader */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-card border border-border rounded-xl p-5">
             <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -177,7 +178,7 @@ export default function AdminSettingsPage() {
               </div>
             </div>
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
@@ -191,16 +192,17 @@ export default function AdminSettingsPage() {
             </div>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
             <div className="mt-4">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Or paste image URL</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Or paste image URL directly</label>
               <input type="url" value={profile?.image_url || ''}
-                onChange={(e) => { setPreviewUrl(e.target.value); handleChange('image_url', e.target.value); }}
+                onChange={e => { setPreviewUrl(e.target.value); handleChange('image_url', e.target.value); }}
                 placeholder="https://…" className={inputClass + ' text-sm'} />
             </div>
           </div>
         </div>
 
-        {/* Text fields */}
+        {/* Text + social fields */}
         <div className="lg:col-span-2 space-y-5">
+          {/* Hero content */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
               <User size={18} className="text-primary" />Hero Content
@@ -208,63 +210,67 @@ export default function AdminSettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Full Name</label>
-                <input type="text" value={profile?.name || ''} onChange={e => handleChange('name', e.target.value)}
+                <input type="text" value={profile?.name || ''}
+                  onChange={e => handleChange('name', e.target.value)}
                   placeholder="e.g. Ayush Tiwari" className={inputClass} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Professional Title</label>
-                <input type="text" value={profile?.title || ''} onChange={e => handleChange('title', e.target.value)}
-                  placeholder="e.g. Full Stack Developer · Backend Engineer" className={inputClass} />
+                <input type="text" value={profile?.title || ''}
+                  onChange={e => handleChange('title', e.target.value)}
+                  placeholder="e.g. Full Stack Developer" className={inputClass} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Hero Description</label>
-                <textarea value={profile?.description || ''} onChange={e => handleChange('description', e.target.value)}
-                  rows={4} placeholder="Write a short, recruiter-focused bio (2–3 sentences)."
+                <textarea value={profile?.description || ''}
+                  onChange={e => handleChange('description', e.target.value)}
+                  rows={4} placeholder="Short bio (2–3 sentences)…"
                   className={inputClass + ' resize-none'} />
-                <p className="text-xs text-muted-foreground mt-1">{(profile?.description || '').length} / 300 characters recommended</p>
+                <p className="text-xs text-muted-foreground mt-1">{(profile?.description || '').length} / 300 recommended</p>
               </div>
             </div>
           </div>
 
+          {/* Social + links */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
-              <Globe size={18} className="text-primary" />Social &amp; Contact Links
+              <Globe size={18} className="text-primary" />Links &amp; Social
             </h2>
             <div className="space-y-4">
-              {SOCIAL_FIELDS.map(({ key, label, type, icon }) => (
+              {SOCIAL_FIELDS.map(({ key, label, type, icon, placeholder }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
                     <span className="mr-1.5">{icon}</span>{label}
                   </label>
                   <input type={type} value={profile?.[key] || ''}
                     onChange={e => handleChange(key, e.target.value)}
-                    placeholder={type === 'email' ? 'you@example.com' : 'https://…'}
+                    placeholder={placeholder}
                     className={inputClass} />
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Save */}
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={fetchProfile} className="border-border" type="button">
               <RefreshCw size={16} className="mr-2" />Discard
             </Button>
             <Button onClick={handleSave} disabled={saving || uploading} className="bg-primary hover:bg-primary/90 min-w-[140px]">
               {saving
-                ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Saving…</span>
-                : <span className="flex items-center gap-2"><Save size={16} /> Save Changes</span>
-              }
+                ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Saving…</span>
+                : <span className="flex items-center gap-2"><Save size={16} />Save Changes</span>}
             </Button>
           </div>
         </div>
       </div>
 
       <div className="bg-amber-950/30 border border-amber-800/40 rounded-xl p-4 text-sm text-amber-200/80">
-        <strong className="text-amber-300">⚡ First-time setup:</strong>
-        {' '}Ensure your Supabase project has a <code className="bg-amber-950/50 px-1 rounded">profile_settings</code> table
-        and a public Storage bucket named <code className="bg-amber-950/50 px-1 rounded">avatars</code>.
-        Set <code className="bg-amber-950/50 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> and
-        <code className="bg-amber-950/50 px-1 rounded"> NEXT_PUBLIC_ADMIN_SECRET</code> in your environment variables.
+        <strong className="text-amber-300">⚡ Upload not working?</strong>
+        {' '}Make sure <code className="bg-amber-950/50 px-1 rounded">NEXT_PUBLIC_ADMIN_SECRET</code> and
+        <code className="bg-amber-950/50 px-1 rounded"> ADMIN_SECRET</code> are set to the
+        <strong> same value</strong> in your <code className="bg-amber-950/50 px-1 rounded">.env.local</code>.
+        Also ensure Supabase Storage has a public bucket named <code className="bg-amber-950/50 px-1 rounded">avatars</code>.
       </div>
     </div>
   );

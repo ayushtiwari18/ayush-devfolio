@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/constants';
-import { ArrowRight, Mail, FileDown } from 'lucide-react';
-
-const RESUME_URL = '/resume.pdf';
+import { ArrowRight, Mail, FileDown, Github, Linkedin, Twitter } from 'lucide-react';
 
 const textShadow = '0 2px 16px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.9)';
 
 export default function HeroContent({ profile, revealPhase, reveal }) {
+  const resumeUrl    = profile?.resume_url   || null;
+  const githubUrl    = profile?.github_url   || 'https://github.com/ayushtiwari18';
+  const linkedinUrl  = profile?.linkedin_url || 'https://linkedin.com/in/tiwariaayush';
+  const twitterUrl   = profile?.twitter_url  || null;
+
   return (
     <div className="relative z-10 flex flex-col items-center lg:items-start text-center lg:text-left">
 
@@ -31,9 +34,7 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
           style={{ textShadow }}
         >
           Hi, I&apos;m{' '}
-          <span className="text-primary">
-            {profile?.name || 'Ayush Tiwari'}
-          </span>
+          <span className="text-primary">{profile?.name || 'Ayush Tiwari'}</span>
         </h1>
       </div>
 
@@ -58,41 +59,53 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
         </p>
       </div>
 
-      {/* Phase 5 — Buttons */}
+      {/* Phase 5 — CTA Buttons */}
       <div style={reveal(5)}>
-        <div className="flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 flex-wrap">
-
-          {/* PRIMARY */}
+        <div className="flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 flex-wrap mb-6">
           <Link href={ROUTES.PROJECTS}>
-            <Button
-              size="lg"
-              className="h-12 px-6 sm:px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white text-sm sm:text-base font-semibold rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 transition-all hover:scale-105 border-0 whitespace-nowrap"
-            >
+            <Button size="lg"
+              className="h-12 px-6 sm:px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white text-sm sm:text-base font-semibold rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 transition-all hover:scale-105 border-0 whitespace-nowrap">
               View My Work <ArrowRight className="ml-2" size={18} />
             </Button>
           </Link>
 
-          {/* SECONDARY */}
           <Link href={ROUTES.CONTACT}>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-12 px-6 sm:px-8 border border-white/30 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 hover:border-white/50 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap"
-            >
-              <Mail className="mr-2" size={18} /> Get In Touch
+            <Button size="lg" variant="outline"
+              className="h-12 px-6 sm:px-8 border border-white/30 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 hover:border-white/50 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap">
+              <Mail className="mr-2" size={18} />Get In Touch
             </Button>
           </Link>
 
-          {/* TERTIARY */}
-          <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" aria-label="Download resume">
-            <Button
-              size="lg"
-              variant="ghost"
-              className="h-12 px-6 sm:px-8 border border-white/15 bg-transparent text-gray-400 hover:text-white hover:bg-black/30 hover:border-white/30 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap"
-            >
-              <FileDown className="mr-2" size={18} /> Resume
-            </Button>
-          </a>
+          {resumeUrl && (
+            <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" variant="ghost"
+                className="h-12 px-6 sm:px-8 border border-white/15 bg-transparent text-gray-400 hover:text-white hover:bg-black/30 hover:border-white/30 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap">
+                <FileDown className="mr-2" size={18} />Resume
+              </Button>
+            </a>
+          )}
+        </div>
+
+        {/* Social icon row — driven by DB */}
+        <div className="flex items-center justify-center lg:justify-start gap-4">
+          {githubUrl && (
+            <a href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
+              className="p-2 rounded-full border border-white/20 bg-black/30 text-gray-400 hover:text-white hover:border-white/50 backdrop-blur-sm transition-all hover:scale-110">
+              <Github size={18} />
+            </a>
+          )}
+          {linkedinUrl && (
+            <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+              className="p-2 rounded-full border border-white/20 bg-black/30 text-gray-400 hover:text-white hover:border-white/50 backdrop-blur-sm transition-all hover:scale-110">
+              <Linkedin size={18} />
+            </a>
+          )}
+          {twitterUrl && (
+            <a href={twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter / X"
+              className="p-2 rounded-full border border-white/20 bg-black/30 text-gray-400 hover:text-white hover:border-white/50 backdrop-blur-sm transition-all hover:scale-110">
+              <Twitter size={18} />
+            </a>
+          )}
         </div>
       </div>
     </div>

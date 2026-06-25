@@ -2,6 +2,10 @@
  * /api/admin/profile
  * GET   — return current profile_settings row
  * PATCH — update profile_settings row (requires x-admin-secret header)
+ *
+ * Real DB columns: id, name, title, description, resume_url,
+ *   github_url, linkedin_url, twitter_url, form_endpoint, image_url,
+ *   created_at, updated_at
  */
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
@@ -27,11 +31,16 @@ export async function GET() {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Auto-seed a blank row if the table is empty
+    // Auto-seed blank row if table is empty
     if (!data) {
       const { data: seeded, error: seedError } = await client
         .from('profile_settings')
-        .insert({ name: '', title: '', description: '', image_url: null })
+        .insert({
+          name: '', title: '', description: '',
+          image_url: null, resume_url: null,
+          github_url: null, linkedin_url: null,
+          twitter_url: null, form_endpoint: null,
+        })
         .select()
         .single();
       if (seedError) return NextResponse.json({ error: seedError.message }, { status: 500 });
@@ -52,21 +61,23 @@ export async function PATCH(request) {
 
   try {
     const body = await request.json();
-    const { id, name, title, description, image_url, email, github, linkedin, twitter, website } = body;
+    const {
+      id, name, title, description, image_url,
+      resume_url, github_url, linkedin_url, twitter_url, form_endpoint,
+    } = body;
 
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
     const updates = { updated_at: new Date().toISOString() };
-    if (name        !== undefined) updates.name        = name;
-    if (title       !== undefined) updates.title       = title;
-    if (description !== undefined) updates.description = description;
-    if (image_url   !== undefined) updates.image_url   = image_url;
-    // Social fields
-    if (email       !== undefined) updates.email       = email;
-    if (github      !== undefined) updates.github      = github;
-    if (linkedin    !== undefined) updates.linkedin    = linkedin;
-    if (twitter     !== undefined) updates.twitter     = twitter;
-    if (website     !== undefined) updates.website     = website;
+    if (name          !== undefined) updates.name          = name;
+    if (title         !== undefined) updates.title         = title;
+    if (description   !== undefined) updates.description   = description;
+    if (image_url     !== undefined) updates.image_url     = image_url;
+    if (resume_url    !== undefined) updates.resume_url    = resume_url;
+    if (github_url    !== undefined) updates.github_url    = github_url;
+    if (linkedin_url  !== undefined) updates.linkedin_url  = linkedin_url;
+    if (twitter_url   !== undefined) updates.twitter_url   = twitter_url;
+    if (form_endpoint !== undefined) updates.form_endpoint = form_endpoint;
 
     const { data, error } = await serviceClient()
       .from('profile_settings')
