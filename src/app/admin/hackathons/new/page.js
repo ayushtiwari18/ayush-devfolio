@@ -20,8 +20,8 @@ const EMPTY = {
 
 export default function NewHackathonPage() {
   const router = useRouter();
-  const [loading, setLoading]       = useState(false);
-  const [formData, setFormData]     = useState(EMPTY);
+  const [loading, setLoading]             = useState(false);
+  const [formData, setFormData]           = useState(EMPTY);
   const [learningInput, setLearningInput] = useState('');
 
   const handleChange = (e) => {
@@ -46,11 +46,11 @@ export default function NewHackathonPage() {
     try {
       const payload = {
         name:      formData.name,
-        role:      formData.role      || null,
-        result:    formData.result    || null,
-        learnings: formData.learnings.length ? formData.learnings : null,
-        image:     formData.image     || null,
-        date:      formData.date      || null,
+        role:      formData.role   || null,
+        result:    formData.result || null,
+        learnings: formData.learnings,   // always array, never null
+        image:     formData.image  || null,
+        date:      formData.date   || null,
       };
       const { error } = await supabase.from('hackathons').insert([payload]);
       if (error) throw error;
@@ -73,7 +73,6 @@ export default function NewHackathonPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Details */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Details</h2>
           <div className="space-y-4">
@@ -103,9 +102,8 @@ export default function NewHackathonPage() {
           </div>
         </section>
 
-        {/* Learnings */}
         <section className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-xl font-bold text-foreground mb-4">Key Learnings</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">Key Learnings <span className="text-sm font-normal text-muted-foreground">(optional)</span></h2>
           <div className="flex gap-2 mb-3">
             <input type="text" value={learningInput} onChange={e => setLearningInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLearning())}
@@ -125,7 +123,6 @@ export default function NewHackathonPage() {
           )}
         </section>
 
-        {/* Image */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Hackathon Image</h2>
           <ImageUploader

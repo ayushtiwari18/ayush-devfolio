@@ -13,10 +13,10 @@ import { supabase } from '@/lib/supabase';
 export default function EditHackathonPage() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading]         = useState(false);
-  const [fetching, setFetching]       = useState(true);
+  const [loading, setLoading]             = useState(false);
+  const [fetching, setFetching]           = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting]       = useState(false);
+  const [deleting, setDeleting]           = useState(false);
   const [learningInput, setLearningInput] = useState('');
   const [formData, setFormData] = useState({
     name: '', role: '', result: '', learnings: [], image: '', date: '',
@@ -24,21 +24,24 @@ export default function EditHackathonPage() {
 
   useEffect(() => { fetchHackathon(); }, [params.id]);
 
+  const parseLearnings = (raw) => {
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
+      try { return JSON.parse(raw); } catch { return []; }
+    }
+    return [];
+  };
+
   const fetchHackathon = async () => {
     try {
       const { data, error } = await supabase
         .from('hackathons').select('*').eq('id', params.id).single();
       if (error) throw error;
-      const learnings = Array.isArray(data.learnings)
-        ? data.learnings
-        : (typeof data.learnings === 'string'
-            ? (() => { try { return JSON.parse(data.learnings); } catch { return []; } })()
-            : []);
       setFormData({
         name:      data.name      ?? '',
         role:      data.role      ?? '',
         result:    data.result    ?? '',
-        learnings,
+        learnings: parseLearnings(data.learnings),
         image:     data.image     ?? '',
         date:      data.date      ?? '',
       });
@@ -71,11 +74,11 @@ export default function EditHackathonPage() {
     try {
       const payload = {
         name:      formData.name,
-        role:      formData.role      || null,
-        result:    formData.result    || null,
-        learnings: formData.learnings.length ? formData.learnings : null,
-        image:     formData.image     || null,
-        date:      formData.date      || null,
+        role:      formData.role   || null,
+        result:    formData.result || null,
+        learnings: formData.learnings,   // always array, never null
+        image:     formData.image  || null,
+        date:      formData.date   || null,
       };
       const { error } = await supabase.from('hackathons').update(payload).eq('id', params.id);
       if (error) throw error;
@@ -137,7 +140,6 @@ export default function EditHackathonPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Details */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Details</h2>
           <div className="space-y-4">
@@ -164,9 +166,8 @@ export default function EditHackathonPage() {
           </div>
         </section>
 
-        {/* Learnings */}
         <section className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-xl font-bold text-foreground mb-4">Key Learnings</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">Key Learnings <span className="text-sm font-normal text-muted-foreground">(optional)</span></h2>
           <div className="flex gap-2 mb-3">
             <input type="text" value={learningInput} onChange={e => setLearningInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLearning())}
@@ -186,7 +187,6 @@ export default function EditHackathonPage() {
           )}
         </section>
 
-        {/* Image */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Hackathon Image</h2>
           <ImageUploader
