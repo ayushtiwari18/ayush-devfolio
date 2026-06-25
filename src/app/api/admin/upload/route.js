@@ -1,23 +1,22 @@
 /**
  * /api/admin/upload
  * POST multipart/form-data with field "file" (image)
- * → uploads to Supabase Storage bucket "avatars"
+ * → uploads to Supabase Storage bucket "portfolio"
  * → returns { url: "<public URL>" }
  *
  * Requires:
  *  - x-admin-secret header matching ADMIN_SECRET env var
  *  - SUPABASE_SERVICE_ROLE_KEY env var (service role bypasses Storage RLS)
- *  - A PUBLIC bucket named "avatars" in Supabase Storage
+ *  - The "portfolio" bucket must be PUBLIC in Supabase Storage
  */
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey   = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const anonKey      = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const adminSecret  = process.env.ADMIN_SECRET || 'change-me-in-env';
 
-const BUCKET        = 'avatars';
+const BUCKET        = 'portfolio';   // ← your actual Supabase bucket name
 const MAX_BYTES     = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -30,9 +29,9 @@ export async function POST(request) {
 
   // 2. Guard: service key required for Storage uploads
   if (!serviceKey) {
-    console.error('[upload] SUPABASE_SERVICE_ROLE_KEY is not set in environment variables');
+    console.error('[upload] SUPABASE_SERVICE_ROLE_KEY is not set');
     return NextResponse.json(
-      { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY is missing. Add it to .env.local and restart.' },
+      { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY missing. Add it to .env.local and restart.' },
       { status: 500 }
     );
   }
@@ -54,9 +53,9 @@ export async function POST(request) {
     }
 
     const ext      = file.type.split('/')[1].replace('jpeg', 'jpg');
-    const fileName = `profile-${Date.now()}.${ext}`;
+    const fileName = `profile/avatar-${Date.now()}.${ext}`;
 
-    // Use service role key — bypasses Storage RLS
+    // Service role key — bypasses Storage RLS
     const client = createClient(supabaseUrl, serviceKey);
 
     const { error: uploadError } = await client.storage
