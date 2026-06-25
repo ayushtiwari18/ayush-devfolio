@@ -1,6 +1,7 @@
 import Hero from '@/components/sections/Hero';
 import dynamic from 'next/dynamic';
 import { HERO_COPY } from '@/lib/constants';
+import { getProfileSettings } from '@/services/profile.service';
 
 const CodingStats = dynamic(
   () => import('@/components/sections/CodingStats'),
@@ -24,16 +25,37 @@ export const metadata = {
   description:
     HERO_COPY.shortDescription ||
     'Portfolio of Ayush Tiwari - Full Stack Developer specialising in MERN, Next.js, Three.js, and cloud-native systems.',
-  // S6: explicit canonical for homepage
   alternates: {
     canonical: 'https://ayush-devfolio.vercel.app',
   },
 };
 
-export default function Home() {
+/**
+ * Home — Server Component.
+ * Fetches profile_settings from Supabase at request time so the Hero
+ * always reflects the latest data saved in Admin → Settings.
+ * Falls back to HERO_COPY constants if the DB is unreachable.
+ */
+export default async function Home() {
+  // Server-side fetch — no useEffect, no loading flash, no client bundle cost.
+  const dbProfile = await getProfileSettings().catch(() => null);
+
+  // Merge DB over static fallbacks so every field always has a value.
+  const profile = {
+    name:         dbProfile?.name         || HERO_COPY.name,
+    title:        dbProfile?.title        || HERO_COPY.title,
+    description:  dbProfile?.description  || HERO_COPY.description,
+    image_url:    dbProfile?.image_url    || null,
+    github_url:   dbProfile?.github_url   || 'https://github.com/ayushtiwari18',
+    linkedin_url: dbProfile?.linkedin_url || 'https://linkedin.com/in/tiwariaayush',
+    twitter_url:  dbProfile?.twitter_url  || null,
+    resume_url:   dbProfile?.resume_url   || null,
+    form_endpoint:dbProfile?.form_endpoint|| null,
+  };
+
   return (
     <main className="min-h-screen">
-      <Hero profile={HERO_COPY} />
+      <Hero profile={profile} />
       <CodingStats />
       <FeaturedProjects />
       <LatestBlog />
