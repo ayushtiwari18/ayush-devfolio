@@ -13,12 +13,13 @@ const EMPTY = {
   title: '',
   issuer: '',
   description: '',
-  image_url: '',
-  certificate_url: '',
-  issued_date: new Date().toISOString().split('T')[0],
+  image: '',
+  url: '',
+  date: new Date().toISOString().slice(0, 7), // YYYY-MM
   expiry_date: '',
   credential_id: '',
-  published: true,
+  verification_url: '',
+  category: '',
 };
 
 export default function NewCertificationPage() {
@@ -27,8 +28,8 @@ export default function NewCertificationPage() {
   const [formData, setFormData] = useState(EMPTY);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+    const { name, value } = e.target;
+    setFormData(p => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -36,15 +37,16 @@ export default function NewCertificationPage() {
     setLoading(true);
     try {
       const payload = {
-        title:           formData.title,
-        issuer:          formData.issuer,
-        description:     formData.description || null,
-        image_url:       formData.image_url || null,
-        certificate_url: formData.certificate_url || null,
-        issued_date:     formData.issued_date,
-        expiry_date:     formData.expiry_date || null,
-        credential_id:   formData.credential_id || null,
-        published:       formData.published,
+        title:            formData.title,
+        issuer:           formData.issuer,
+        description:      formData.description || null,
+        image:            formData.image || null,
+        url:              formData.url || null,
+        date:             formData.date || null,
+        expiry_date:      formData.expiry_date || null,
+        credential_id:    formData.credential_id || null,
+        verification_url: formData.verification_url || null,
+        category:         formData.category || null,
       };
       const { error } = await supabase.from('certifications').insert([payload]);
       if (error) throw error;
@@ -67,8 +69,6 @@ export default function NewCertificationPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-
-        {/* Core Details */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Details</h2>
           <div className="space-y-4">
@@ -85,6 +85,12 @@ export default function NewCertificationPage() {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Category</label>
+              <input type="text" name="category" value={formData.category} onChange={handleChange}
+                placeholder="Cloud, Security, Programming…"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-foreground mb-2">Description</label>
               <textarea name="description" value={formData.description} onChange={handleChange} rows={3}
                 placeholder="Brief description of what this certification covers..."
@@ -92,13 +98,13 @@ export default function NewCertificationPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Issued Date *</label>
-                <input type="date" name="issued_date" value={formData.issued_date} onChange={handleChange} required
+                <label className="block text-sm font-medium text-foreground mb-2">Date (YYYY-MM) *</label>
+                <input type="month" name="date" value={formData.date} onChange={handleChange} required
                   className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Expiry Date <span className="text-muted-foreground">(optional)</span></label>
-                <input type="date" name="expiry_date" value={formData.expiry_date} onChange={handleChange}
+                <input type="month" name="expiry_date" value={formData.expiry_date} onChange={handleChange}
                   className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
             </div>
@@ -109,43 +115,36 @@ export default function NewCertificationPage() {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Certificate URL <span className="text-muted-foreground">(optional)</span></label>
-              <input type="url" name="certificate_url" value={formData.certificate_url} onChange={handleChange}
+              <label className="block text-sm font-medium text-foreground mb-2">Certificate URL</label>
+              <input type="url" name="url" value={formData.url} onChange={handleChange}
+                placeholder="https://..."
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Verification URL <span className="text-muted-foreground">(optional)</span></label>
+              <input type="url" name="verification_url" value={formData.verification_url} onChange={handleChange}
                 placeholder="https://..."
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
         </section>
 
-        {/* Image */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Certificate Image</h2>
           <ImageUploader
             label="Certificate Image"
-            value={formData.image_url}
-            onChange={url => setFormData(p => ({ ...p, image_url: url }))}
+            value={formData.image}
+            onChange={url => setFormData(p => ({ ...p, image: url }))}
             folder="certifications"
             hint="Upload the certificate badge or thumbnail image."
           />
-          {formData.image_url && (
+          {formData.image && (
             <div className="relative h-40 mt-4 rounded-xl overflow-hidden bg-muted border border-border">
-              <FallbackImage src={formData.image_url} alt="Certificate preview" fill className="object-contain" unoptimized
+              <FallbackImage src={formData.image} alt="Certificate preview" fill className="object-contain" unoptimized
                 fallback={<div className="flex flex-col items-center gap-2 text-muted-foreground"><ImageIcon size={32} /><span className="text-xs">Image failed to load</span></div>}
                 containerClassName="absolute inset-0 flex items-center justify-center bg-muted" />
             </div>
           )}
-        </section>
-
-        {/* Settings */}
-        <section className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-xl font-bold text-foreground mb-4">Settings</h2>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" name="published" checked={formData.published} onChange={handleChange} className="w-5 h-5 accent-primary" />
-            <div>
-              <p className="font-medium text-foreground">Publish Certification</p>
-              <p className="text-sm text-muted-foreground">Make visible on your public portfolio</p>
-            </div>
-          </label>
         </section>
 
         <div className="flex items-center gap-4">
@@ -155,9 +154,7 @@ export default function NewCertificationPage() {
               : <><Save size={18} className="mr-2" />Add Certification</>
             }
           </Button>
-          <Link href="/admin/certifications">
-            <Button type="button" variant="outline">Cancel</Button>
-          </Link>
+          <Link href="/admin/certifications"><Button type="button" variant="outline">Cancel</Button></Link>
         </div>
       </form>
     </div>
