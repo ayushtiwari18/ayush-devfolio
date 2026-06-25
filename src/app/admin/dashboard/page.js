@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   FolderGit2, FileText, Award, Trophy,
   MessageSquare, Eye, TrendingUp, Plus, ArrowRight,
+  AlertCircle, Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -15,22 +16,32 @@ export default function AdminDashboardPage() {
     blogPosts:      { total: 0, published: 0, views: 0 },
     certifications: 0,
     hackathons:     0,
+    timeline:       0,
     messages:       { total: 0, unread: 0 },
     totalViews:     0,
   });
   const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
 
   useEffect(() => { getDashboardStats(); }, []);
 
   const getDashboardStats = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const [projects, blogPosts, certifications, hackathons, messages] = await Promise.all([
+      const [projects, blogPosts, certifications, hackathons, timeline, messages] = await Promise.all([
         supabase.from('projects').select('id, view_count, published', { count: 'exact' }),
         supabase.from('blog_posts').select('id, view_count, published', { count: 'exact' }),
         supabase.from('certifications').select('id', { count: 'exact' }),
         supabase.from('hackathons').select('id', { count: 'exact' }),
+        supabase.from('timeline_events').select('id', { count: 'exact' }),
         supabase.from('contact_messages').select('id, status', { count: 'exact' }),
       ]);
+
+      // Throw on first error
+      for (const res of [projects, blogPosts, certifications, hackathons, timeline, messages]) {
+        if (res.error) throw res.error;
+      }
 
       const totalProjectViews = projects.data?.reduce((acc, p) => acc + (p.view_count || 0), 0) || 0;
       const totalBlogViews    = blogPosts.data?.reduce((acc, b) => acc + (b.view_count || 0), 0) || 0;
@@ -48,15 +59,17 @@ export default function AdminDashboardPage() {
           views:     totalBlogViews,
         },
         certifications: certifications.count || 0,
-        hackathons:     hackathons.count || 0,
+        hackathons:     hackathons.count     || 0,
+        timeline:       timeline.count       || 0,
         messages: {
           total:  messages.count || 0,
           unread: unreadMessages,
         },
         totalViews: totalProjectViews + totalBlogViews,
       });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+      setError('Failed to load dashboard. Check your Supabase connection.');
     } finally {
       setLoading(false);
     }
@@ -64,99 +77,89 @@ export default function AdminDashboardPage() {
 
   const statsCards = [
     {
-      title: 'Total Projects',
-      value: stats.projects.total,
-      subtitle: `${stats.projects.published} published`,
-      icon: FolderGit2,
-      color: 'text-blue-500',
+      title:   'Total Projects',
+      value:   stats.projects.total,
+      subtitle:`${stats.projects.published} published`,
+      icon:    FolderGit2,
+      color:   'text-blue-500',
       bgColor: 'bg-blue-500/10',
-      href: '/admin/projects',
+      href:    '/admin/projects',
     },
     {
-      title: 'Blog Posts',
-      value: stats.blogPosts.total,
-      subtitle: `${stats.blogPosts.published} published`,
-      icon: FileText,
-      color: 'text-purple-500',
+      title:   'Blog Posts',
+      value:   stats.blogPosts.total,
+      subtitle:`${stats.blogPosts.published} published`,
+      icon:    FileText,
+      color:   'text-purple-500',
       bgColor: 'bg-purple-500/10',
-      href: '/admin/blog',
+      href:    '/admin/blog',
     },
     {
-      title: 'Certifications',
-      value: stats.certifications,
-      subtitle: 'Professional credentials',
-      icon: Award,
-      color: 'text-green-500',
+      title:   'Certifications',
+      value:   stats.certifications,
+      subtitle:'Professional credentials',
+      icon:    Award,
+      color:   'text-green-500',
       bgColor: 'bg-green-500/10',
-      href: '/admin/certifications',
+      href:    '/admin/certifications',
     },
     {
-      title: 'Hackathons',
-      value: stats.hackathons,
-      subtitle: 'Competitions participated',
-      icon: Trophy,
-      color: 'text-yellow-500',
+      title:   'Hackathons',
+      value:   stats.hackathons,
+      subtitle:'Competitions participated',
+      icon:    Trophy,
+      color:   'text-yellow-500',
       bgColor: 'bg-yellow-500/10',
-      href: '/admin/hackathons',
+      href:    '/admin/hackathons',
     },
     {
-      title: 'Messages',
-      value: stats.messages.total,
-      subtitle: `${stats.messages.unread} unread`,
-      icon: MessageSquare,
-      color: 'text-pink-500',
+      title:   'Timeline Events',
+      value:   stats.timeline,
+      subtitle:'Career milestones',
+      icon:    Clock,
+      color:   'text-indigo-500',
+      bgColor: 'bg-indigo-500/10',
+      href:    '/admin/timeline',
+    },
+    {
+      title:   'Messages',
+      value:   stats.messages.total,
+      subtitle:`${stats.messages.unread} unread`,
+      icon:    MessageSquare,
+      color:   'text-pink-500',
       bgColor: 'bg-pink-500/10',
-      href: '/admin/messages',
-      badge: stats.messages.unread > 0 ? stats.messages.unread : null,
+      href:    '/admin/messages',
+      badge:   stats.messages.unread > 0 ? stats.messages.unread : null,
     },
     {
-      title: 'Total Views',
-      value: stats.totalViews.toLocaleString(),
-      subtitle: 'All content',
-      icon: Eye,
-      color: 'text-cyan-500',
+      title:   'Total Views',
+      value:   stats.totalViews.toLocaleString(),
+      subtitle:'All content combined',
+      icon:    Eye,
+      color:   'text-cyan-500',
       bgColor: 'bg-cyan-500/10',
+      href:    null, // no dedicated page — render as div not Link
     },
   ];
 
   const quickActions = [
-    {
-      title: 'New Project',
-      description: 'Add a new project to your portfolio',
-      icon: FolderGit2,
-      href: '/admin/projects/new',
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
-    },
-    {
-      title: 'New Blog Post',
-      description: 'Write a new blog article',
-      icon: FileText,
-      href: '/admin/blog/new',
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10',
-    },
-    {
-      title: 'Add Certificate',
-      description: 'Add a new certification',
-      icon: Award,
-      href: '/admin/certifications/new',
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10',
-    },
-    {
-      title: 'Add Hackathon',
-      description: 'Record hackathon participation',
-      icon: Trophy,
-      href: '/admin/hackathons/new',
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-500/10',
-    },
+    { title:'New Project',    description:'Add a new project to your portfolio', icon:FolderGit2, href:'/admin/projects/new',      color:'text-blue-500',   bgColor:'bg-blue-500/10'   },
+    { title:'New Blog Post',  description:'Write a new blog article',             icon:FileText,  href:'/admin/blog/new',          color:'text-purple-500', bgColor:'bg-purple-500/10' },
+    { title:'Add Certificate',description:'Add a new certification',              icon:Award,     href:'/admin/certifications/new',color:'text-green-500',  bgColor:'bg-green-500/10'  },
+    { title:'Add Hackathon',  description:'Record hackathon participation',        icon:Trophy,    href:'/admin/hackathons/new',    color:'text-yellow-500', bgColor:'bg-yellow-500/10' },
   ];
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[400px]">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+      <AlertCircle className="text-destructive" size={40} />
+      <p className="text-destructive text-center max-w-sm">{error}</p>
+      <Button onClick={getDashboardStats} variant="outline">Try Again</Button>
     </div>
   );
 
@@ -167,7 +170,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back! 👋</h1>
-            <p className="text-muted-foreground">Here's what's happening with your portfolio today.</p>
+            <p className="text-muted-foreground">Here’s what’s happening with your portfolio today.</p>
           </div>
           <Link href="/" target="_blank">
             <Button className="bg-primary hover:bg-primary/90">
@@ -183,9 +186,9 @@ export default function AdminDashboardPage() {
           <TrendingUp size={24} className="text-primary" />Overview
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {statsCards.map(stat => (
-            <Link key={stat.title} href={stat.href || '#'}>
-              <div className="bg-card border border-border rounded-xl p-6 card-glow hover-lift transition-all cursor-pointer">
+          {statsCards.map(stat => {
+            const inner = (
+              <div className="bg-card border border-border rounded-xl p-6 card-glow hover-lift transition-all h-full" style={{ cursor: stat.href ? 'pointer' : 'default' }}>
                 <div className="flex items-start justify-between mb-4">
                   <div className={`p-3 ${stat.bgColor} rounded-lg`}>
                     <stat.icon className={stat.color} size={24} />
@@ -198,8 +201,11 @@ export default function AdminDashboardPage() {
                 <p className="text-sm text-muted-foreground mb-2">{stat.title}</p>
                 <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
               </div>
-            </Link>
-          ))}
+            );
+            return stat.href
+              ? <Link key={stat.title} href={stat.href}>{inner}</Link>
+              : <div key={stat.title}>{inner}</div>;
+          })}
         </div>
       </div>
 
