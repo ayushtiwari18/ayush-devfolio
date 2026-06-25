@@ -3,16 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Plus,
-  Edit,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Star,
-  Clock,
-  Search,
+  Plus, Edit, Trash2, CheckCircle, XCircle,
+  Star, Clock, Search, AlertCircle, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/utils/formatDate';
 
@@ -33,14 +28,17 @@ const TYPE_LABELS = {
 export default function AdminTimelinePage() {
   const [events,  setEvents]  = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
   const [search,  setSearch]  = useState('');
   const [filter,  setFilter]  = useState('all');
-  const [deleting, setDeleting] = useState(null);
+  const [deleting,     setDeleting]     = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => { fetchEvents(); }, []);
 
   const fetchEvents = async () => {
     setLoading(true);
+    setError(null);
     try {
       const { data, error } = await supabase
         .from('timeline_events')
@@ -51,6 +49,7 @@ export default function AdminTimelinePage() {
       setEvents(data || []);
     } catch (err) {
       console.error('Error fetching timeline events:', err);
+      setError('Failed to load timeline events.');
     } finally {
       setLoading(false);
     }
@@ -63,26 +62,23 @@ export default function AdminTimelinePage() {
         .update({ [field]: !current })
         .eq('id', id);
       if (error) throw error;
-      setEvents(prev =>
-        prev.map(e => e.id === id ? { ...e, [field]: !current } : e)
-      );
+      setEvents(prev => prev.map(e => e.id === id ? { ...e, [field]: !current } : e));
     } catch (err) {
       console.error(`Error toggling ${field}:`, err);
     }
   };
 
-  const deleteEvent = async (id) => {
-    if (!window.confirm('Delete this timeline event? This cannot be undone.')) return;
-    setDeleting(id);
+  const handleConfirmedDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(deleteTarget.id);
     try {
       const { error } = await supabase
-        .from('timeline_events')
-        .delete()
-        .eq('id', id);
+        .from('timeline_events').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      setEvents(prev => prev.filter(e => e.id !== id));
+      setEvents(prev => prev.filter(e => e.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err) {
-      console.error('Error deleting event:', err);
+      alert('Failed to delete event: ' + err.message);
     } finally {
       setDeleting(null);
     }
@@ -96,28 +92,44 @@ export default function AdminTimelinePage() {
     return matchesType && matchesSearch;
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+      <AlertCircle className="text-destructive" size={40} />
+      <p className="text-destructive text-center">{error}</p>
+      <Button onClick={fetchEvents} variant="outline">Try Again</Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Timeline Event?"
+        description={deleteTarget ? `"${deleteTarget.title}" will be permanently removed. This cannot be undone.` : ''}
+        confirmLabel="Delete Event"
+        danger
+        loading={!!deleting}
+        onConfirm={handleConfirmedDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Timeline Events</h1>
           <p className="text-muted-foreground">
-            {events.length} total · {events.filter(e => e.published).length} published
+            {events.length} total &middot; {events.filter(e => e.published).length} published
           </p>
         </div>
         <Link href="/admin/timeline/new">
           <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2" size={18} />
-            Add Event
+            <Plus className="mr-2" size={18} />Add Event
           </Button>
         </Link>
       </div>
@@ -156,9 +168,7 @@ export default function AdminTimelinePage() {
           <h3 className="text-xl font-bold text-foreground mb-2">No events found</h3>
           <p className="text-muted-foreground mb-6">Try a different filter or add your first event.</p>
           <Link href="/admin/timeline/new">
-            <Button className="bg-primary hover:bg-primary/90">
-              <Plus className="mr-2" size={18} /> Add First Event
-            </Button>
+            <Button className="bg-primary hover:bg-primary/90"><Plus className="mr-2" size={18} />Add First Event</Button>
           </Link>
         </div>
       )}
@@ -190,8 +200,7 @@ export default function AdminTimelinePage() {
               </div>
 
               {/* Toggles */}
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Published toggle */}
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <button
                   title={event.published ? 'Click to unpublish' : 'Click to publish'}
                   onClick={() => toggleField(event.id, 'published', event.published)}
@@ -205,7 +214,6 @@ export default function AdminTimelinePage() {
                   {event.published ? 'Live' : 'Draft'}
                 </button>
 
-                {/* Featured toggle */}
                 <button
                   title={event.featured ? 'Remove from featured' : 'Mark as featured'}
                   onClick={() => toggleField(event.id, 'featured', event.featured)}
@@ -219,22 +227,22 @@ export default function AdminTimelinePage() {
                   {event.featured ? 'Featured' : 'Normal'}
                 </button>
 
-                {/* Edit */}
                 <Link href={`/admin/timeline/${event.id}/edit`}>
                   <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
                     <Edit size={14} />
                   </Button>
                 </Link>
 
-                {/* Delete */}
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={deleting === event.id}
-                  onClick={() => deleteEvent(event.id)}
+                  onClick={() => setDeleteTarget({ id: event.id, title: event.title })}
                   className="border-red-500/40 text-red-500 hover:bg-red-500/10"
                 >
-                  <Trash2 size={14} />
+                  {deleting === event.id
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Trash2 size={14} />}
                 </Button>
               </div>
             </div>
