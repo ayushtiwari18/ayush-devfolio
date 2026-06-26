@@ -1,68 +1,73 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const CATEGORIES = [
+  { id: 'frontend', label: 'Frontend'      },
+  { id: 'backend',  label: 'Backend'       },
+  { id: 'tools',    label: 'Tools & DevOps'},
+  { id: 'other',    label: 'Other'         },
+];
+
+// Fallback skills used while DB loads or if DB is empty
+const FALLBACK = {
+  frontend: [
+    { name: 'React',        level: 95 }, { name: 'Next.js',      level: 90 },
+    { name: 'TypeScript',   level: 85 }, { name: 'Tailwind CSS', level: 95 },
+    { name: 'JavaScript',   level: 90 }, { name: 'HTML/CSS',     level: 95 },
+  ],
+  backend: [
+    { name: 'Node.js',    level: 85 }, { name: 'Express',    level: 80 },
+    { name: 'MongoDB',    level: 75 }, { name: 'PostgreSQL', level: 80 },
+    { name: 'Supabase',   level: 85 }, { name: 'REST APIs',  level: 90 },
+  ],
+  tools: [
+    { name: 'Git/GitHub', level: 90 }, { name: 'VS Code',  level: 95 },
+    { name: 'Docker',     level: 70 }, { name: 'Vercel',   level: 90 },
+    { name: 'AWS',        level: 65 }, { name: 'CI/CD',    level: 75 },
+  ],
+  other: [
+    { name: 'Problem Solving',    level: 90 }, { name: 'System Design',      level: 80 },
+    { name: 'Team Collaboration', level: 95 }, { name: 'Agile/Scrum',        level: 85 },
+    { name: 'Technical Writing',  level: 80 }, { name: 'UI/UX Design',       level: 75 },
+  ],
+};
 
 export default function Skills() {
   const [activeCategory, setActiveCategory] = useState('frontend');
+  const [dbSkills, setDbSkills] = useState(null); // null = loading
 
-  const categories = [
-    { id: 'frontend', label: 'Frontend' },
-    { id: 'backend', label: 'Backend' },
-    { id: 'tools', label: 'Tools & DevOps' },
-    { id: 'other', label: 'Other' },
-  ];
+  useEffect(() => {
+    fetch('/api/public/skills')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setDbSkills(Array.isArray(data) && data.length > 0 ? data : []))
+      .catch(() => setDbSkills([]));
+  }, []);
 
-  const skills = {
-    frontend: [
-      { name: 'React', level: 95 },
-      { name: 'Next.js', level: 90 },
-      { name: 'TypeScript', level: 85 },
-      { name: 'Tailwind CSS', level: 95 },
-      { name: 'JavaScript', level: 90 },
-      { name: 'HTML/CSS', level: 95 },
-    ],
-    backend: [
-      { name: 'Node.js', level: 85 },
-      { name: 'Express', level: 80 },
-      { name: 'MongoDB', level: 75 },
-      { name: 'PostgreSQL', level: 80 },
-      { name: 'Supabase', level: 85 },
-      { name: 'REST APIs', level: 90 },
-    ],
-    tools: [
-      { name: 'Git/GitHub', level: 90 },
-      { name: 'VS Code', level: 95 },
-      { name: 'Docker', level: 70 },
-      { name: 'Vercel', level: 90 },
-      { name: 'AWS', level: 65 },
-      { name: 'CI/CD', level: 75 },
-    ],
-    other: [
-      { name: 'Problem Solving', level: 90 },
-      { name: 'System Design', level: 80 },
-      { name: 'Team Collaboration', level: 95 },
-      { name: 'Agile/Scrum', level: 85 },
-      { name: 'Technical Writing', level: 80 },
-      { name: 'UI/UX Design', level: 75 },
-    ],
+  // Group DB skills by category; fall back per-category if none in DB
+  const getSkills = (catId) => {
+    if (!dbSkills) return FALLBACK[catId] || []; // still loading
+    const group = dbSkills.filter(s => s.category === catId);
+    return group.length > 0 ? group : FALLBACK[catId] || [];
   };
+
+  const displayed = getSkills(activeCategory);
 
   return (
     <section id="skills" className="py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Section Header */}
+
         <div className="text-center mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-            Skills & <span className="gradient-text">Expertise</span>
+            Skills &amp; <span className="gradient-text">Expertise</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Technologies and tools I use to bring ideas to life
           </p>
         </div>
 
-        {/* Category Tabs */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {categories.map((category) => (
+          {CATEGORIES.map((category) => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
@@ -77,11 +82,10 @@ export default function Skills() {
           ))}
         </div>
 
-        {/* Skills Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {skills[activeCategory].map((skill, index) => (
+          {displayed.map((skill, index) => (
             <div
-              key={index}
+              key={skill.id || index}
               className="bg-card border border-border rounded-xl p-6 card-glow hover-lift transition-all"
             >
               <div className="flex items-center justify-between mb-3">
@@ -92,11 +96,12 @@ export default function Skills() {
                 <div
                   className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${skill.level}%` }}
-                ></div>
+                />
               </div>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );
