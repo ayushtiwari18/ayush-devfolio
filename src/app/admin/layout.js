@@ -16,6 +16,10 @@ import {
   X,
   User,
   Clock,
+  Code2,
+  Layers,
+  GraduationCap,
+  Briefcase,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -60,19 +64,22 @@ export default function AdminLayout({ children }) {
   }
 
   const navigation = [
-    { name: 'Dashboard',       href: '/admin/dashboard',   icon: LayoutDashboard },
-    { name: 'Projects',        href: '/admin/projects',    icon: FolderGit2      },
-    { name: 'Blog Posts',      href: '/admin/blog',        icon: FileText        },
-    { name: 'Timeline',        href: '/admin/timeline',    icon: Clock           },
-    { name: 'Certifications',  href: '/admin/certifications', icon: Award        },
-    { name: 'Hackathons',      href: '/admin/hackathons',  icon: Trophy          },
-    { name: 'Messages',        href: '/admin/messages',    icon: MessageSquare   },
-    { name: 'Settings',        href: '/admin/settings',    icon: Settings        },
+    { name: 'Dashboard',      href: '/admin/dashboard',      icon: LayoutDashboard },
+    { name: 'Projects',       href: '/admin/projects',       icon: FolderGit2      },
+    { name: 'Blog Posts',     href: '/admin/blog',           icon: FileText        },
+    { name: 'Timeline',       href: '/admin/timeline',       icon: Clock           },
+    { name: 'Experience',     href: '/admin/experience',     icon: Briefcase       },
+    { name: 'Education',      href: '/admin/education',      icon: GraduationCap   },
+    { name: 'Skills',         href: '/admin/skills',         icon: Layers          },
+    { name: 'Certifications', href: '/admin/certifications', icon: Award           },
+    { name: 'Hackathons',     href: '/admin/hackathons',     icon: Trophy          },
+    { name: 'Status',         href: '/admin/status',         icon: Code2           },
+    { name: 'Messages',       href: '/admin/messages',       icon: MessageSquare   },
+    { name: 'Settings',       href: '/admin/settings',       icon: Settings        },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -80,14 +87,12 @@ export default function AdminLayout({ children }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 z-50 h-screen w-64 bg-card border-r border-border transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="p-6 border-b border-border">
             <Link href="/admin/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
@@ -100,7 +105,6 @@ export default function AdminLayout({ children }) {
             </Link>
           </div>
 
-          {/* Nav */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map(item => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -122,7 +126,6 @@ export default function AdminLayout({ children }) {
             })}
           </nav>
 
-          {/* User */}
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -144,9 +147,7 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main */}
       <div className="lg:pl-64">
-        {/* Topbar */}
         <header className="sticky top-0 z-30 bg-card border-b border-border backdrop-blur-sm bg-card/95">
           <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-4">
@@ -172,7 +173,6 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        {/* Content */}
         <main className="p-6">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>

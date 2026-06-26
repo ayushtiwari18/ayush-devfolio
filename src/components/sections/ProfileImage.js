@@ -1,21 +1,23 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
+import { User } from 'lucide-react';
 
 /**
- * ProfileImage — clean, no heavy ring disc.
- * Just the circular photo + soft glow underneath.
- * No Framer Motion loops — all CSS animations (compositor thread).
- * Reveal animation handled by parent Hero.js revealPhase transitions.
+ * ProfileImage
+ * - If imageUrl is a valid URL: renders Next.js <Image>
+ * - On load error OR no imageUrl: renders a styled placeholder div (no broken img, no infinite loop)
  */
 export default function ProfileImage({ imageUrl }) {
-  // Fallback chain: DB url -> local optimised photo -> generic SVG
-  const src = imageUrl || '/profile.png';
+  const [imgError, setImgError] = useState(false);
+
+  const showImage = imageUrl && !imgError;
 
   return (
     <div className="relative flex items-center justify-center w-full">
 
-      {/* Soft ambient glow behind photo — does NOT look like a disc */}
+      {/* Ambient glow */}
       <div
         aria-hidden="true"
         className="absolute rounded-full profile-glow-pulse"
@@ -27,26 +29,34 @@ export default function ProfileImage({ imageUrl }) {
         }}
       />
 
-      {/* Photo container — clean circle, thin glow border only */}
+      {/* Photo container */}
       <div
-        className="relative rounded-full overflow-hidden"
+        className="relative rounded-full overflow-hidden bg-muted flex items-center justify-center"
         style={{
           width: 'min(260px, 72vw)',
           height: 'min(260px, 72vw)',
           boxShadow: '0 0 0 2px rgba(99,102,241,0.5), 0 0 32px rgba(99,102,241,0.3), 0 0 64px rgba(139,92,246,0.15)',
         }}
       >
-        <Image
-          src={src}
-          alt="Ayush Tiwari — Full Stack Developer"
-          fill
-          className="object-cover object-top"
-          priority
-          sizes="(max-width: 640px) 260px, (max-width: 1024px) 300px, 360px"
-          onError={(e) => { e.currentTarget.src = '/placeholder-avatar.svg'; }}
-        />
+        {showImage ? (
+          <Image
+            src={imageUrl}
+            alt="Ayush Tiwari — Full Stack Developer"
+            fill
+            className="object-cover object-top"
+            priority
+            sizes="(max-width: 640px) 260px, (max-width: 1024px) 300px, 360px"
+            onError={() => setImgError(true)}
+            unoptimized={imageUrl.includes('supabase.co')}
+          />
+        ) : (
+          // Fallback: initials avatar — no broken image, no file needed in public/
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
+            <User size={80} className="text-primary/60" />
+          </div>
+        )}
 
-        {/* Subtle inner vignette so edges blend with dark background */}
+        {/* Inner vignette */}
         <div
           aria-hidden="true"
           className="absolute inset-0 rounded-full pointer-events-none"
@@ -56,7 +66,7 @@ export default function ProfileImage({ imageUrl }) {
         />
       </div>
 
-      {/* Accent dots — two small glowing dots, CSS pulsed */}
+      {/* Accent dots */}
       <div aria-hidden="true" className="absolute -top-1 right-4 w-3 h-3 bg-primary rounded-full shadow-lg shadow-primary/60 profile-dot-pulse" />
       <div aria-hidden="true" className="absolute -bottom-1 left-4 w-3 h-3 bg-accent rounded-full shadow-lg shadow-accent/60 profile-dot-pulse" style={{ animationDelay: '1s' }} />
     </div>

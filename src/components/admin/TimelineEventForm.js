@@ -2,18 +2,7 @@
 
 /**
  * TimelineEventForm — shared form for create + edit
- * --------------------------------------------------
- * Fields:
- * - type        : select (6 options)
- * - title       : text input
- * - description : textarea (600 char limit)
- * - start_date  : date input
- * - end_date    : date input (blank = ongoing)
- * - media       : multi-image upload (ImageUploader, multiple=true)
- * - video_url   : text input (optional)
- * - order       : number (tie-breaker within same month)
- * - featured    : checkbox
- * - published   : checkbox
+ * Order is now managed exclusively via drag-and-drop on the list page.
  */
 
 import { useState } from 'react';
@@ -36,12 +25,10 @@ const EMPTY = {
   start_date:  '',
   end_date:    '',
   video_url:   '',
-  order:       0,
   featured:    false,
   published:   false,
 };
 
-// Extract existing image URLs from media JSONB array
 const extractUrls = (media) => {
   if (!Array.isArray(media)) return [];
   return media.map(m => (typeof m === 'string' ? m : m?.url)).filter(Boolean);
@@ -58,14 +45,12 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
     } : {}),
   }));
 
-  // media is kept as string[] (URLs); serialised to JSONB on submit
   const [mediaUrls, setMediaUrls] = useState(() => extractUrls(initialData?.media));
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Convert string[] → JSONB array expected by the DB
     const mediaJsonb = mediaUrls.map((url, i) => ({
       url,
       alt:    `${form.title} image ${i + 1}`,
@@ -79,7 +64,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
       start_date:  form.start_date,
       end_date:    form.end_date || null,
       video_url:   form.video_url.trim() || null,
-      order:       Number(form.order) || 0,
       featured:    form.featured,
       published:   form.published,
       media:       mediaJsonb,
@@ -94,7 +78,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
   return (
     <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-6 space-y-5">
 
-      {/* Type */}
       <div>
         <label className={labelClass}>Event Type</label>
         <select value={form.type} onChange={e => set('type', e.target.value)} required className={inputClass}>
@@ -102,7 +85,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
         </select>
       </div>
 
-      {/* Title */}
       <div>
         <label className={labelClass}>Title <span className="text-red-500">*</span></label>
         <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
@@ -110,7 +92,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
           required maxLength={120} className={inputClass} />
       </div>
 
-      {/* Description */}
       <div>
         <label className={labelClass}>Description <span className="text-red-500">*</span></label>
         <textarea value={form.description} onChange={e => set('description', e.target.value)}
@@ -120,7 +101,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
         <p className={hintClass}>{form.description.length}/600</p>
       </div>
 
-      {/* Dates */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Start Date <span className="text-red-500">*</span></label>
@@ -135,7 +115,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
         </div>
       </div>
 
-      {/* Media images — multi upload */}
       <ImageUploader
         label="Media Images"
         multiple
@@ -145,7 +124,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
         hint="These appear in the media column of the timeline card. Upload up to 6 images."
       />
 
-      {/* Video URL */}
       <div>
         <label className={labelClass}>Video URL</label>
         <input type="url" value={form.video_url} onChange={e => set('video_url', e.target.value)}
@@ -154,15 +132,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
         <p className={hintClass}>Optional. If provided, shows a video preview instead of images.</p>
       </div>
 
-      {/* Order */}
-      <div>
-        <label className={labelClass}>Order</label>
-        <input type="number" value={form.order} onChange={e => set('order', e.target.value)}
-          min={0} max={99} className={`${inputClass} w-32`} />
-        <p className={hintClass}>Lower number = shown first within the same month. Default: 0</p>
-      </div>
-
-      {/* Toggles */}
       <div className="flex flex-col sm:flex-row gap-4 pt-1">
         <label className="flex items-center gap-3 cursor-pointer">
           <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)}
@@ -182,7 +151,6 @@ export default function TimelineEventForm({ initialData, onSubmit, saving, submi
         </label>
       </div>
 
-      {/* Submit */}
       <div className="pt-2">
         <Button type="submit" disabled={saving}
           className="w-full sm:w-auto bg-primary hover:bg-primary/90 flex items-center justify-center">
