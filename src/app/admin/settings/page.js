@@ -11,11 +11,11 @@ import { Button } from '@/components/ui/button';
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
 
 const SOCIAL_FIELDS = [
-  { key: 'github_url',    label: 'GitHub URL',              type: 'url',  icon: '🐙', placeholder: 'https://github.com/username' },
-  { key: 'linkedin_url', label: 'LinkedIn URL',             type: 'url',  icon: '💼', placeholder: 'https://linkedin.com/in/username' },
-  { key: 'twitter_url',  label: 'Twitter / X URL',          type: 'url',  icon: '🐦', placeholder: 'https://twitter.com/username' },
-  { key: 'resume_url',   label: 'Resume URL',               type: 'url',  icon: '📄', placeholder: 'https://drive.google.com/...' },
-  { key: 'form_endpoint',label: 'Contact Form Endpoint',    type: 'url',  icon: '✉',  placeholder: 'https://formspree.io/f/...' },
+  { key: 'github_url',    label: 'GitHub URL',           type: 'url', icon: '🐙', placeholder: 'https://github.com/username' },
+  { key: 'linkedin_url', label: 'LinkedIn URL',          type: 'url', icon: '💼', placeholder: 'https://linkedin.com/in/username' },
+  { key: 'twitter_url',  label: 'Twitter / X URL',       type: 'url', icon: '🐦', placeholder: 'https://twitter.com/username' },
+  { key: 'resume_url',   label: 'Resume URL',            type: 'url', icon: '📄', placeholder: 'https://drive.google.com/...' },
+  { key: 'form_endpoint',label: 'Contact Form Endpoint', type: 'url', icon: '✉',  placeholder: 'https://formspree.io/f/...' },
 ];
 
 const TABS = [
@@ -64,7 +64,6 @@ export default function AdminSettingsPage() {
   const handleChange = (field, value) =>
     setProfile(prev => ({ ...prev, [field]: value }));
 
-  // ── About highlights helpers ──────────────────────────────────────────────
   const highlights = Array.isArray(profile?.about_highlights) ? profile.about_highlights : [];
 
   const addHighlight = () => {
@@ -77,7 +76,6 @@ export default function AdminSettingsPage() {
   const removeHighlight = (idx) =>
     handleChange('about_highlights', highlights.filter((_, i) => i !== idx));
 
-  // ── Image upload ─────────────────────────────────────────────────────────
   const uploadImage = async (file) => {
     if (!file) return;
     setUploading(true);
@@ -107,34 +105,29 @@ export default function AdminSettingsPage() {
     uploadImage(e.dataTransfer.files?.[0]);
   };
 
-  // ── Save ─────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!profile?.id) return;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/profile', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': ADMIN_SECRET,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
         body: JSON.stringify({
-          id:                profile.id,
-          name:              profile.name              || null,
-          title:             profile.title             || null,
-          description:       profile.description       || null,
-          image_url:         profile.image_url         || null,
-          github_url:        profile.github_url        || null,
-          linkedin_url:      profile.linkedin_url      || null,
-          twitter_url:       profile.twitter_url       || null,
-          resume_url:        profile.resume_url        || null,
-          form_endpoint:     profile.form_endpoint     || null,
-          // About columns
-          about_bio:         profile.about_bio         || null,
-          about_highlights:  highlights.length ? highlights : null,
-          about_location:    profile.about_location    || null,
-          about_email:       profile.about_email       || null,
-          about_availability:profile.about_availability|| null,
+          id:                 profile.id,
+          name:               profile.name               || null,
+          title:              profile.title              || null,
+          description:        profile.description        || null,
+          image_url:          profile.image_url          || null,
+          github_url:         profile.github_url         || null,
+          linkedin_url:       profile.linkedin_url       || null,
+          twitter_url:        profile.twitter_url        || null,
+          resume_url:         profile.resume_url         || null,
+          form_endpoint:      profile.form_endpoint      || null,
+          about_bio:          profile.about_bio          || null,
+          about_highlights:   highlights.length ? highlights : null,
+          about_location:     profile.about_location     || null,
+          about_email:        profile.about_email        || null,
+          about_availability: profile.about_availability || null,
         }),
       });
       const json = await res.json();
@@ -156,7 +149,6 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-6 max-w-4xl">
 
-      {/* Toast */}
       {toast && (
         <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border backdrop-blur-sm ${
           toast.type === 'success'
@@ -170,7 +162,6 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Settings</h1>
@@ -181,7 +172,6 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-muted/40 p-1 rounded-xl w-fit">
         {TABS.map(tab => (
           <button
@@ -201,8 +191,6 @@ export default function AdminSettingsPage() {
       {/* ═══════════════════ TAB: HERO ═══════════════════ */}
       {activeTab === 'hero' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Image uploader */}
           <div className="lg:col-span-1 space-y-4">
             <div className="bg-card border border-border rounded-xl p-5">
               <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -247,7 +235,6 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          {/* Text + social */}
           <div className="lg:col-span-2 space-y-5">
             <div className="bg-card border border-border rounded-xl p-6">
               <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
@@ -312,14 +299,11 @@ export default function AdminSettingsPage() {
       {/* ═══════════════════ TAB: ABOUT ═══════════════════ */}
       {activeTab === 'about' && (
         <div className="space-y-6">
-
-          {/* Bio + meta */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
               <Info size={18} className="text-primary" />About Page Content
             </h2>
             <div className="space-y-5">
-
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">About Bio</label>
                 <textarea value={profile?.about_bio || ''}
@@ -329,24 +313,20 @@ export default function AdminSettingsPage() {
                   className={inputClass + ' resize-none'} />
                 <p className="text-xs text-muted-foreground mt-1">{(profile?.about_bio || '').length} chars</p>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">📍 Location</label>
                   <input type="text" value={profile?.about_location || ''}
                     onChange={e => handleChange('about_location', e.target.value)}
-                    placeholder="e.g. Jabalpur, India"
-                    className={inputClass} />
+                    placeholder="e.g. Jabalpur, India" className={inputClass} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">📧 Public Email</label>
                   <input type="email" value={profile?.about_email || ''}
                     onChange={e => handleChange('about_email', e.target.value)}
-                    placeholder="hello@example.com"
-                    className={inputClass} />
+                    placeholder="hello@example.com" className={inputClass} />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">🟢 Availability Status</label>
                 <input type="text" value={profile?.about_availability || ''}
@@ -355,33 +335,25 @@ export default function AdminSettingsPage() {
                   className={inputClass} />
                 <p className="text-xs text-muted-foreground mt-1">Shown as a badge on the About page.</p>
               </div>
-
             </div>
           </div>
 
-          {/* Highlights */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2">
               ✨ Key Highlights
             </h2>
             <p className="text-xs text-muted-foreground mb-4">Short bullet points shown on your About page — e.g. "AWS Certified", "5600+ GitHub commits".</p>
-
-            {/* Existing tags */}
             <div className="flex flex-wrap gap-2 mb-4">
               {highlights.map((h, i) => (
                 <span key={i} className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm border border-primary/20">
                   {h}
-                  <button onClick={() => removeHighlight(i)} className="hover:text-red-400 transition">
-                    <X size={13} />
-                  </button>
+                  <button onClick={() => removeHighlight(i)} className="hover:text-red-400 transition"><X size={13} /></button>
                 </span>
               ))}
               {highlights.length === 0 && (
                 <p className="text-sm text-muted-foreground italic">No highlights yet — add your first one below.</p>
               )}
             </div>
-
-            {/* Add highlight */}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -398,7 +370,6 @@ export default function AdminSettingsPage() {
             <p className="text-xs text-muted-foreground mt-1.5">Press Enter or click + to add.</p>
           </div>
 
-          {/* Save */}
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={fetchProfile} className="border-border" type="button">
               <RefreshCw size={16} className="mr-2" />Discard
@@ -408,18 +379,6 @@ export default function AdminSettingsPage() {
                 ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Saving…</span>
                 : <span className="flex items-center gap-2"><Save size={16} />Save About</span>}
             </Button>
-          </div>
-
-          {/* SQL reminder */}
-          <div className="bg-amber-950/30 border border-amber-800/40 rounded-xl p-4 text-sm text-amber-200/80">
-            <strong className="text-amber-300">⚡ First time using About tab?</strong>
-            {' '}Run this SQL in your Supabase dashboard (SQL Editor) to add the new columns:
-            <pre className="mt-2 text-xs bg-black/30 rounded-lg p-3 overflow-x-auto text-amber-100/80">{`ALTER TABLE profile_settings
-  ADD COLUMN IF NOT EXISTS about_bio          text,
-  ADD COLUMN IF NOT EXISTS about_highlights   text[],
-  ADD COLUMN IF NOT EXISTS about_location     text,
-  ADD COLUMN IF NOT EXISTS about_email        text,
-  ADD COLUMN IF NOT EXISTS about_availability text;`}</pre>
           </div>
         </div>
       )}
