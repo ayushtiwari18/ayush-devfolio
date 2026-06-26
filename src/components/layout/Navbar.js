@@ -3,39 +3,32 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, X, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Menu, X } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 
 const navLinks = [
-  { href: ROUTES.HOME, label: 'Home' },
-  { href: ROUTES.ABOUT, label: 'About' },
-  { href: ROUTES.PROJECTS, label: 'Projects' },
-  { href: ROUTES.BLOG, label: 'Blog' },
-  { href: ROUTES.CERTIFICATIONS, label: 'Certifications' },
-  { href: ROUTES.HACKATHONS, label: 'Hackathons' },
-  { href: ROUTES.CONTACT, label: 'Contact' },
+  { href: ROUTES.HOME,           label: 'Home'          },
+  { href: ROUTES.ABOUT,          label: 'About'         },
+  { href: ROUTES.PROJECTS,       label: 'Projects'      },
+  { href: ROUTES.BLOG,           label: 'Blog'          },
+  { href: ROUTES.CERTIFICATIONS, label: 'Certifications'},
+  { href: ROUTES.HACKATHONS,     label: 'Hackathons'    },
+  { href: ROUTES.CONTACT,        label: 'Contact'       },
 ];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled,       setScrolled]       = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const isActive = (href) => {
-    if (href === ROUTES.HOME) {
-      return pathname === href;
-    }
-    return pathname.startsWith(href);
-  };
+  const isActive = (href) =>
+    href === ROUTES.HOME ? pathname === href : pathname.startsWith(href);
 
   return (
     <nav
@@ -47,6 +40,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
           <Link href={ROUTES.HOME} className="flex items-center space-x-2 group">
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center font-bold text-white group-hover:scale-110 transition-transform">
@@ -55,7 +49,7 @@ export default function Navbar() {
             <span className="text-xl font-bold gradient-text hidden sm:block">Ayush Tiwari</span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center space-x-1">
             {navLinks.map((link) => (
               <Link
@@ -72,21 +66,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Admin Button (Desktop) */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href={ROUTES.ADMIN}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-primary text-primary hover:bg-primary hover:text-white"
-              >
-                <Settings size={16} className="mr-2" />
-                Admin
-              </Button>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
+          {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg text-foreground hover:bg-primary/10 transition-colors"
@@ -97,7 +77,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-background/95 backdrop-blur-lg border-t border-border">
           <div className="px-4 py-4 space-y-2">
@@ -115,15 +95,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link href={ROUTES.ADMIN} onClick={() => setMobileMenuOpen(false)}>
-              <Button
-                variant="outline"
-                className="w-full border-primary text-primary hover:bg-primary hover:text-white mt-4"
-              >
-                <Settings size={16} className="mr-2" />
-                Admin Panel
-              </Button>
-            </Link>
           </div>
         </div>
       )}

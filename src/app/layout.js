@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BfCacheManager from '@/components/BfCacheManager';
 import AdminKeyTrigger from '@/components/AdminKeyTrigger';
+import { headers } from 'next/headers';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -28,17 +29,12 @@ export const metadata = {
   publisher: 'Ayush Tiwari',
   formatDetection: { email: false, address: false, telephone: false },
   alternates: { canonical: BASE_URL },
-  verification: {
-    google: 'LMliRi04tiYL0NYuVuXjMFxj4bNUXCzDCVOLZ8zLPa0',
-  },
+  verification: { google: 'LMliRi04tiYL0NYuVuXjMFxj4bNUXCzDCVOLZ8zLPa0' },
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: BASE_URL,
+    type: 'website', locale: 'en_US', url: BASE_URL,
     siteName: 'Ayush Tiwari Portfolio',
     title: 'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js',
-    description:
-      'Full Stack Developer building production-grade web systems. MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. 5,600+ GitHub commits.',
+    description: 'Full Stack Developer building production-grade web systems. MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. 5,600+ GitHub commits.',
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Ayush Tiwari - Full Stack Developer' }],
   },
   twitter: {
@@ -56,7 +52,12 @@ export const metadata = {
   classification: 'Web Development Portfolio',
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') ||
+                   headersList.get('next-url') || '/';
+  const isAdmin = pathname.startsWith('/admin');
+
   return (
     <html lang="en" className={`scroll-smooth dark ${inter.variable}`}>
       <head>
@@ -69,10 +70,8 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Person',
-              name: 'Ayush Tiwari',
-              url: BASE_URL,
+              '@context': 'https://schema.org', '@type': 'Person',
+              name: 'Ayush Tiwari', url: BASE_URL,
               sameAs: [
                 'https://github.com/ayushtiwari18',
                 'https://www.linkedin.com/in/ayushtiwari18',
@@ -92,20 +91,16 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'ProfessionalService',
+              '@context': 'https://schema.org', '@type': 'ProfessionalService',
               name: 'Ayush Tiwari - Full Stack Development Services',
               description: 'Production-grade Full Stack Web Development, API Engineering, and Cloud Architecture services',
-              url: BASE_URL,
-              serviceType: 'Web Development',
-              areaServed: 'Worldwide',
-              availableLanguage: 'English',
+              url: BASE_URL, serviceType: 'Web Development', areaServed: 'Worldwide', availableLanguage: 'English',
             }),
           }}
         />
       </head>
       <body className={`${inter.className} relative`}>
-        {/* Global admin key trigger — invisible, no UI */}
+        {/* Secret admin key trigger — renders nothing visible */}
         <AdminKeyTrigger />
         <BfCacheManager />
         <a
@@ -115,9 +110,11 @@ export default function RootLayout({ children }) {
           Skip to main content
         </a>
         <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
-        <Navbar />
-        <main id="main-content" className="pt-16 relative z-10">{children}</main>
-        <Footer />
+        {!isAdmin && <Navbar />}
+        <main id="main-content" className={!isAdmin ? 'pt-16 relative z-10' : ''}>
+          {children}
+        </main>
+        {!isAdmin && <Footer />}
       </body>
     </html>
   );
