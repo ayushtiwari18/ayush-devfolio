@@ -1,31 +1,54 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
-  Plus, Trash2, Save, RefreshCw, Loader2,
-  CheckCircle, AlertCircle, Layers, X,
+  Plus, Trash2, RefreshCw, Loader2,
+  CheckCircle, AlertCircle, Layers, X, ImageIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
 
 const CATEGORIES = [
-  { id: 'frontend', label: 'Frontend' },
-  { id: 'backend',  label: 'Backend'  },
-  { id: 'tools',    label: 'Tools & DevOps' },
-  { id: 'other',    label: 'Other'    },
+  { id: 'frontend', label: 'Frontend'      },
+  { id: 'backend',  label: 'Backend'       },
+  { id: 'tools',    label: 'Tools & DevOps'},
+  { id: 'other',    label: 'Other'         },
 ];
 
 const inputClass =
   'w-full px-3 py-2.5 bg-background border border-border rounded-lg text-foreground text-sm ' +
   'focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground transition';
 
-const EMPTY_FORM = { name: '', icon: '', category: 'frontend', level: 80 };
+const EMPTY_FORM = { name: '', icon: '', category: 'frontend' };
+
+function IconPreview({ src, name, size = 32 }) {
+  const [err, setErr] = useState(false);
+  useEffect(() => setErr(false), [src]);
+  if (!src || err) return (
+    <div
+      style={{ width: size, height: size }}
+      className="rounded bg-muted flex items-center justify-center text-muted-foreground"
+    >
+      <ImageIcon size={size * 0.55} />
+    </div>
+  );
+  return (
+    <Image
+      src={src} alt={name || 'icon'}
+      width={size} height={size}
+      className="rounded object-contain"
+      onError={() => setErr(true)}
+      unoptimized
+    />
+  );
+}
 
 export default function AdminSkillsPage() {
   const [skills, setSkills]       = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [saving, setSaving]       = useState(null); // id or 'new'
+  const [adding, setAdding]       = useState(false);
   const [deleting, setDeleting]   = useState(null);
   const [toast, setToast]         = useState(null);
   const [form, setForm]           = useState(EMPTY_FORM);
@@ -42,8 +65,7 @@ export default function AdminSkillsPage() {
     try {
       const res = await fetch('/api/admin/skills');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setSkills(data || []);
+      setSkills((await res.json()) || []);
     } catch (err) {
       showToast('error', `Failed to load: ${err.message}`);
     } finally {
@@ -53,15 +75,14 @@ export default function AdminSkillsPage() {
 
   useEffect(() => { fetchSkills(); }, [fetchSkills]);
 
-  // Add new skill
   const handleAdd = async () => {
     if (!form.name.trim()) return showToast('error', 'Skill name is required.');
-    setSaving('new');
+    setAdding(true);
     try {
       const res = await fetch('/api/admin/skills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
-        body: JSON.stringify({ ...form, level: Number(form.level) }),
+        body: JSON.stringify({ name: form.name.trim(), icon: form.icon.trim() || null, category: form.category }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Add failed');
@@ -73,34 +94,10 @@ export default function AdminSkillsPage() {
     } catch (err) {
       showToast('error', `Add failed: ${err.message}`);
     } finally {
-      setSaving(null);
+      setAdding(false);
     }
   };
 
-  // Inline level edit
-  const handleLevelChange = (id, level) =>
-    setSkills(prev => prev.map(s => s.id === id ? { ...s, level: Number(level) } : s));
-
-  const handleUpdateLevel = async (skill) => {
-    setSaving(skill.id);
-    try {
-      const res = await fetch('/api/admin/skills', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
-        body: JSON.stringify({ id: skill.id, level: skill.level }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Update failed');
-      setSkills(prev => prev.map(s => s.id === json.id ? json : s));
-      showToast('success', `"${json.name}" updated!`);
-    } catch (err) {
-      showToast('error', `Update failed: ${err.message}`);
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  // Delete
   const handleDelete = async (skill) => {
     if (!confirm(`Delete "${skill.name}"? This cannot be undone.`)) return;
     setDeleting(skill.id);
@@ -166,46 +163,67 @@ export default function AdminSkillsPage() {
           <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
             <Plus size={16} className="text-primary" />New Skill
           </h2>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {/* Name */}
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Skill Name <span className="text-red-400">*</span></label>
-              <input type="text" value={form.name}
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Skill Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text" value={form.name} autoFocus
                 onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. React" className={inputClass} autoFocus />
+                onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                placeholder="e.g. React" className={inputClass}
+              />
             </div>
+
+            {/* Category */}
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Icon Slug <span className="text-muted-foreground/60">(optional)</span></label>
-              <input type="text" value={form.icon}
-                onChange={e => setForm(p => ({ ...p, icon: e.target.value }))}
-                placeholder="e.g. react, nodejs, docker" className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Category</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Category</label>
               <select value={form.category}
                 onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
                 className={inputClass}>
                 {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Proficiency Level — <span className="text-primary font-semibold">{form.level}%</span>
+
+            {/* Icon URL — full width with preview */}
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Icon Image URL
+                <span className="text-muted-foreground/60 font-normal ml-1">
+                  — paste any image URL (PNG, SVG, WebP)
+                </span>
               </label>
-              <input type="range" min={5} max={100} step={5}
-                value={form.level}
-                onChange={e => setForm(p => ({ ...p, level: Number(e.target.value) }))}
-                className="w-full accent-primary mt-2" />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>5%</span><span>100%</span>
+              <div className="flex items-center gap-3">
+                {/* Live preview thumbnail */}
+                <div className="shrink-0 w-12 h-12 rounded-xl border border-border bg-muted flex items-center justify-center overflow-hidden">
+                  <IconPreview src={form.icon} name={form.name} size={36} />
+                </div>
+                <input
+                  type="url" value={form.icon}
+                  onChange={e => setForm(p => ({ ...p, icon: e.target.value }))}
+                  placeholder="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
+                  className={inputClass}
+                />
               </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Tip: use{' '}
+                <a href="https://devicon.dev" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">devicon.dev</a>
+                {' '}or{' '}
+                <a href="https://simpleicons.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">simpleicons.org</a>
+                {' '}— right-click any icon → Copy image address.
+              </p>
             </div>
           </div>
+
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => { setForm(EMPTY_FORM); setShowAdd(false); }} className="border-border">
               Cancel
             </Button>
-            <Button onClick={handleAdd} disabled={saving === 'new'} className="bg-primary hover:bg-primary/90 min-w-[120px]">
-              {saving === 'new'
+            <Button onClick={handleAdd} disabled={adding} className="bg-primary hover:bg-primary/90 min-w-[120px]">
+              {adding
                 ? <span className="flex items-center gap-2"><Loader2 size={15} className="animate-spin" />Adding…</span>
                 : <span className="flex items-center gap-2"><Plus size={15} />Add Skill</span>}
             </Button>
@@ -218,15 +236,12 @@ export default function AdminSkillsPage() {
         {CATEGORIES.map(cat => {
           const count = skills.filter(s => s.category === cat.id).length;
           return (
-            <button
-              key={cat.id}
-              onClick={() => setActiveTab(cat.id)}
+            <button key={cat.id} onClick={() => setActiveTab(cat.id)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                 activeTab === cat.id
                   ? 'bg-primary text-white shadow-md shadow-primary/20'
                   : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/40'
-              }`}
-            >
+              }`}>
               {cat.label}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 activeTab === cat.id ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
@@ -236,61 +251,40 @@ export default function AdminSkillsPage() {
         })}
       </div>
 
-      {/* Skills List */}
+      {/* Skills Grid */}
       {filtered.length === 0 ? (
         <div className="bg-card border border-dashed border-border rounded-xl p-12 text-center">
           <Layers size={40} className="text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground">No skills in this category yet.</p>
-          <Button onClick={() => { setForm(p => ({ ...p, category: activeTab })); setShowAdd(true); }}
+          <Button
+            onClick={() => { setForm(p => ({ ...p, category: activeTab })); setShowAdd(true); }}
             variant="outline" className="mt-4 border-primary/40 hover:bg-primary/10">
             <Plus size={15} className="mr-2" />Add First Skill
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {filtered.map(skill => (
-            <div key={skill.id} className="bg-card border border-border rounded-xl p-5 flex items-center gap-4 group hover:border-primary/30 transition-all">
-              {/* Skill name + icon slug */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-foreground">{skill.name}</span>
-                  {skill.icon && (
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-mono">{skill.icon}</span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground capitalize">{skill.category}</p>
-              </div>
-
-              {/* Level slider */}
-              <div className="flex items-center gap-3 w-48">
-                <input
-                  type="range" min={5} max={100} step={5}
-                  value={skill.level ?? 80}
-                  onChange={e => handleLevelChange(skill.id, e.target.value)}
-                  className="flex-1 accent-primary"
-                />
-                <span className="text-sm font-bold text-primary w-10 text-right">{skill.level ?? 80}%</span>
-              </div>
-
-              {/* Save level */}
-              <button
-                onClick={() => handleUpdateLevel(skill)}
-                disabled={saving === skill.id}
-                title="Save level"
-                className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
-              >
-                {saving === skill.id ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              </button>
-
-              {/* Delete */}
+            <div key={skill.id}
+              className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-3 group hover:border-primary/40 transition-all relative"
+            >
+              {/* Delete button */}
               <button
                 onClick={() => handleDelete(skill)}
                 disabled={deleting === skill.id}
-                title="Delete skill"
-                className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                className="absolute top-2 right-2 p-1.5 rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                title="Delete"
               >
-                {deleting === skill.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {deleting === skill.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </button>
+
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center overflow-hidden">
+                <IconPreview src={skill.icon} name={skill.name} size={36} />
+              </div>
+
+              {/* Name */}
+              <span className="text-sm font-semibold text-foreground text-center leading-tight">{skill.name}</span>
             </div>
           ))}
         </div>

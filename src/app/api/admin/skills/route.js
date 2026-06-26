@@ -10,13 +10,12 @@ function adminClient() {
   );
 }
 
-// GET — list all skills ordered by category then name
 export async function GET() {
   try {
     const supabase = adminClient();
     const { data, error } = await supabase
       .from('skills')
-      .select('*')
+      .select('id, name, icon, category, created_at')
       .order('category')
       .order('name');
     if (error) throw error;
@@ -26,18 +25,17 @@ export async function GET() {
   }
 }
 
-// POST — add a new skill
 export async function POST(request) {
   if (request.headers.get('x-admin-secret') !== secret)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
-    const { name, icon, category, level } = await request.json();
+    const { name, icon, category } = await request.json();
     if (!name?.trim()) return NextResponse.json({ error: 'name is required' }, { status: 400 });
     const supabase = adminClient();
     const { data, error } = await supabase
       .from('skills')
-      .insert({ name: name.trim(), icon: icon?.trim() || null, category: category || 'other', level: level ?? 80 })
-      .select()
+      .insert({ name: name.trim(), icon: icon?.trim() || null, category: category || 'other' })
+      .select('id, name, icon, category, created_at')
       .single();
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
@@ -46,28 +44,6 @@ export async function POST(request) {
   }
 }
 
-// PATCH — update level (or any field) of a skill
-export async function PATCH(request) {
-  if (request.headers.get('x-admin-secret') !== secret)
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  try {
-    const { id, ...fields } = await request.json();
-    if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
-    const supabase = adminClient();
-    const { data, error } = await supabase
-      .from('skills')
-      .update({ ...fields, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return NextResponse.json(data);
-  } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-
-// DELETE — remove a skill by id
 export async function DELETE(request) {
   if (request.headers.get('x-admin-secret') !== secret)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

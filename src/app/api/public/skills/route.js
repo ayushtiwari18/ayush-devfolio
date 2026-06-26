@@ -9,7 +9,7 @@ export async function GET() {
     );
     const { data, error } = await supabase
       .from('skills')
-      .select('*')
+      .select('id, name, icon, category')
       .order('category')
       .order('name');
     if (error) throw error;
