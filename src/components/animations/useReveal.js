@@ -4,19 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * useReveal — shared IntersectionObserver hook.
- *
- * Replaces the 3+ inline duplicates across CodingStats, Experience, Education.
- *
- * @param {object} options
- * @param {number}  options.threshold  — 0–1 visibility ratio to trigger (default 0.12)
- * @param {boolean} options.once       — disconnect after first trigger (default true)
- * @param {string}  options.rootMargin — IOb rootMargin string (default '0px')
- *
- * @returns {{ ref: React.RefObject, visible: boolean }}
- *
- * Usage:
- *   const { ref, visible } = useReveal({ threshold: 0.15 });
- *   <div ref={ref} style={{ opacity: visible ? 1 : 0 }} />
+ * SSR-safe: visible is always false on server and during hydration.
+ * IntersectionObserver only runs client-side after mount.
  */
 export function useReveal({
   threshold = 0.12,
@@ -24,13 +13,21 @@ export function useReveal({
   rootMargin = '0px',
 } = {}) {
   const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
+  // isMounted guards against SSR/hydration mismatch
+  // visible starts false on both server and client first render
+  const [isMounted, setIsMounted] = useState(false);
+  const [visible, setVisible]     = useState(false);
 
+  // Step 1: mark mounted after hydration
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Step 2: only observe once mounted (never runs on server)
+  useEffect(() => {
+    if (!isMounted) return;
     const el = ref.current;
     if (!el) return;
-
-    // Already visible — skip observer setup (e.g. hot-reload)
     if (visible && once) return;
 
     const observer = new IntersectionObserver(
@@ -48,18 +45,15 @@ export function useReveal({
     observer.observe(el);
     return () => observer.disconnect();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threshold, once, rootMargin]);
+  }, [isMounted, threshold, once, rootMargin]);
 
   return { ref, visible };
 }
 
 /**
- * fadeUp — convenience style object for reveal transitions.
- * Pure CSS, zero JS on animation frame — compositor-thread only.
- *
- * @param {boolean} visible
- * @param {number}  delay   — seconds
- * @param {number}  distance — px to travel (default 20)
+ * fadeUp — compositor-thread CSS transition style object.
+ * Returns identical styles on server and client first render (both invisible)
+ * so hydration always matches.
  */
 export function fadeUp(visible, delay = 0, distance = 20) {
   return {
