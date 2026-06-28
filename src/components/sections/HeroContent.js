@@ -8,10 +8,10 @@ import { ArrowRight, Mail, FileDown, Github, Linkedin, Twitter } from 'lucide-re
 const textShadow = '0 2px 16px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.9)';
 
 export default function HeroContent({ profile, revealPhase, reveal }) {
-  const resumeUrl    = profile?.resume_url   || null;
-  const githubUrl    = profile?.github_url   || 'https://github.com/ayushtiwari18';
-  const linkedinUrl  = profile?.linkedin_url || 'https://linkedin.com/in/tiwariaayush';
-  const twitterUrl   = profile?.twitter_url  || null;
+  const resumeUrl   = profile?.resume_url   || null;
+  const githubUrl   = profile?.github_url   || 'https://github.com/ayushtiwari18';
+  const linkedinUrl = profile?.linkedin_url || 'https://linkedin.com/in/tiwariaayush';
+  const twitterUrl  = profile?.twitter_url  || null;
 
   return (
     <div className="relative z-10 flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -27,10 +27,10 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
         </div>
       </div>
 
-      {/* Phase 2 — Name */}
+      {/* Phase 2 — Name — Clash Display applied */}
       <div style={reveal(2)}>
         <h1
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-3 sm:mb-4 leading-tight tracking-tight"
+          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white mb-3 sm:mb-4 leading-tight tracking-tighter"
           style={{ textShadow }}
         >
           Hi, I&apos;m{' '}
@@ -86,7 +86,7 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
           )}
         </div>
 
-        {/* Social icon row — driven by DB */}
+        {/* Social icons */}
         <div className="flex items-center justify-center lg:justify-start gap-4">
           {githubUrl && (
             <a href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
