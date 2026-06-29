@@ -17,7 +17,6 @@
     --muted:              210 40% 96.1%;
     --muted-foreground:   215.4 16.3% 46.9%;
 
-    /* accent — cyan-blue, keeps gradient in the blue family */
     --accent:             199 89% 48%;
     --accent-foreground:  210 40% 98%;
 
@@ -37,7 +36,6 @@
     --popover:            222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
 
-    /* primary — blue */
     --primary:            217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
@@ -46,7 +44,6 @@
     --muted:              217.2 32.6% 17.5%;
     --muted-foreground:   215 20.2% 65.1%;
 
-    /* accent — cyan-blue (dark mode), gradient stays blue→cyan */
     --accent:             199 89% 55%;
     --accent-foreground:  222.2 47.4% 11.2%;
 
@@ -128,7 +125,6 @@
 
   /* ==========================================================
      GRADIENT & GLASS UTILITIES
-     gradient-text: blue → cyan (no purple anywhere)
      ========================================================== */
 
   .gradient-text {
@@ -221,8 +217,11 @@
 
   /* ==========================================================
      INFINITE MARQUEE — Skills Section
-     Two directions: marquee (left) and marquee-reverse (right)
-     Pause on hover via .marquee-track:hover
+     FIX: no CSS custom property for duration — React sets
+     animationDuration inline which overrides the 30s default.
+     flex-wrap: nowrap + min-width: 100% prevent pill wrapping.
+     overflow-hidden lives on .marquee-row ONLY — never on a
+     parent section, otherwise translateX is clipped/invisible.
      ========================================================== */
 
   @keyframes marquee {
@@ -235,18 +234,22 @@
     100% { transform: translateX(0); }
   }
 
+  /* Track: flex row, no wrap, full-width baseline */
   .marquee-track {
     display: flex;
+    flex-wrap: nowrap;
     width: max-content;
+    min-width: 100%;
     will-change: transform;
   }
 
+  /* React overrides animationDuration inline — 30s is just a safe fallback */
   .marquee-track--forward {
-    animation: marquee var(--marquee-duration, 30s) linear infinite;
+    animation: marquee 30s linear infinite;
   }
 
   .marquee-track--reverse {
-    animation: marquee-reverse var(--marquee-duration, 30s) linear infinite;
+    animation: marquee-reverse 30s linear infinite;
   }
 
   /* Pause entire row on hover */
@@ -254,7 +257,7 @@
     animation-play-state: paused;
   }
 
-  /* Left + right fade masks */
+  /* Left + right fade masks — only on the overflow container */
   .marquee-fade {
     -webkit-mask-image: linear-gradient(
       to right,

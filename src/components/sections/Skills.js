@@ -46,7 +46,7 @@ const FALLBACK = {
 // ---------------------------------------------------------------------------
 // SkillIcon — error-safe image with letter fallback
 // ---------------------------------------------------------------------------
-function SkillIcon({ src, name, size = 36 }) {
+function SkillIcon({ src, name, size = 24 }) {
   const [err, setErr] = useState(false);
   useEffect(() => setErr(false), [src]);
 
@@ -77,7 +77,8 @@ function SkillIcon({ src, name, size = 36 }) {
 // ---------------------------------------------------------------------------
 // SkillPill — single pill shown in the marquee
 // ---------------------------------------------------------------------------
-function SkillPill({ skill, isOther }) {
+function SkillPill({ skill }) {
+  const isEmoji = Boolean(skill.emoji);
   return (
     <div className="
       inline-flex items-center gap-2.5 mx-2
@@ -86,12 +87,12 @@ function SkillPill({ skill, isOther }) {
       hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/10
       transition-all duration-200 cursor-default select-none shrink-0
     ">
-      {isOther && skill.emoji ? (
-        <span style={{ fontSize: 20, lineHeight: 1 }} role="img" aria-hidden="true">
+      {isEmoji ? (
+        <span style={{ fontSize: 18, lineHeight: 1 }} role="img" aria-hidden="true">
           {skill.emoji}
         </span>
       ) : (
-        <SkillIcon src={skill.icon} name={skill.name} size={24} />
+        <SkillIcon src={skill.icon} name={skill.name} size={22} />
       )}
       <span className="text-sm font-semibold text-foreground whitespace-nowrap">
         {skill.name}
@@ -103,20 +104,20 @@ function SkillPill({ skill, isOther }) {
 // ---------------------------------------------------------------------------
 // MarqueeRow — one infinite scrolling row
 // direction: 'forward' (→) or 'reverse' (←)
-// speed: CSS duration string e.g. '28s'
+// duration: animationDuration string e.g. '28s'
 // ---------------------------------------------------------------------------
-function MarqueeRow({ skills, isOther = false, direction = 'forward', speed = '30s' }) {
-  // Duplicate items to create seamless loop
+function MarqueeRow({ skills, direction = 'forward', duration = '30s' }) {
+  // Duplicate to create seamless loop: translateX(-50%) scrolls exactly one copy
   const items = [...skills, ...skills];
 
   return (
     <div className="marquee-row marquee-fade overflow-hidden py-2">
       <div
         className={`marquee-track marquee-track--${direction}`}
-        style={{ '--marquee-duration': speed }}
+        style={{ animationDuration: duration }}
       >
         {items.map((skill, i) => (
-          <SkillPill key={`${skill.name}-${i}`} skill={skill} isOther={isOther} />
+          <SkillPill key={`${skill.name}-${i}`} skill={skill} />
         ))}
       </div>
     </div>
@@ -138,24 +139,23 @@ export default function Skills() {
       .catch(() => setDbSkills([]));
   }, []);
 
-  // Build per-category arrays — DB first, fallback if empty
+  // Build per-category arrays — DB first, fallback if category is empty
   const get = (catId) => {
     if (!dbSkills) return FALLBACK[catId] || [];
     const group = dbSkills.filter(s => s.category === catId);
     return group.length > 0 ? group : FALLBACK[catId] || [];
   };
 
-  const row1 = get('frontend');           // → right
-  const row2 = get('backend');            // ← left
-  const row3 = [...get('tools'), ...get('other')]; // → right (tools + soft skills combined)
+  const row1 = get('frontend');                       // → right
+  const row2 = get('backend');                        // ← left
+  const row3 = [...get('tools'), ...get('other')];    // → right
 
-  // Row speeds — slightly different so they never feel in sync
   const isLoading = dbSkills === null;
 
   return (
-    <section id="skills" className="py-section px-4 sm:px-6 lg:px-8 overflow-hidden">
+    // NOTE: NO overflow-hidden on <section> — that clips translateX and kills animation
+    <section id="skills" className="py-section px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-
         {/* Header */}
         <div
           ref={header.ref}
@@ -170,29 +170,27 @@ export default function Skills() {
             Technologies I use to build production-grade systems
           </p>
         </div>
-
       </div>
 
-      {/* Marquee rows — full width, outside max-w container for edge-to-edge */}
+      {/* Marquee rows — full-bleed, outside max-w container */}
       <div
         ref={rows.ref}
         className="space-y-3"
         style={{
-          opacity:    rows.visible ? 1 : 0,
-          transform:  rows.visible ? 'translateY(0)' : 'translateY(24px)',
+          opacity:   rows.visible ? 1 : 0,
+          transform: rows.visible ? 'translateY(0)' : 'translateY(24px)',
           transition: 'opacity 0.7s ease, transform 0.7s ease',
         }}
       >
         {isLoading ? (
-          // Skeleton rows while DB loads
           <div className="space-y-3 px-4">
-            {[35, 30, 32].map((w, i) => (
+            {[0, 1, 2].map((i) => (
               <div key={i} className="flex gap-3 overflow-hidden">
-                {[...Array(w)].map((_, j) => (
+                {[...Array(8)].map((_, j) => (
                   <div
                     key={j}
                     className="skeleton rounded-full shrink-0"
-                    style={{ width: 120, height: 44 }}
+                    style={{ width: 130, height: 44 }}
                     aria-hidden="true"
                   />
                 ))}
@@ -201,34 +199,19 @@ export default function Skills() {
           </div>
         ) : (
           <>
-            {/* Row 1 — Frontend → right */}
-            <MarqueeRow
-              skills={row1}
-              isOther={false}
-              direction="forward"
-              speed="28s"
-            />
+            {/* Row 1 — Frontend → */}
+            <MarqueeRow skills={row1} direction="forward" duration="28s" />
 
-            {/* Row 2 — Backend ← left */}
-            <MarqueeRow
-              skills={row2}
-              isOther={false}
-              direction="reverse"
-              speed="24s"
-            />
+            {/* Row 2 — Backend ← */}
+            <MarqueeRow skills={row2} direction="reverse" duration="24s" />
 
-            {/* Row 3 — Tools + Soft Skills → right */}
-            <MarqueeRow
-              skills={row3}
-              isOther={false}
-              direction="forward"
-              speed="32s"
-            />
+            {/* Row 3 — Tools + Soft Skills → */}
+            <MarqueeRow skills={row3} direction="forward" duration="32s" />
           </>
         )}
       </div>
 
-      {/* Legend — small note below rows */}
+      {/* Legend */}
       <div
         className="max-w-6xl mx-auto mt-8 text-center"
         style={{
