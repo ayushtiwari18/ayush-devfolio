@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, X, Plus, ExternalLink, Loader2, Trash2, ImageIcon } from 'lucide-react';
+import {
+  ArrowLeft, Save, X, Plus, ExternalLink, Loader2, Trash2, ImageIcon,
+  Eye, EyeOff, ChevronDown, ChevronUp, Zap,
+} from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,7 +14,7 @@ import ImageUploader from '@/components/admin/ImageUploader';
 import FallbackImage from '@/components/ui/FallbackImage';
 import { supabase } from '@/lib/supabase';
 
-// ── Defined OUTSIDE component — stable refs, no remount / focus loss ──
+// ── Stable sub-components ────────────────────────────────────────────────────
 function Field({ label, name, type = 'text', placeholder = '', required = false, value, onChange }) {
   return (
     <div>
@@ -23,28 +26,52 @@ function Field({ label, name, type = 'text', placeholder = '', required = false,
   );
 }
 
-function TextArea({ label, name, rows = 4, placeholder = '', value, onChange }) {
+function TextArea({ label, name, rows = 4, placeholder = '', hint, value, onChange }) {
   return (
     <div>
       <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
+      {hint && <p className="text-xs text-muted-foreground mb-2">{hint}</p>}
       <textarea name={name} value={value ?? ''} onChange={onChange} rows={rows} placeholder={placeholder}
-        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
+        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y font-mono text-sm" />
     </div>
   );
 }
 
+// ── Visibility toggle grid ───────────────────────────────────────────────────
+const VISIBILITY_FIELDS = [
+  { key: 'show_architecture',   label: 'Architecture' },
+  { key: 'show_code_structure', label: 'Code Structure' },
+  { key: 'show_challenges',     label: 'Challenges' },
+  { key: 'show_strategies',     label: 'Strategies' },
+  { key: 'show_performance',    label: 'Performance' },
+  { key: 'show_tradeoffs',      label: 'Trade-offs' },
+  { key: 'show_lessons',        label: 'Lessons Learned' },
+  { key: 'show_future',         label: 'Future Plans' },
+  { key: 'show_security',       label: 'Security' },
+];
+
+// ── Architecture type options ─────────────────────────────────────────────────
+const ARCH_TYPES = [
+  { value: 'text',    label: 'Plain Text',      desc: 'Rendered as formatted text' },
+  { value: 'mermaid', label: 'Mermaid Diagram', desc: 'Flowchart rendered from mermaid syntax' },
+  { value: 'image',   label: 'Image URL',       desc: 'architecture_plan field used as image src' },
+];
+
+// ── Main page ────────────────────────────────────────────────────────────────
 export default function EditProjectPage() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [techInput, setTechInput] = useState('');
-  const [tagInput, setTagInput] = useState('');
-  const [strategyInput, setStrategyInput] = useState({ title: '', description: '' });
-  const [challengeInput, setChallengeInput] = useState({ problem: '', fix: '' });
-  const [formData, setFormData] = useState({});
+  const [loading,          setLoading]          = useState(false);
+  const [fetching,         setFetching]         = useState(true);
+  const [showDeleteModal,  setShowDeleteModal]  = useState(false);
+  const [deleting,         setDeleting]         = useState(false);
+  const [visibilityOpen,   setVisibilityOpen]   = useState(false);
+  const [techInput,        setTechInput]        = useState('');
+  const [tagInput,         setTagInput]         = useState('');
+  const [strategyInput,    setStrategyInput]    = useState({ title: '', description: '' });
+  const [challengeInput,   setChallengeInput]   = useState({ problem: '', fix: '' });
+  const [metricInput,      setMetricInput]      = useState({ label: '', value: '', unit: '', good: true });
+  const [formData,         setFormData]         = useState({});
 
   useEffect(() => { fetchProject(); }, [params.id]);
 
@@ -54,12 +81,25 @@ export default function EditProjectPage() {
       if (error) throw error;
       setFormData({
         ...data,
-        technologies: data.technologies || [],
-        tags:         data.tags         || [],
-        strategies:   data.strategies   || [],
-        challenges:   data.challenges   || [],
-        order_index:  data.order_index  ?? 0,
-        date:         data.date ? data.date.split('T')[0] : '',
+        technologies:        data.technologies        || [],
+        tags:                data.tags                || [],
+        strategies:          data.strategies          || [],
+        challenges:          data.challenges          || [],
+        performance_metrics: data.performance_metrics || [],
+        order_index:         data.order_index         ?? 0,
+        date:                data.date ? data.date.split('T')[0] : '',
+        // new columns — DB defaults already correct, but seed here for safety
+        architecture_type:   data.architecture_type   || 'text',
+        code_structure_json: data.code_structure_json || null,
+        show_architecture:   data.show_architecture   ?? true,
+        show_code_structure: data.show_code_structure ?? true,
+        show_challenges:     data.show_challenges     ?? true,
+        show_strategies:     data.show_strategies     ?? true,
+        show_performance:    data.show_performance    ?? true,
+        show_tradeoffs:      data.show_tradeoffs      ?? true,
+        show_lessons:        data.show_lessons        ?? true,
+        show_future:         data.show_future         ?? true,
+        show_security:       data.show_security       ?? true,
       });
     } catch (err) {
       alert('Error loading project: ' + err.message);
@@ -73,6 +113,7 @@ export default function EditProjectPage() {
     setFormData(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  // ── Tech / Tag helpers ──
   const addTech = () => {
     if (techInput.trim() && !formData.technologies.includes(techInput.trim())) {
       setFormData(p => ({ ...p, technologies: [...p.technologies, techInput.trim()] }));
@@ -89,6 +130,7 @@ export default function EditProjectPage() {
   };
   const removeTag = t => setFormData(p => ({ ...p, tags: p.tags.filter(x => x !== t) }));
 
+  // ── Strategy / Challenge helpers ──
   const addStrategy = () => {
     if (strategyInput.title.trim()) {
       setFormData(p => ({ ...p, strategies: [...p.strategies, { ...strategyInput }] }));
@@ -105,6 +147,16 @@ export default function EditProjectPage() {
   };
   const removeChallenge = i => setFormData(p => ({ ...p, challenges: p.challenges.filter((_, idx) => idx !== i) }));
 
+  // ── Performance metric helpers ──
+  const addMetric = () => {
+    if (metricInput.label.trim() && metricInput.value.trim()) {
+      setFormData(p => ({ ...p, performance_metrics: [...(p.performance_metrics || []), { ...metricInput }] }));
+      setMetricInput({ label: '', value: '', unit: '', good: true });
+    }
+  };
+  const removeMetric = i => setFormData(p => ({ ...p, performance_metrics: p.performance_metrics.filter((_, idx) => idx !== i) }));
+
+  // ── Submit ──
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -121,19 +173,32 @@ export default function EditProjectPage() {
         featured:            formData.featured,
         published:           formData.published,
         order_index:         Number(formData.order_index) || 0,
-        duration:            formData.duration || null,
-        date:                formData.date || null,
-        problem_statement:   formData.problem_statement || null,
-        solution:            formData.solution || null,
-        architecture_plan:   formData.architecture_plan || null,
-        code_structure:      formData.code_structure || null,
-        performance_notes:   formData.performance_notes || null,
-        trade_offs:          formData.trade_offs || null,
-        lessons_learned:     formData.lessons_learned || null,
+        duration:            formData.duration            || null,
+        date:                formData.date                || null,
+        problem_statement:   formData.problem_statement   || null,
+        solution:            formData.solution            || null,
+        architecture_plan:   formData.architecture_plan   || null,
+        code_structure:      formData.code_structure      || null,
+        performance_notes:   formData.performance_notes   || null,
+        trade_offs:          formData.trade_offs          || null,
+        lessons_learned:     formData.lessons_learned     || null,
         future_improvements: formData.future_improvements || null,
-        security_notes:      formData.security_notes || null,
+        security_notes:      formData.security_notes      || null,
         strategies:          formData.strategies,
         challenges:          formData.challenges,
+        // ── new fields ──
+        architecture_type:   formData.architecture_type   || 'text',
+        performance_metrics: formData.performance_metrics?.length > 0 ? formData.performance_metrics : null,
+        code_structure_json: formData.code_structure_json || null,
+        show_architecture:   formData.show_architecture   ?? true,
+        show_code_structure: formData.show_code_structure ?? true,
+        show_challenges:     formData.show_challenges     ?? true,
+        show_strategies:     formData.show_strategies     ?? true,
+        show_performance:    formData.show_performance    ?? true,
+        show_tradeoffs:      formData.show_tradeoffs      ?? true,
+        show_lessons:        formData.show_lessons        ?? true,
+        show_future:         formData.show_future         ?? true,
+        show_security:       formData.show_security       ?? true,
         updated_at:          new Date().toISOString(),
       };
       const { error } = await supabase.from('projects').update(payload).eq('id', params.id);
@@ -171,7 +236,7 @@ export default function EditProjectPage() {
       <ConfirmModal
         open={showDeleteModal}
         title="Delete Project?"
-        description={`"${formData.title}" will be permanently removed from your portfolio. This cannot be undone.`}
+        description={`"${formData.title}" will be permanently removed. This cannot be undone.`}
         confirmLabel="Delete Project"
         danger
         loading={deleting}
@@ -197,7 +262,7 @@ export default function EditProjectPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Basic Info */}
+        {/* ── Basic Info ─────────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Basic Information</h2>
           <div className="space-y-4">
@@ -217,7 +282,7 @@ export default function EditProjectPage() {
           </div>
         </section>
 
-        {/* Technologies */}
+        {/* ── Technologies ───────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Technologies</h2>
           <div className="flex gap-2">
@@ -227,7 +292,7 @@ export default function EditProjectPage() {
               placeholder="React.js, Node.js…" />
             <Button type="button" onClick={addTech}><Plus size={18} className="mr-1" />Add</Button>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {formData.technologies?.map(t => (
               <span key={t} className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full border border-primary/20 flex items-center gap-2">
                 {t}<button type="button" onClick={() => removeTech(t)}><X size={14} /></button>
@@ -236,7 +301,7 @@ export default function EditProjectPage() {
           </div>
         </section>
 
-        {/* Tags */}
+        {/* ── Tags ───────────────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Tags</h2>
           <div className="flex gap-2">
@@ -246,7 +311,7 @@ export default function EditProjectPage() {
               placeholder="mern, fullstack…" />
             <Button type="button" onClick={addTag}><Plus size={18} className="mr-1" />Add</Button>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {formData.tags?.map(t => (
               <span key={t} className="px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full border border-border flex items-center gap-2">
                 {t}<button type="button" onClick={() => removeTag(t)}><X size={14} /></button>
@@ -255,7 +320,7 @@ export default function EditProjectPage() {
           </div>
         </section>
 
-        {/* Media & Links */}
+        {/* ── Media & Links ──────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Media &amp; Links</h2>
           <div className="space-y-5">
@@ -292,14 +357,58 @@ export default function EditProjectPage() {
           </div>
         </section>
 
-        {/* Case Study */}
+        {/* ── Case Study ─────────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-xl font-bold text-foreground mb-6">Case Study</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Case Study Content</h2>
           <div className="space-y-4">
             <TextArea label="Problem Statement" name="problem_statement" rows={4} value={formData.problem_statement} onChange={handleChange} />
             <TextArea label="Solution" name="solution" rows={4} value={formData.solution} onChange={handleChange} />
-            <TextArea label="Architecture Plan" name="architecture_plan" rows={4} value={formData.architecture_plan} onChange={handleChange} />
-            <TextArea label="Code Structure" name="code_structure" rows={4} value={formData.code_structure} onChange={handleChange} />
+
+            {/* Architecture — type selector + content */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-foreground">Architecture</label>
+              <div className="grid grid-cols-3 gap-2">
+                {ARCH_TYPES.map(opt => (
+                  <label key={opt.value}
+                    className={`flex flex-col gap-1 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                      formData.architecture_type === opt.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <input type="radio" name="architecture_type" value={opt.value}
+                      checked={formData.architecture_type === opt.value}
+                      onChange={handleChange} className="sr-only" />
+                    <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+                    <span className="text-xs text-muted-foreground">{opt.desc}</span>
+                  </label>
+                ))}
+              </div>
+              <TextArea
+                name="architecture_plan"
+                rows={5}
+                placeholder={
+                  formData.architecture_type === 'mermaid'
+                    ? 'graph TD\n  Client-->NextJS\n  NextJS-->Supabase\n  Supabase-->PostgreSQL'
+                    : formData.architecture_type === 'image'
+                    ? 'https://example.com/architecture-diagram.png'
+                    : 'Describe your architecture…'
+                }
+                value={formData.architecture_plan}
+                onChange={handleChange}
+                hint={
+                  formData.architecture_type === 'mermaid'
+                    ? 'Enter valid Mermaid syntax. Preview available at mermaid.live'
+                    : formData.architecture_type === 'image'
+                    ? 'Enter the full URL of your architecture diagram image'
+                    : undefined
+                }
+              />
+            </div>
+
+            <TextArea label="Code Structure (plain text)" name="code_structure" rows={4}
+              placeholder="src/\n  app/ — Next.js routes\n  components/ — UI components\n  services/ — DB logic"
+              value={formData.code_structure} onChange={handleChange} />
             <TextArea label="Performance Notes" name="performance_notes" rows={3} value={formData.performance_notes} onChange={handleChange} />
             <TextArea label="Trade-offs" name="trade_offs" rows={3} value={formData.trade_offs} onChange={handleChange} />
             <TextArea label="Lessons Learned" name="lessons_learned" rows={3} value={formData.lessons_learned} onChange={handleChange} />
@@ -308,7 +417,52 @@ export default function EditProjectPage() {
           </div>
         </section>
 
-        {/* Strategies */}
+        {/* ── Performance Metrics Builder ─────────────────────────── */}
+        <section className="bg-card border border-border rounded-xl p-6">
+          <h2 className="text-xl font-bold text-foreground mb-2">Performance Metrics</h2>
+          <p className="text-sm text-muted-foreground mb-5">Visual metric cards shown on the public page (e.g. LCP, bundle size, uptime).</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            <input value={metricInput.label} onChange={e => setMetricInput(p => ({ ...p, label: e.target.value }))}
+              className="px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Label (e.g. LCP)" />
+            <input value={metricInput.value} onChange={e => setMetricInput(p => ({ ...p, value: e.target.value }))}
+              className="px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Value (e.g. 1.2)" />
+            <input value={metricInput.unit} onChange={e => setMetricInput(p => ({ ...p, unit: e.target.value }))}
+              className="px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Unit (e.g. s, kb, %)" />
+            <label className="flex items-center gap-2 px-3 py-2.5 bg-background border border-border rounded-lg cursor-pointer">
+              <input type="checkbox" checked={metricInput.good} onChange={e => setMetricInput(p => ({ ...p, good: e.target.checked }))}
+                className="w-4 h-4 accent-primary" />
+              <span className="text-sm text-foreground">Good result</span>
+            </label>
+          </div>
+          <Button type="button" onClick={addMetric} className="mb-4">
+            <Plus size={16} className="mr-1" />Add Metric
+          </Button>
+
+          {(formData.performance_metrics || []).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+              {formData.performance_metrics.map((m, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-background border border-border rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Zap size={14} className={m.good ? 'text-green-500' : 'text-red-400'} />
+                    <div>
+                      <p className="text-xs text-muted-foreground">{m.label}</p>
+                      <p className="text-sm font-bold text-foreground">{m.value}{m.unit}</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => removeMetric(i)}>
+                    <X size={14} className="text-red-400" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ── Strategies ─────────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Key Strategies</h2>
           <div className="space-y-3 mb-4">
@@ -328,7 +482,7 @@ export default function EditProjectPage() {
           ))}
         </section>
 
-        {/* Challenges */}
+        {/* ── Challenges ─────────────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Challenges &amp; Fixes</h2>
           <div className="space-y-3 mb-4">
@@ -348,7 +502,55 @@ export default function EditProjectPage() {
           ))}
         </section>
 
-        {/* Settings */}
+        {/* ── Section Visibility ─────────────────────────────────── */}
+        <section className="bg-card border border-border rounded-xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setVisibilityOpen(v => !v)}
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/40 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Eye size={18} className="text-primary" />
+              <div className="text-left">
+                <p className="font-bold text-foreground">Section Visibility</p>
+                <p className="text-xs text-muted-foreground">
+                  {VISIBILITY_FIELDS.filter(f => formData[f.key] !== false).length} of {VISIBILITY_FIELDS.length} sections visible on public page
+                </p>
+              </div>
+            </div>
+            {visibilityOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
+          </button>
+
+          {visibilityOpen && (
+            <div className="px-6 pb-6 border-t border-border">
+              <p className="text-xs text-muted-foreground mt-4 mb-4">
+                Toggle which case study sections appear on the public project page. Hidden sections are still saved — just not displayed.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {VISIBILITY_FIELDS.map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg cursor-pointer hover:border-primary/40 transition-colors">
+                    <input
+                      type="checkbox"
+                      name={key}
+                      checked={formData[key] ?? true}
+                      onChange={handleChange}
+                      className="w-4 h-4 accent-primary"
+                    />
+                    <div className="flex items-center gap-2">
+                      {(formData[key] ?? true)
+                        ? <Eye size={13} className="text-primary" />
+                        : <EyeOff size={13} className="text-muted-foreground" />
+                      }
+                      <span className="text-sm font-medium text-foreground">{label}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ── Publish Settings ───────────────────────────────────── */}
         <section className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-xl font-bold text-foreground mb-6">Settings</h2>
           <div className="space-y-4">
@@ -369,6 +571,7 @@ export default function EditProjectPage() {
           </Button>
           <Link href="/admin/projects"><Button type="button" variant="outline">Cancel</Button></Link>
         </div>
+
       </form>
     </div>
   );
