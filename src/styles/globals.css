@@ -75,6 +75,59 @@
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
 }
 
+/* =============================================================
+   KEYFRAMES — defined in global scope (outside any @layer)
+   Tailwind @layer components can cause animation-name:none
+   when keyframes are scoped inside the same layer.
+   ALL keyframes live here at the top level.
+   ============================================================= */
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-reverse {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes gradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes profile-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes ring-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ring-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+@keyframes profile-shine {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.7; }
+  50%       { transform: scale(1.2); opacity: 1;   }
+}
+
 @layer components {
   /* ==========================================================
      TYPOGRAPHY UTILITIES
@@ -196,11 +249,6 @@
       background-size: 400% 400%;
       animation: gradient 15s ease infinite;
     }
-    @keyframes gradient {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
   }
 
   .hover-lift {
@@ -217,24 +265,11 @@
 
   /* ==========================================================
      INFINITE MARQUEE — Skills Section
-     FIX: no CSS custom property for duration — React sets
-     animationDuration inline which overrides the 30s default.
-     flex-wrap: nowrap + min-width: 100% prevent pill wrapping.
-     overflow-hidden lives on .marquee-row ONLY — never on a
-     parent section, otherwise translateX is clipped/invisible.
+     Keyframes are in global scope above — NOT inside @layer.
+     React sets animationDuration inline (overrides 30s default).
+     overflow-hidden is on .marquee-row only, never on <section>.
      ========================================================== */
 
-  @keyframes marquee {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-
-  @keyframes marquee-reverse {
-    0%   { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
-  }
-
-  /* Track: flex row, no wrap, full-width baseline */
   .marquee-track {
     display: flex;
     flex-wrap: nowrap;
@@ -243,7 +278,6 @@
     will-change: transform;
   }
 
-  /* React overrides animationDuration inline — 30s is just a safe fallback */
   .marquee-track--forward {
     animation: marquee 30s linear infinite;
   }
@@ -252,12 +286,10 @@
     animation: marquee-reverse 30s linear infinite;
   }
 
-  /* Pause entire row on hover */
   .marquee-row:hover .marquee-track {
     animation-play-state: paused;
   }
 
-  /* Left + right fade masks — only on the overflow container */
   .marquee-fade {
     -webkit-mask-image: linear-gradient(
       to right,
@@ -279,44 +311,11 @@
      PROFILE IMAGE
      ========================================================== */
 
-  @keyframes profile-glow {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50%       { opacity: 0.8; transform: scale(1.1); }
-  }
   .profile-glow-pulse { animation: profile-glow 3s ease-in-out infinite; }
-
-  @keyframes ring-cw {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
-  .profile-ring-cw { animation: ring-cw 20s linear infinite; }
-
-  @keyframes ring-ccw {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(-360deg); }
-  }
-  .profile-ring-ccw { animation: ring-ccw 15s linear infinite; }
-
-  @keyframes profile-shine {
-    0%, 100% { opacity: 0.2; }
-    50%       { opacity: 0.4; }
-  }
-  .profile-shine { animation: profile-shine 4s ease-in-out infinite; }
-
-  @keyframes dot-pulse {
-    0%, 100% { transform: scale(1);   opacity: 0.7; }
-    50%       { transform: scale(1.2); opacity: 1;   }
-  }
-  .profile-dot-pulse { animation: dot-pulse 2s ease-in-out infinite; }
-
-  /* ==========================================================
-     SHIMMER (used by .skeleton)
-     ========================================================== */
-
-  @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
-  }
+  .profile-ring-cw    { animation: ring-cw 20s linear infinite; }
+  .profile-ring-ccw   { animation: ring-ccw 15s linear infinite; }
+  .profile-shine      { animation: profile-shine 4s ease-in-out infinite; }
+  .profile-dot-pulse  { animation: dot-pulse 2s ease-in-out infinite; }
 
   /* ==========================================================
      TIMELINE
@@ -378,8 +377,6 @@
     .skeleton-card,
     .animated-gradient,
     .gradient-text-display,
-    .marquee-track--forward,
-    .marquee-track--reverse,
     [data-animate] {
       transition: none !important;
       animation: none !important;
