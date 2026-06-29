@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 
 // ---------------------------------------------------------------------------
-// Marquee animation injected directly into <head> — bypasses Tailwind entirely
+// Keyframes injected directly — bypasses Tailwind purge/@layer entirely
+// Uses -25% translateX because we duplicate 4x (1/4 of total = 1 copy width)
 // ---------------------------------------------------------------------------
 const MARQUEE_CSS = `
-@keyframes marquee {
+@keyframes marquee-quad {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(-25%); }
 }
-@keyframes marquee-reverse {
-  0%   { transform: translateX(-50%); }
+@keyframes marquee-quad-reverse {
+  0%   { transform: translateX(-25%); }
   100% { transform: translateX(0); }
 }
 .marquee-row:hover .marquee-track {
@@ -61,13 +62,21 @@ const FALLBACK = {
 };
 
 // ---------------------------------------------------------------------------
-// SkillIcon
+// SkillIcon — slug-safe: if src doesn’t start with http, treat as devicon slug
 // ---------------------------------------------------------------------------
+function resolveIcon(src) {
+  if (!src) return null;
+  if (src.startsWith('http')) return src;
+  const slug = src.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${slug}/${slug}-original.svg`;
+}
+
 function SkillIcon({ src, name, size = 22 }) {
   const [err, setErr] = useState(false);
+  const resolved = resolveIcon(src);
   useEffect(() => setErr(false), [src]);
 
-  if (!src || err) {
+  if (!resolved || err) {
     return (
       <div
         style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
@@ -80,7 +89,7 @@ function SkillIcon({ src, name, size = 22 }) {
 
   return (
     <Image
-      src={src}
+      src={resolved}
       alt={name}
       width={size}
       height={size}
@@ -115,23 +124,17 @@ function SkillPill({ skill }) {
 }
 
 // ---------------------------------------------------------------------------
-// MarqueeRow — animation applied 100% via inline style, no CSS class needed
+// MarqueeRow
+// 4x duplication ensures track is always wider than viewport — no gap/jump
+// translateX(-25%) = scroll exactly one copy width seamlessly
+// Animation 100% inline — no CSS class dependency
 // ---------------------------------------------------------------------------
 function MarqueeRow({ skills, direction = 'forward', duration = '30s' }) {
-  const items = [...skills, ...skills];
-
-  const animationStyle = {
-    display: 'flex',
-    flexWrap: 'nowrap',
-    width: 'max-content',
-    minWidth: '100%',
-    willChange: 'transform',
-    animationName: direction === 'forward' ? 'marquee' : 'marquee-reverse',
-    animationDuration: duration,
-    animationTimingFunction: 'linear',
-    animationIterationCount: 'infinite',
-    animationPlayState: 'running',
-  };
+  // 4x duplication: translateX(-25%) scrolls exactly 1 copy, always seamless
+  const items = useMemo(
+    () => [...skills, ...skills, ...skills, ...skills],
+    [skills]
+  );
 
   return (
     <div
@@ -141,7 +144,20 @@ function MarqueeRow({ skills, direction = 'forward', duration = '30s' }) {
         maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
       }}
     >
-      <div className="marquee-track" style={animationStyle}>
+      <div
+        className="marquee-track"
+        style={{
+          display: 'flex',
+          flexWrap: 'nowrap',
+          width: 'max-content',
+          willChange: 'transform',
+          animationName: direction === 'forward' ? 'marquee-quad' : 'marquee-quad-reverse',
+          animationDuration: duration,
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite',
+          animationPlayState: 'running',
+        }}
+      >
         {items.map((skill, i) => (
           <SkillPill key={`${skill.name}-${i}`} skill={skill} />
         ))}
@@ -165,24 +181,27 @@ export default function Skills() {
       .catch(() => setDbSkills([]));
   }, []);
 
-  const get = (catId) => {
+  // Memoised so row arrays don’t change reference on unrelated re-renders
+  const get = useMemo(() => (catId) => {
     if (!dbSkills) return FALLBACK[catId] || [];
     const group = dbSkills.filter(s => s.category === catId);
     return group.length > 0 ? group : FALLBACK[catId] || [];
-  };
+  }, [dbSkills]);
 
-  const row1 = get('frontend');
-  const row2 = get('backend');
-  const row3 = [...get('tools'), ...get('other')];
+  const row1 = useMemo(() => get('frontend'),                     [get]);
+  const row2 = useMemo(() => get('backend'),                      [get]);
+  const row3 = useMemo(() => [...get('tools'), ...get('other')],  [get]);
+
   const isLoading = dbSkills === null;
 
   return (
     <>
-      {/* Inject keyframes directly — bypasses Tailwind purge and @layer issues */}
+      {/* Keyframes injected directly — Tailwind cannot purge or override these */}
       <style dangerouslySetInnerHTML={{ __html: MARQUEE_CSS }} />
 
       <section id="skills" className="py-section px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
+          {/* Header reveal — translateY only on heading, never on marquee rows */}
           <div
             ref={header.ref}
             className="text-center mb-16"
@@ -198,13 +217,13 @@ export default function Skills() {
           </div>
         </div>
 
+        {/* Marquee rows — opacity fade-in only, NO translateY (avoids GPU layer conflict) */}
         <div
           ref={rows.ref}
           className="space-y-3"
           style={{
             opacity:    rows.visible ? 1 : 0,
-            transform:  rows.visible ? 'translateY(0)' : 'translateY(24px)',
-            transition: 'opacity 0.7s ease, transform 0.7s ease',
+            transition: 'opacity 0.7s ease',
           }}
         >
           {isLoading ? (
@@ -219,9 +238,9 @@ export default function Skills() {
             </div>
           ) : (
             <>
-              <MarqueeRow skills={row1} direction="forward" duration="28s" />
-              <MarqueeRow skills={row2} direction="reverse" duration="24s" />
-              <MarqueeRow skills={row3} direction="forward" duration="32s" />
+              <MarqueeRow skills={row1} direction="forward" duration="40s" />
+              <MarqueeRow skills={row2} direction="reverse" duration="35s" />
+              <MarqueeRow skills={row3} direction="forward" duration="45s" />
             </>
           )}
         </div>
