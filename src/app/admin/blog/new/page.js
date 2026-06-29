@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
-  ArrowLeft, Save, Eye, X, Plus, FileText,
-  ChevronDown, BookOpen, Lightbulb, Link2, Star,
+  ArrowLeft, Save, X, Plus, FileText,
+  ChevronDown, BookOpen, Lightbulb, Link2, Star, Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,8 +13,17 @@ import ImageUploader from '@/components/admin/ImageUploader';
 import FallbackImage from '@/components/ui/FallbackImage';
 import { supabase } from '@/lib/supabase';
 
+const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[500px] rounded-xl border border-border bg-background flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+    </div>
+  ),
+});
+
 const EMPTY = {
-  title: '', slug: '', content: '', excerpt: '', cover_image: '',
+  title: '', slug: '', content: '[]', excerpt: '', cover_image: '',
   tags: [], published: true, reading_time: 1,
   key_takeaways: [], series_name: '', series_order: '',
   canonical_url: '', featured: false,
@@ -25,7 +35,6 @@ export default function NewBlogPostPage() {
   const [loading, setLoading]             = useState(false);
   const [tagInput, setTagInput]           = useState('');
   const [takeawayInput, setTakeawayInput] = useState('');
-  const [showPreview, setShowPreview]     = useState(false);
   const [visOpen, setVisOpen]             = useState(false);
   const [formData, setFormData]           = useState(EMPTY);
 
@@ -35,13 +44,21 @@ export default function NewBlogPostPage() {
       const next = { ...prev, [name]: type === 'checkbox' ? checked : value };
       if (name === 'title')
         next.slug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      if (name === 'content') {
-        const words = value.trim().split(/\s+/).filter(Boolean).length;
-        next.reading_time = Math.max(1, Math.ceil(words / 200));
-      }
       return next;
     });
   };
+
+  const handleEditorChange = useCallback((json) => {
+    setFormData(prev => ({ ...prev, content: json }));
+  }, []);
+
+  const handleMetaChange = useCallback(({ reading_time, excerpt }) => {
+    setFormData(prev => ({
+      ...prev,
+      reading_time,
+      excerpt: prev.excerpt || excerpt,
+    }));
+  }, []);
 
   const addTag = () => {
     const t = tagInput.trim();
@@ -67,8 +84,11 @@ export default function NewBlogPostPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      let contentJson;
+      try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
       const payload = {
         ...formData,
+        content: contentJson,
         series_order: formData.series_order === '' ? null : Number(formData.series_order),
         created_at: new Date().toISOString(),
       };
@@ -86,7 +106,6 @@ export default function NewBlogPostPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <Link href="/admin/blog">
           <Button variant="outline" className="mb-4"><ArrowLeft className="mr-2" size={18} />Back to Blog</Button>
@@ -96,20 +115,14 @@ export default function NewBlogPostPage() {
             <h1 className="text-3xl font-bold text-foreground">Write New Post</h1>
             <p className="text-muted-foreground mt-2">Create a new blog article</p>
           </div>
-          <Button type="button" variant="outline" onClick={() => setShowPreview(!showPreview)}
-            className="border-primary text-primary hover:bg-primary/10">
-            <Eye className="mr-2" size={18} />{showPreview ? 'Edit' : 'Preview'}
-          </Button>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Main Content column ── */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Title & Slug */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-foreground mb-2">Post Title *</label>
@@ -126,39 +139,36 @@ export default function NewBlogPostPage() {
               </div>
             </div>
 
-            {/* Excerpt */}
             <div className="bg-card border border-border rounded-xl p-6">
-              <label className="block text-sm font-medium text-foreground mb-2">Excerpt (Optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Excerpt
+                <span className="ml-2 text-xs text-muted-foreground font-normal">(auto-filled from first paragraph if left empty)</span>
+              </label>
               <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} rows={3}
                 placeholder="A brief summary shown in listings and social previews..."
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
             </div>
 
-            {/* Content */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <label className="text-sm font-medium text-foreground">Content (Markdown) *</label>
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                <div>
+                  <label className="text-sm font-medium text-foreground">Content</label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Type <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">/</kbd> to insert blocks
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full shrink-0">
                   {formData.reading_time} min read
                 </span>
               </div>
-              {!showPreview ? (
-                <textarea name="content" value={formData.content} onChange={handleChange} required rows={20}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-y"
-                  placeholder="# Your blog post content here...\n\nWrite in **Markdown** format." />
-              ) : (
-                <div className="w-full px-4 py-3 bg-background border border-border rounded-lg min-h-[500px] prose prose-invert max-w-none">
-                  {formData.content
-                    ? <div dangerouslySetInnerHTML={{ __html: formData.content.replace(/\n/g, '<br />') }} />
-                    : <p className="text-muted-foreground italic">Nothing to preview yet.</p>}
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground mt-2">
-                Supports Markdown: **bold**, *italic*, `code`, [links](url), # headings, ```code blocks```
-              </p>
+              <BlogEditor
+                value={formData.content}
+                onChange={handleEditorChange}
+                onMetaChange={handleMetaChange}
+              />
             </div>
 
-            {/* Key Takeaways builder */}
+            {/* Key Takeaways */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -190,7 +200,7 @@ export default function NewBlogPostPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-muted-foreground italic">No takeaways yet — add at least 3 for best results.</p>
+                <p className="text-xs text-muted-foreground italic">No takeaways yet — add at least 3.</p>
               )}
             </div>
 
@@ -237,7 +247,7 @@ export default function NewBlogPostPage() {
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
 
-            {/* Section Visibility */}
+            {/* Visibility */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <button type="button" onClick={() => setVisOpen(v => !v)}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors">
@@ -275,30 +285,21 @@ export default function NewBlogPostPage() {
                 </div>
               )}
             </div>
+          </div>
 
-          </div>{/* end main col */}
-
-          {/* ── Sidebar col ── */}
+          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-
             <div className="bg-card border border-border rounded-xl p-6">
               <ImageUploader
                 label="Cover Image"
                 value={formData.cover_image}
                 onChange={url => setFormData(prev => ({ ...prev, cover_image: url }))}
-                folder="blog"
-                hint="Recommended: 1200×630px (OG image ratio)."
+                folder="blog" hint="Recommended: 1200×630px (OG image ratio)."
               />
               {formData.cover_image && (
                 <div className="relative h-40 rounded-xl overflow-hidden bg-muted mt-3 border border-border">
-                  <FallbackImage
-                    src={formData.cover_image} alt="Cover preview" fill className="object-cover" unoptimized
-                    fallback={
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <FileText size={32} />
-                        <span className="text-xs">Image failed to load</span>
-                      </div>
-                    }
+                  <FallbackImage src={formData.cover_image} alt="Cover preview" fill className="object-cover" unoptimized
+                    fallback={<div className="flex flex-col items-center gap-2 text-muted-foreground"><FileText size={32} /><span className="text-xs">Preview unavailable</span></div>}
                     containerClassName="absolute inset-0 flex items-center justify-center bg-muted"
                   />
                 </div>
@@ -308,8 +309,7 @@ export default function NewBlogPostPage() {
             <div className="bg-card border border-border rounded-xl p-6">
               <h3 className="font-bold text-foreground mb-4">Tags</h3>
               <div className="flex gap-2 mb-3">
-                <input type="text" value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
+                <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Add tag" />

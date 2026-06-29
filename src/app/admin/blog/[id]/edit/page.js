@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   ArrowLeft, Save, Eye, X, Plus, Trash2, FileText,
   ChevronDown, BookOpen, Lightbulb, Link2, Star,
@@ -13,22 +14,30 @@ import FallbackImage from '@/components/ui/FallbackImage';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { supabase } from '@/lib/supabase';
 
+// Dynamically import editor — no SSR (BlockNote is client-only)
+const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[500px] rounded-xl border border-border bg-background flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+    </div>
+  ),
+});
+
 export default function EditBlogPostPage() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading]           = useState(false);
-  const [fetching, setFetching]         = useState(true);
-  const [tagInput, setTagInput]         = useState('');
+  const [loading, setLoading]             = useState(false);
+  const [fetching, setFetching]           = useState(true);
+  const [tagInput, setTagInput]           = useState('');
   const [takeawayInput, setTakeawayInput] = useState('');
-  const [showPreview, setShowPreview]   = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting]         = useState(false);
-  const [visOpen, setVisOpen]           = useState(false);
+  const [deleting, setDeleting]           = useState(false);
+  const [visOpen, setVisOpen]             = useState(false);
 
   const [formData, setFormData] = useState({
-    title: '', slug: '', content: '', excerpt: '', cover_image: '',
+    title: '', slug: '', content: '[]', excerpt: '', cover_image: '',
     tags: [], published: true, reading_time: 1,
-    // new fields
     key_takeaways: [], series_name: '', series_order: '',
     canonical_url: '', featured: false,
     show_takeaways: true, show_toc: true, show_share: true,
@@ -45,7 +54,7 @@ export default function EditBlogPostPage() {
         ...data,
         tags:           data.tags           || [],
         key_takeaways:  data.key_takeaways  || [],
-        content:        data.content        || '',
+        content:        data.content        ? JSON.stringify(data.content) : '[]',
         excerpt:        data.excerpt        || '',
         series_name:    data.series_name    || '',
         series_order:   data.series_order   ?? '',
@@ -65,15 +74,20 @@ export default function EditBlogPostPage() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => {
-      const next = { ...prev, [name]: type === 'checkbox' ? checked : value };
-      if (name === 'content') {
-        const words = value.trim().split(/\s+/).filter(Boolean).length;
-        next.reading_time = Math.max(1, Math.ceil(words / 200));
-      }
-      return next;
-    });
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
+
+  const handleEditorChange = useCallback((json) => {
+    setFormData(prev => ({ ...prev, content: json }));
+  }, []);
+
+  const handleMetaChange = useCallback(({ reading_time, excerpt }) => {
+    setFormData(prev => ({
+      ...prev,
+      reading_time,
+      excerpt: prev.excerpt || excerpt, // don't overwrite if user manually set
+    }));
+  }, []);
 
   const addTag = () => {
     const t = tagInput.trim();
@@ -99,8 +113,11 @@ export default function EditBlogPostPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      let contentJson;
+      try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
       const payload = {
         ...formData,
+        content: contentJson,
         series_order: formData.series_order === '' ? null : Number(formData.series_order),
         updated_at: new Date().toISOString(),
       };
@@ -147,7 +164,6 @@ export default function EditBlogPostPage() {
         onCancel={() => setShowDeleteModal(false)}
       />
 
-      {/* Header */}
       <div className="mb-8">
         <Link href="/admin/blog">
           <Button variant="outline" className="mb-4"><ArrowLeft className="mr-2" size={18} />Back to Blog</Button>
@@ -158,9 +174,9 @@ export default function EditBlogPostPage() {
             <p className="text-muted-foreground mt-2">Update blog article</p>
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setShowPreview(!showPreview)}
+            <Button type="button" variant="outline" onClick={() => window.open(`/blog/${formData.slug}`, '_blank')}
               className="border-primary text-primary hover:bg-primary/10">
-              <Eye className="mr-2" size={18} />{showPreview ? 'Edit' : 'Preview'}
+              <Eye className="mr-2" size={18} />Preview
             </Button>
             <Button type="button" variant="outline" onClick={() => setShowDeleteModal(true)}
               className="border-red-500 text-red-500 hover:bg-red-500/10">
@@ -173,7 +189,7 @@ export default function EditBlogPostPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Main Content column ── */}
+          {/* ── Main col ── */}
           <div className="lg:col-span-2 space-y-6">
 
             {/* Title & Slug */}
@@ -193,36 +209,36 @@ export default function EditBlogPostPage() {
 
             {/* Excerpt */}
             <div className="bg-card border border-border rounded-xl p-6">
-              <label className="block text-sm font-medium text-foreground mb-2">Excerpt</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Excerpt
+                <span className="ml-2 text-xs text-muted-foreground font-normal">(auto-filled from first paragraph if left empty)</span>
+              </label>
               <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} rows={3}
                 placeholder="A brief summary shown in listings and social previews..."
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
             </div>
 
-            {/* Content */}
+            {/* Block Editor */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <label className="text-sm font-medium text-foreground">Content (Markdown) *</label>
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                <div>
+                  <label className="text-sm font-medium text-foreground">Content</label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Type <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">/</kbd> to insert blocks — headings, code, images, callouts, tables, mermaid diagrams
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full shrink-0">
                   {formData.reading_time} min read
                 </span>
               </div>
-              {!showPreview ? (
-                <textarea name="content" value={formData.content} onChange={handleChange} required rows={20}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
-              ) : (
-                <div className="w-full px-4 py-3 bg-background border border-border rounded-lg min-h-[500px] prose prose-invert max-w-none">
-                  {formData.content
-                    ? <div dangerouslySetInnerHTML={{ __html: formData.content.replace(/\n/g, '<br />') }} />
-                    : <p className="text-muted-foreground italic">Nothing to preview yet.</p>}
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground mt-2">
-                Supports Markdown: **bold**, *italic*, `code`, [links](url), # headings, ```code blocks```
-              </p>
+              <BlogEditor
+                value={formData.content}
+                onChange={handleEditorChange}
+                onMetaChange={handleMetaChange}
+              />
             </div>
 
-            {/* ── Key Takeaways builder ── */}
+            {/* Key Takeaways */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -234,8 +250,7 @@ export default function EditBlogPostPage() {
                 </div>
               </div>
               <div className="flex gap-2 mb-3">
-                <input
-                  type="text" value={takeawayInput}
+                <input type="text" value={takeawayInput}
                   onChange={e => setTakeawayInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTakeaway())}
                   placeholder="e.g. Always separate concerns at the route level"
@@ -259,7 +274,7 @@ export default function EditBlogPostPage() {
               )}
             </div>
 
-            {/* ── Series Info ── */}
+            {/* Series */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
@@ -286,7 +301,7 @@ export default function EditBlogPostPage() {
               </div>
             </div>
 
-            {/* ── Canonical URL ── */}
+            {/* Canonical URL */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -294,7 +309,7 @@ export default function EditBlogPostPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-foreground text-sm">Canonical URL</h3>
-                  <p className="text-xs text-muted-foreground">Only fill if this post is cross-posted from dev.to / Hashnode</p>
+                  <p className="text-xs text-muted-foreground">Only if cross-posted from dev.to / Hashnode</p>
                 </div>
               </div>
               <input type="url" name="canonical_url" value={formData.canonical_url} onChange={handleChange}
@@ -302,13 +317,10 @@ export default function EditBlogPostPage() {
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
 
-            {/* ── Section Visibility panel ── */}
+            {/* Visibility */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setVisOpen(v => !v)}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors"
-              >
+              <button type="button" onClick={() => setVisOpen(v => !v)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors">
                 <div className="flex items-center gap-2">
                   <Eye size={16} className="text-primary" />
                   <span className="font-bold text-foreground text-sm">Section Visibility</span>
@@ -320,7 +332,7 @@ export default function EditBlogPostPage() {
               </button>
               {visOpen && (
                 <div className="px-6 pb-5 border-t border-border">
-                  <p className="text-xs text-muted-foreground mt-4 mb-3">Toggle which sidebar/footer sections render on the public post page.</p>
+                  <p className="text-xs text-muted-foreground mt-4 mb-3">Toggle which sections render on the public post page.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
                       { key: 'show_toc',       label: 'Table of Contents', desc: 'Sidebar TOC from headings' },
@@ -329,9 +341,7 @@ export default function EditBlogPostPage() {
                     ].map(({ key, label, desc }) => (
                       <label key={key}
                         className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                          formData[key]
-                            ? 'border-primary/40 bg-primary/5'
-                            : 'border-border bg-background opacity-60'
+                          formData[key] ? 'border-primary/40 bg-primary/5' : 'border-border bg-background opacity-60'
                         }`}>
                         <input type="checkbox" name={key} checked={formData[key]} onChange={handleChange}
                           className="w-4 h-4 accent-primary mt-0.5" />
@@ -345,43 +355,31 @@ export default function EditBlogPostPage() {
                 </div>
               )}
             </div>
-
-          </div>{/* end main col */}
+          </div>
 
           {/* ── Sidebar col ── */}
           <div className="lg:col-span-1 space-y-6">
-
-            {/* Cover Image */}
             <div className="bg-card border border-border rounded-xl p-6">
               <ImageUploader
                 label="Cover Image"
                 value={formData.cover_image}
                 onChange={url => setFormData(prev => ({ ...prev, cover_image: url }))}
-                folder="blog"
-                hint="Recommended: 1200×630px (OG image ratio)."
+                folder="blog" hint="Recommended: 1200×630px (OG image ratio)."
               />
               {formData.cover_image && (
                 <div className="relative h-40 rounded-xl overflow-hidden bg-muted mt-3 border border-border">
-                  <FallbackImage
-                    src={formData.cover_image} alt="Cover preview" fill className="object-cover" unoptimized
-                    fallback={
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <FileText size={32} />
-                        <span className="text-xs">Image failed to load</span>
-                      </div>
-                    }
+                  <FallbackImage src={formData.cover_image} alt="Cover preview" fill className="object-cover" unoptimized
+                    fallback={<div className="flex flex-col items-center gap-2 text-muted-foreground"><FileText size={32} /><span className="text-xs">Preview unavailable</span></div>}
                     containerClassName="absolute inset-0 flex items-center justify-center bg-muted"
                   />
                 </div>
               )}
             </div>
 
-            {/* Tags */}
             <div className="bg-card border border-border rounded-xl p-6">
               <h3 className="font-bold text-foreground mb-4">Tags</h3>
               <div className="flex gap-2 mb-3">
-                <input type="text" value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
+                <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Add tag" />
@@ -399,7 +397,6 @@ export default function EditBlogPostPage() {
               )}
             </div>
 
-            {/* Settings */}
             <div className="bg-card border border-border rounded-xl p-6 space-y-4">
               <h3 className="font-bold text-foreground">Settings</h3>
               <label className="flex items-center gap-3 cursor-pointer">
@@ -420,7 +417,6 @@ export default function EditBlogPostPage() {
               </label>
             </div>
 
-            {/* Submit */}
             <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90">
               {loading
                 ? <span className="flex items-center justify-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />Saving...</span>
