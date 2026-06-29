@@ -5,6 +5,23 @@ import Image from 'next/image';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 
 // ---------------------------------------------------------------------------
+// Marquee animation injected directly into <head> — bypasses Tailwind entirely
+// ---------------------------------------------------------------------------
+const MARQUEE_CSS = `
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-reverse {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.marquee-row:hover .marquee-track {
+  animation-play-state: paused !important;
+}
+`;
+
+// ---------------------------------------------------------------------------
 // DATA
 // ---------------------------------------------------------------------------
 const FALLBACK = {
@@ -34,19 +51,19 @@ const FALLBACK = {
     { name: 'VS Code', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg' },
   ],
   other: [
-    { name: 'Problem Solving',    emoji: '🧩' },
-    { name: 'System Design',      emoji: '🏗️' },
-    { name: 'Team Collaboration', emoji: '🤝' },
-    { name: 'Agile / Scrum',      emoji: '🔄' },
-    { name: 'Technical Writing',  emoji: '✍️' },
-    { name: 'UI / UX Design',     emoji: '🎨' },
+    { name: 'Problem Solving',    emoji: '\u{1F9E9}' },
+    { name: 'System Design',      emoji: '\u{1F3D7}\uFE0F' },
+    { name: 'Team Collaboration', emoji: '\u{1F91D}' },
+    { name: 'Agile / Scrum',      emoji: '\u{1F504}' },
+    { name: 'Technical Writing',  emoji: '\u270D\uFE0F' },
+    { name: 'UI / UX Design',     emoji: '\u{1F3A8}' },
   ],
 };
 
 // ---------------------------------------------------------------------------
-// SkillIcon — error-safe image with letter fallback
+// SkillIcon
 // ---------------------------------------------------------------------------
-function SkillIcon({ src, name, size = 24 }) {
+function SkillIcon({ src, name, size = 22 }) {
   const [err, setErr] = useState(false);
   useEffect(() => setErr(false), [src]);
 
@@ -75,19 +92,15 @@ function SkillIcon({ src, name, size = 24 }) {
 }
 
 // ---------------------------------------------------------------------------
-// SkillPill — single pill shown in the marquee
+// SkillPill
 // ---------------------------------------------------------------------------
 function SkillPill({ skill }) {
-  const isEmoji = Boolean(skill.emoji);
   return (
-    <div className="
-      inline-flex items-center gap-2.5 mx-2
-      px-4 py-2.5
-      bg-card border border-border rounded-full
-      hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/10
-      transition-all duration-200 cursor-default select-none shrink-0
-    ">
-      {isEmoji ? (
+    <div
+      className="inline-flex items-center gap-2.5 mx-2 px-4 py-2.5 bg-card border border-border rounded-full hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 cursor-default select-none"
+      style={{ flexShrink: 0 }}
+    >
+      {skill.emoji ? (
         <span style={{ fontSize: 18, lineHeight: 1 }} role="img" aria-hidden="true">
           {skill.emoji}
         </span>
@@ -102,20 +115,33 @@ function SkillPill({ skill }) {
 }
 
 // ---------------------------------------------------------------------------
-// MarqueeRow — one infinite scrolling row
-// direction: 'forward' (→) or 'reverse' (←)
-// duration: animationDuration string e.g. '28s'
+// MarqueeRow — animation applied 100% via inline style, no CSS class needed
 // ---------------------------------------------------------------------------
 function MarqueeRow({ skills, direction = 'forward', duration = '30s' }) {
-  // Duplicate to create seamless loop: translateX(-50%) scrolls exactly one copy
   const items = [...skills, ...skills];
 
+  const animationStyle = {
+    display: 'flex',
+    flexWrap: 'nowrap',
+    width: 'max-content',
+    minWidth: '100%',
+    willChange: 'transform',
+    animationName: direction === 'forward' ? 'marquee' : 'marquee-reverse',
+    animationDuration: duration,
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+    animationPlayState: 'running',
+  };
+
   return (
-    <div className="marquee-row marquee-fade overflow-hidden py-2">
-      <div
-        className={`marquee-track marquee-track--${direction}`}
-        style={{ animationDuration: duration }}
-      >
+    <div
+      className="marquee-row overflow-hidden py-2"
+      style={{
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+        maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+      }}
+    >
+      <div className="marquee-track" style={animationStyle}>
         {items.map((skill, i) => (
           <SkillPill key={`${skill.name}-${i}`} skill={skill} />
         ))}
@@ -139,90 +165,76 @@ export default function Skills() {
       .catch(() => setDbSkills([]));
   }, []);
 
-  // Build per-category arrays — DB first, fallback if category is empty
   const get = (catId) => {
     if (!dbSkills) return FALLBACK[catId] || [];
     const group = dbSkills.filter(s => s.category === catId);
     return group.length > 0 ? group : FALLBACK[catId] || [];
   };
 
-  const row1 = get('frontend');                       // → right
-  const row2 = get('backend');                        // ← left
-  const row3 = [...get('tools'), ...get('other')];    // → right
-
+  const row1 = get('frontend');
+  const row2 = get('backend');
+  const row3 = [...get('tools'), ...get('other')];
   const isLoading = dbSkills === null;
 
   return (
-    // NOTE: NO overflow-hidden on <section> — that clips translateX and kills animation
-    <section id="skills" className="py-section px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <>
+      {/* Inject keyframes directly — bypasses Tailwind purge and @layer issues */}
+      <style dangerouslySetInnerHTML={{ __html: MARQUEE_CSS }} />
+
+      <section id="skills" className="py-section px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div
+            ref={header.ref}
+            className="text-center mb-16"
+            style={fadeUp(header.visible)}
+          >
+            <p className="section-label mb-3">Tech Stack</p>
+            <h2 className="section-heading mb-4">
+              Skills &amp; <span className="gradient-text">Expertise</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Technologies I use to build production-grade systems
+            </p>
+          </div>
+        </div>
+
         <div
-          ref={header.ref}
-          className="text-center mb-16"
-          style={fadeUp(header.visible)}
+          ref={rows.ref}
+          className="space-y-3"
+          style={{
+            opacity:    rows.visible ? 1 : 0,
+            transform:  rows.visible ? 'translateY(0)' : 'translateY(24px)',
+            transition: 'opacity 0.7s ease, transform 0.7s ease',
+          }}
         >
-          <p className="section-label mb-3">Tech Stack</p>
-          <h2 className="section-heading mb-4">
-            Skills &amp; <span className="gradient-text">Expertise</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Technologies I use to build production-grade systems
+          {isLoading ? (
+            <div className="space-y-3 px-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex gap-3 overflow-hidden">
+                  {[...Array(8)].map((_, j) => (
+                    <div key={j} className="skeleton rounded-full shrink-0" style={{ width: 130, height: 44 }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <MarqueeRow skills={row1} direction="forward" duration="28s" />
+              <MarqueeRow skills={row2} direction="reverse" duration="24s" />
+              <MarqueeRow skills={row3} direction="forward" duration="32s" />
+            </>
+          )}
+        </div>
+
+        <div
+          className="max-w-6xl mx-auto mt-8 text-center"
+          style={{ opacity: rows.visible ? 1 : 0, transition: 'opacity 0.7s ease 0.3s' }}
+        >
+          <p className="text-xs text-muted-foreground">
+            Hover any row to pause &nbsp;·&nbsp; Row 1: Frontend &nbsp;·&nbsp; Row 2: Backend &nbsp;·&nbsp; Row 3: Tools &amp; Soft Skills
           </p>
         </div>
-      </div>
-
-      {/* Marquee rows — full-bleed, outside max-w container */}
-      <div
-        ref={rows.ref}
-        className="space-y-3"
-        style={{
-          opacity:   rows.visible ? 1 : 0,
-          transform: rows.visible ? 'translateY(0)' : 'translateY(24px)',
-          transition: 'opacity 0.7s ease, transform 0.7s ease',
-        }}
-      >
-        {isLoading ? (
-          <div className="space-y-3 px-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex gap-3 overflow-hidden">
-                {[...Array(8)].map((_, j) => (
-                  <div
-                    key={j}
-                    className="skeleton rounded-full shrink-0"
-                    style={{ width: 130, height: 44 }}
-                    aria-hidden="true"
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            {/* Row 1 — Frontend → */}
-            <MarqueeRow skills={row1} direction="forward" duration="28s" />
-
-            {/* Row 2 — Backend ← */}
-            <MarqueeRow skills={row2} direction="reverse" duration="24s" />
-
-            {/* Row 3 — Tools + Soft Skills → */}
-            <MarqueeRow skills={row3} direction="forward" duration="32s" />
-          </>
-        )}
-      </div>
-
-      {/* Legend */}
-      <div
-        className="max-w-6xl mx-auto mt-8 text-center"
-        style={{
-          opacity:    rows.visible ? 1 : 0,
-          transition: 'opacity 0.7s ease 0.3s',
-        }}
-      >
-        <p className="text-xs text-muted-foreground">
-          Hover any row to pause &nbsp;·&nbsp; Row 1: Frontend &nbsp;·&nbsp; Row 2: Backend &nbsp;·&nbsp; Row 3: Tools &amp; Soft Skills
-        </p>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
