@@ -2,16 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import StaggeredList from '@/components/animations/StaggeredList';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 
-const CATEGORIES = [
-  { id: 'frontend', label: 'Frontend'       },
-  { id: 'backend',  label: 'Backend'        },
-  { id: 'tools',    label: 'Tools & DevOps' },
-  { id: 'other',    label: 'Other'          },
-];
-
+// ---------------------------------------------------------------------------
+// DATA
+// ---------------------------------------------------------------------------
 const FALLBACK = {
   frontend: [
     { name: 'React',        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg' },
@@ -31,14 +26,13 @@ const FALLBACK = {
     { name: 'REST APIs',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg' },
   ],
   tools: [
-    { name: 'Git',    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
-    { name: 'GitHub', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
-    { name: 'Docker', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
-    { name: 'Vercel', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vercel/vercel-original.svg' },
-    { name: 'AWS',    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg' },
-    { name: 'VS Code',icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg' },
+    { name: 'Git',     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
+    { name: 'GitHub',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
+    { name: 'Docker',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
+    { name: 'Vercel',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vercel/vercel-original.svg' },
+    { name: 'AWS',     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg' },
+    { name: 'VS Code', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg' },
   ],
-  // 'other' — soft skills use emoji icons, not CDN images (avoids broken letter avatars)
   other: [
     { name: 'Problem Solving',    emoji: '🧩' },
     { name: 'System Design',      emoji: '🏗️' },
@@ -50,9 +44,9 @@ const FALLBACK = {
 };
 
 // ---------------------------------------------------------------------------
-// SkillIcon — Bug fixed: removed duplicate style prop
+// SkillIcon — error-safe image with letter fallback
 // ---------------------------------------------------------------------------
-function SkillIcon({ src, name, size = 40 }) {
+function SkillIcon({ src, name, size = 36 }) {
   const [err, setErr] = useState(false);
   useEffect(() => setErr(false), [src]);
 
@@ -60,7 +54,7 @@ function SkillIcon({ src, name, size = 40 }) {
     return (
       <div
         style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
-        className="rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold"
+        className="rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0"
       >
         {name?.[0]?.toUpperCase() ?? '?'}
       </div>
@@ -73,23 +67,59 @@ function SkillIcon({ src, name, size = 40 }) {
       alt={name}
       width={size}
       height={size}
-      className="object-contain"
+      className="object-contain shrink-0"
       onError={() => setErr(true)}
       unoptimized
     />
   );
 }
 
-// Emoji icon for soft-skill 'other' category
-function EmojiIcon({ emoji, size = 40 }) {
+// ---------------------------------------------------------------------------
+// SkillPill — single pill shown in the marquee
+// ---------------------------------------------------------------------------
+function SkillPill({ skill, isOther }) {
   return (
-    <span
-      style={{ fontSize: Math.round(size * 0.7), lineHeight: 1 }}
-      role="img"
-      aria-hidden="true"
-    >
-      {emoji}
-    </span>
+    <div className="
+      inline-flex items-center gap-2.5 mx-2
+      px-4 py-2.5
+      bg-card border border-border rounded-full
+      hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/10
+      transition-all duration-200 cursor-default select-none shrink-0
+    ">
+      {isOther && skill.emoji ? (
+        <span style={{ fontSize: 20, lineHeight: 1 }} role="img" aria-hidden="true">
+          {skill.emoji}
+        </span>
+      ) : (
+        <SkillIcon src={skill.icon} name={skill.name} size={24} />
+      )}
+      <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+        {skill.name}
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MarqueeRow — one infinite scrolling row
+// direction: 'forward' (→) or 'reverse' (←)
+// speed: CSS duration string e.g. '28s'
+// ---------------------------------------------------------------------------
+function MarqueeRow({ skills, isOther = false, direction = 'forward', speed = '30s' }) {
+  // Duplicate items to create seamless loop
+  const items = [...skills, ...skills];
+
+  return (
+    <div className="marquee-row marquee-fade overflow-hidden py-2">
+      <div
+        className={`marquee-track marquee-track--${direction}`}
+        style={{ '--marquee-duration': speed }}
+      >
+        {items.map((skill, i) => (
+          <SkillPill key={`${skill.name}-${i}`} skill={skill} isOther={isOther} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -97,9 +127,9 @@ function EmojiIcon({ emoji, size = 40 }) {
 // SKILLS SECTION
 // ---------------------------------------------------------------------------
 export default function Skills() {
-  const [activeCategory, setActiveCategory] = useState('frontend');
-  const [dbSkills, setDbSkills]             = useState(null);
+  const [dbSkills, setDbSkills] = useState(null);
   const header = useReveal({ threshold: 0.1 });
+  const rows   = useReveal({ threshold: 0.05 });
 
   useEffect(() => {
     fetch('/api/public/skills')
@@ -108,18 +138,22 @@ export default function Skills() {
       .catch(() => setDbSkills([]));
   }, []);
 
-  const getSkills = (catId) => {
+  // Build per-category arrays — DB first, fallback if empty
+  const get = (catId) => {
     if (!dbSkills) return FALLBACK[catId] || [];
     const group = dbSkills.filter(s => s.category === catId);
     return group.length > 0 ? group : FALLBACK[catId] || [];
   };
 
-  const displayed    = getSkills(activeCategory);
-  const isOther      = activeCategory === 'other';
-  const isLoading    = dbSkills === null;
+  const row1 = get('frontend');           // → right
+  const row2 = get('backend');            // ← left
+  const row3 = [...get('tools'), ...get('other')]; // → right (tools + soft skills combined)
+
+  // Row speeds — slightly different so they never feel in sync
+  const isLoading = dbSkills === null;
 
   return (
-    <section id="skills" className="py-section px-4 sm:px-6 lg:px-8">
+    <section id="skills" className="py-section px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
@@ -133,80 +167,78 @@ export default function Skills() {
             Skills &amp; <span className="gradient-text">Expertise</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Technologies and tools I use to bring ideas to life
+            Technologies I use to build production-grade systems
           </p>
         </div>
 
-        {/* Category Tabs — with aria-pressed for accessibility */}
-        <div
-          className="flex flex-wrap justify-center gap-3 mb-12"
-          role="tablist"
-          aria-label="Skill categories"
-        >
-          {CATEGORIES.map((category) => {
-            const isActive = activeCategory === category.id;
-            return (
-              <button
-                key={category.id}
-                role="tab"
-                aria-pressed={isActive}
-                aria-selected={isActive}
-                onClick={() => setActiveCategory(category.id)}
-                className={`
-                  px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-200
-                  ${isActive
-                    ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105'
-                    : 'bg-card border border-border text-foreground hover:border-primary/50 hover:text-primary hover:scale-105'
-                  }
-                `}
-              >
-                {category.label}
-              </button>
-            );
-          })}
-        </div>
+      </div>
 
-        {/* Skills Grid */}
+      {/* Marquee rows — full width, outside max-w container for edge-to-edge */}
+      <div
+        ref={rows.ref}
+        className="space-y-3"
+        style={{
+          opacity:    rows.visible ? 1 : 0,
+          transform:  rows.visible ? 'translateY(0)' : 'translateY(24px)',
+          transition: 'opacity 0.7s ease, transform 0.7s ease',
+        }}
+      >
         {isLoading ? (
-          // Skeleton while DB loads
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="skeleton rounded-2xl" style={{ height: 100 }} aria-hidden="true" />
+          // Skeleton rows while DB loads
+          <div className="space-y-3 px-4">
+            {[35, 30, 32].map((w, i) => (
+              <div key={i} className="flex gap-3 overflow-hidden">
+                {[...Array(w)].map((_, j) => (
+                  <div
+                    key={j}
+                    className="skeleton rounded-full shrink-0"
+                    style={{ width: 120, height: 44 }}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
             ))}
           </div>
         ) : (
-          <StaggeredList
-            key={activeCategory} // re-stagger when category changes
-            className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4"
-            staggerMs={60}
-            durationMs={400}
-          >
-            {displayed.map((skill, index) => (
-              <div
-                key={skill.id || index}
-                className="
-                  bg-card border border-border rounded-2xl p-4
-                  flex flex-col items-center gap-3 cursor-default
-                  hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10
-                  hover:-translate-y-1.5 hover:scale-[1.04]
-                  transition-all duration-200 group
-                "
-              >
-                <div className="w-10 h-10 flex items-center justify-center">
-                  {isOther && skill.emoji ? (
-                    <EmojiIcon emoji={skill.emoji} size={40} />
-                  ) : (
-                    <SkillIcon src={skill.icon} name={skill.name} size={40} />
-                  )}
-                </div>
-                <span className="text-xs font-semibold text-foreground text-center leading-tight group-hover:text-primary transition-colors">
-                  {skill.name}
-                </span>
-              </div>
-            ))}
-          </StaggeredList>
-        )}
+          <>
+            {/* Row 1 — Frontend → right */}
+            <MarqueeRow
+              skills={row1}
+              isOther={false}
+              direction="forward"
+              speed="28s"
+            />
 
+            {/* Row 2 — Backend ← left */}
+            <MarqueeRow
+              skills={row2}
+              isOther={false}
+              direction="reverse"
+              speed="24s"
+            />
+
+            {/* Row 3 — Tools + Soft Skills → right */}
+            <MarqueeRow
+              skills={row3}
+              isOther={false}
+              direction="forward"
+              speed="32s"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Legend — small note below rows */}
+      <div
+        className="max-w-6xl mx-auto mt-8 text-center"
+        style={{
+          opacity:    rows.visible ? 1 : 0,
+          transition: 'opacity 0.7s ease 0.3s',
+        }}
+      >
+        <p className="text-xs text-muted-foreground">
+          Hover any row to pause &nbsp;·&nbsp; Row 1: Frontend &nbsp;·&nbsp; Row 2: Backend &nbsp;·&nbsp; Row 3: Tools &amp; Soft Skills
+        </p>
       </div>
     </section>
   );
