@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
-import { BlockNoteView } from '@blocknote/mantine';
-import '@blocknote/mantine/style.css';
-import '@mantine/core/styles.css';
+import { BlockNoteView } from '@blocknote/shadcn';
+import '@blocknote/core/fonts/inter.css';
+import '@blocknote/shadcn/style.css';
 
-// Count words across all blocks for reading_time
 function countWords(blocks) {
   if (!blocks?.length) return 0;
   let count = 0;
@@ -28,7 +27,6 @@ function countWords(blocks) {
   return count;
 }
 
-// Extract first paragraph text for excerpt
 function extractExcerpt(blocks) {
   if (!blocks?.length) return '';
   for (const block of blocks) {
