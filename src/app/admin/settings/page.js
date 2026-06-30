@@ -8,14 +8,17 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
+// ⚠️  Do NOT read process.env at module level in a 'use client' component.
+// It evaluates to '' at build time. Read it lazily inside the function that
+// actually needs it so Next.js inlines the value correctly at runtime.
+const getAdminSecret = () => process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
 
 const SOCIAL_FIELDS = [
-  { key: 'github_url',    label: 'GitHub URL',           type: 'url', icon: '🐙', placeholder: 'https://github.com/username' },
-  { key: 'linkedin_url', label: 'LinkedIn URL',          type: 'url', icon: '💼', placeholder: 'https://linkedin.com/in/username' },
-  { key: 'twitter_url',  label: 'Twitter / X URL',       type: 'url', icon: '🐦', placeholder: 'https://twitter.com/username' },
-  { key: 'resume_url',   label: 'Resume URL',            type: 'url', icon: '📄', placeholder: 'https://drive.google.com/...' },
-  { key: 'form_endpoint',label: 'Contact Form Endpoint', type: 'url', icon: '✉',  placeholder: 'https://formspree.io/f/...' },
+  { key: 'github_url',    label: 'GitHub URL',           type: 'url', icon: '\uD83D\uDC19', placeholder: 'https://github.com/username' },
+  { key: 'linkedin_url', label: 'LinkedIn URL',          type: 'url', icon: '\uD83D\uDCBC', placeholder: 'https://linkedin.com/in/username' },
+  { key: 'twitter_url',  label: 'Twitter / X URL',       type: 'url', icon: '\uD83D\uDC26', placeholder: 'https://twitter.com/username' },
+  { key: 'resume_url',   label: 'Resume URL',            type: 'url', icon: '\uD83D\uDCC4', placeholder: 'https://drive.google.com/...' },
+  { key: 'form_endpoint',label: 'Contact Form Endpoint', type: 'url', icon: '\u2709',  placeholder: 'https://formspree.io/f/...' },
 ];
 
 const TABS = [
@@ -78,20 +81,25 @@ export default function AdminSettingsPage() {
 
   const uploadImage = async (file) => {
     if (!file) return;
+    const secret = getAdminSecret();
+    if (!secret) {
+      showToast('error', 'NEXT_PUBLIC_ADMIN_SECRET is not set in Vercel environment variables.');
+      return;
+    }
     setUploading(true);
     try {
       const form = new FormData();
       form.append('file', file);
       const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { 'x-admin-secret': ADMIN_SECRET },
-        body: form,
+        method:  'POST',
+        headers: { 'x-admin-secret': secret },
+        body:    form,
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Upload failed');
       setPreviewUrl(json.url);
       setProfile(prev => ({ ...prev, image_url: json.url }));
-      showToast('success', 'Image uploaded — click Save to apply.');
+      showToast('success', 'Image uploaded \u2014 click Save to apply.');
     } catch (err) {
       showToast('error', `Upload failed: ${err.message}`);
     } finally {
@@ -107,11 +115,16 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     if (!profile?.id) return;
+    const secret = getAdminSecret();
+    if (!secret) {
+      showToast('error', 'NEXT_PUBLIC_ADMIN_SECRET is not set in Vercel environment variables.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/admin/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
         body: JSON.stringify({
           id:                 profile.id,
           name:               profile.name               || null,
@@ -188,7 +201,6 @@ export default function AdminSettingsPage() {
         ))}
       </div>
 
-      {/* ═══════════════════ TAB: HERO ═══════════════════ */}
       {activeTab === 'hero' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-4">
@@ -222,15 +234,15 @@ export default function AdminSettingsPage() {
                 }`}
               >
                 <Upload size={22} className="mx-auto mb-2" />
-                <p className="text-sm font-medium">{uploading ? 'Uploading…' : 'Drop image or click to browse'}</p>
-                <p className="text-xs mt-1 opacity-70">JPEG · PNG · WebP · max 5 MB</p>
+                <p className="text-sm font-medium">{uploading ? 'Uploading\u2026' : 'Drop image or click to browse'}</p>
+                <p className="text-xs mt-1 opacity-70">JPEG \u00b7 PNG \u00b7 WebP \u00b7 max 5 MB</p>
               </div>
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
               <div className="mt-4">
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Or paste image URL</label>
                 <input type="url" value={profile?.image_url || ''}
                   onChange={e => { setPreviewUrl(e.target.value); handleChange('image_url', e.target.value); }}
-                  placeholder="https://…" className={inputClass + ' text-sm'} />
+                  placeholder="https://\u2026" className={inputClass + ' text-sm'} />
               </div>
             </div>
           </div>
@@ -257,7 +269,7 @@ export default function AdminSettingsPage() {
                   <label className="block text-sm font-medium text-foreground mb-1.5">Hero Description</label>
                   <textarea value={profile?.description || ''}
                     onChange={e => handleChange('description', e.target.value)}
-                    rows={4} placeholder="Short bio (2–3 sentences)…"
+                    rows={4} placeholder="Short bio (2\u20133 sentences)\u2026"
                     className={inputClass + ' resize-none'} />
                   <p className="text-xs text-muted-foreground mt-1">{(profile?.description || '').length} / 300 recommended</p>
                 </div>
@@ -288,7 +300,7 @@ export default function AdminSettingsPage() {
               </Button>
               <Button onClick={handleSave} disabled={saving || uploading} className="bg-primary hover:bg-primary/90 min-w-[140px]">
                 {saving
-                  ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Saving…</span>
+                  ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Saving\u2026</span>
                   : <span className="flex items-center gap-2"><Save size={16} />Save Changes</span>}
               </Button>
             </div>
@@ -296,7 +308,6 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* ═══════════════════ TAB: ABOUT ═══════════════════ */}
       {activeTab === 'about' && (
         <div className="space-y-6">
           <div className="bg-card border border-border rounded-xl p-6">
@@ -309,29 +320,29 @@ export default function AdminSettingsPage() {
                 <textarea value={profile?.about_bio || ''}
                   onChange={e => handleChange('about_bio', e.target.value)}
                   rows={6}
-                  placeholder="Write a detailed bio for your About page — background, philosophy, what drives you…"
+                  placeholder="Write a detailed bio for your About page \u2014 background, philosophy, what drives you\u2026"
                   className={inputClass + ' resize-none'} />
                 <p className="text-xs text-muted-foreground mt-1">{(profile?.about_bio || '').length} chars</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">📍 Location</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">\uD83D\uDCCD Location</label>
                   <input type="text" value={profile?.about_location || ''}
                     onChange={e => handleChange('about_location', e.target.value)}
                     placeholder="e.g. Jabalpur, India" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">📧 Public Email</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">\uD83D\uDCE7 Public Email</label>
                   <input type="email" value={profile?.about_email || ''}
                     onChange={e => handleChange('about_email', e.target.value)}
                     placeholder="hello@example.com" className={inputClass} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">🟢 Availability Status</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">\uD83D\uDFE2 Availability Status</label>
                 <input type="text" value={profile?.about_availability || ''}
                   onChange={e => handleChange('about_availability', e.target.value)}
-                  placeholder="e.g. Open to full-time roles · Available from Aug 2026"
+                  placeholder="e.g. Open to full-time roles \u00b7 Available from Aug 2026"
                   className={inputClass} />
                 <p className="text-xs text-muted-foreground mt-1">Shown as a badge on the About page.</p>
               </div>
@@ -340,9 +351,9 @@ export default function AdminSettingsPage() {
 
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2">
-              ✨ Key Highlights
+              \u2728 Key Highlights
             </h2>
-            <p className="text-xs text-muted-foreground mb-4">Short bullet points shown on your About page — e.g. "AWS Certified", "5600+ GitHub commits".</p>
+            <p className="text-xs text-muted-foreground mb-4">Short bullet points shown on your About page \u2014 e.g. "AWS Certified", "5600+ GitHub commits".</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {highlights.map((h, i) => (
                 <span key={i} className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm border border-primary/20">
@@ -351,7 +362,7 @@ export default function AdminSettingsPage() {
                 </span>
               ))}
               {highlights.length === 0 && (
-                <p className="text-sm text-muted-foreground italic">No highlights yet — add your first one below.</p>
+                <p className="text-sm text-muted-foreground italic">No highlights yet \u2014 add your first one below.</p>
               )}
             </div>
             <div className="flex gap-2">
@@ -376,7 +387,7 @@ export default function AdminSettingsPage() {
             </Button>
             <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 min-w-[140px]">
               {saving
-                ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Saving…</span>
+                ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Saving\u2026</span>
                 : <span className="flex items-center gap-2"><Save size={16} />Save About</span>}
             </Button>
           </div>

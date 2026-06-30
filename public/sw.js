@@ -1,13 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Ayush Tiwari Portfolio — Service Worker
-// Strategy:
-//   - Shell / navigation requests → Network-first, fallback to cache, then offline.html
-//   - Static assets (_next/static) → Cache-first (immutable, 1-year TTL)
-//   - Images → Cache-first, max 60 entries, 30-day TTL
-//   - API routes → Network-only (never cache)
+// Ayush Tiwari Portfolio — Service Worker v2
+// Strategies:
+//   /admin/*        → BYPASS (network only, no SW interference)
+//   /api/*          → Network only
+//   /_next/static/* → Cache-first (immutable)
+//   Images          → Cache-first, max 60 entries
+//   Navigation HTML → Network-first, fallback cache, then offline.html
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const SHELL_CACHE   = `shell-${CACHE_VERSION}`;
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE   = `images-${CACHE_VERSION}`;
@@ -23,7 +24,7 @@ const SHELL_URLS = [
   '/offline.html',
 ];
 
-// ── Install: pre-cache shell routes ──────────────────────────────────────────
+// ── Install ─────────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE)
@@ -32,7 +33,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// ── Activate: purge old caches ────────────────────────────────────────────────
+// ── Activate: purge old caches ───────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   const VALID = [SHELL_CACHE, STATIC_CACHE, IMAGE_CACHE];
   event.waitUntil(
@@ -49,16 +50,20 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and cross-origin
+  // Skip non-GET and cross-origin requests entirely
   if (request.method !== 'GET' || url.origin !== location.origin) return;
 
-  // API routes — network only
+  // 🔒 BYPASS: admin routes — never intercept, let browser handle directly
+  // This prevents the 'Failed to convert value to Response' SW crash
+  if (url.pathname.startsWith('/admin')) return;
+
+  // API routes — network only, no caching
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(request));
     return;
   }
 
-  // Static assets — cache first
+  // Static assets (_next/static) — cache first, immutable
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async cache => {
@@ -72,7 +77,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Images — cache first, max 60, 30 days
+  // Images — cache first, max 60 entries, 30-day effective TTL
   if (
     request.destination === 'image' ||
     url.pathname.match(/\.(png|jpg|jpeg|gif|webp|avif|svg|ico)$/)
@@ -85,7 +90,6 @@ self.addEventListener('fetch', (event) => {
           const response = await fetch(request);
           if (response.ok) {
             cache.put(request, response.clone());
-            // Trim cache to max 60 entries
             cache.keys().then(keys => {
               if (keys.length > 60) cache.delete(keys[0]);
             });
@@ -99,7 +103,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation / HTML — network first, fallback to cache, then offline
+  // Navigation / HTML pages — network first, fallback to cache, then offline
   if (request.mode === 'navigate' || request.headers.get('Accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)
