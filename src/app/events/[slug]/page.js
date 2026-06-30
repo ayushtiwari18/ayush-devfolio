@@ -8,18 +8,15 @@ import {
 import { getEventBySlug, getAllEventSlugs } from '@/services/events.service';
 import EventGallery from '@/components/events/EventGallery';
 
-export const revalidate    = 86400;
+export const revalidate    = 0;  // 🔧 DEBUG: disable cache so every request is fresh
 export const dynamicParams = true;
 
-// ── Safe links parser ─────────────────────────────────
-// Supabase may return links as a JSON string "{}" or as an object.
 function parseLinks(raw) {
   if (!raw) return {};
   if (typeof raw === 'object') return raw;
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
-// ── Static params ────────────────────────────────────
 export async function generateStaticParams() {
   try {
     const slugs = await getAllEventSlugs();
@@ -27,7 +24,6 @@ export async function generateStaticParams() {
   } catch { return []; }
 }
 
-// ── Metadata ───────────────────────────────────────
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   let event;
@@ -58,7 +54,6 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// ── Helpers ──────────────────────────────────────────
 const fmtDate = (d) => d
   ? new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
   : null;
@@ -86,71 +81,58 @@ function resultStyle(result) {
   return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
 }
 
-// ── Sidebar ──────────────────────────────────────────
 function Sidebar({ event, links }) {
   const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
-
   return (
     <aside className="hidden xl:block w-56 shrink-0">
       <div className="sticky top-28 space-y-4">
-
-        {/* Event info card */}
         <div className="bg-card border border-border rounded-xl p-4 space-y-3">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Info</p>
-
           <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>
             {cfg.label}
           </span>
-
           {event.result && (
             <div className="flex items-start gap-2 text-xs">
               <Trophy size={12} className="text-primary shrink-0 mt-0.5" />
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${resultStyle(event.result)}`}>{event.result}</span>
             </div>
           )}
-
           {fmtShort(event.date) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Calendar size={12} className="text-primary shrink-0" />
               <span>{fmtShort(event.date)}</span>
             </div>
           )}
-
           {event.location && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MapPin size={12} className="text-primary shrink-0" />
               <span>{event.location}</span>
             </div>
           )}
-
           {event.duration && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Clock size={12} className="text-primary shrink-0" />
               <span>{event.duration}</span>
             </div>
           )}
-
           {event.organizer && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Tag size={12} className="text-primary shrink-0" />
               <span>{event.organizer}</span>
             </div>
           )}
-
           {event.team_size > 1 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Users size={12} className="text-primary shrink-0" />
               <span>Team of {event.team_size}{event.team_name ? ` · ${event.team_name}` : ''}</span>
             </div>
           )}
-
           {event.role && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Award size={12} className="text-primary shrink-0" />
               <span>{event.role}</span>
             </div>
           )}
-
           {event.prize && (
             <div className="flex items-center gap-2 text-xs text-yellow-400">
               <Trophy size={12} className="shrink-0" />
@@ -158,53 +140,22 @@ function Sidebar({ event, links }) {
             </div>
           )}
         </div>
-
-        {/* Links card */}
         {Object.keys(links).length > 0 && (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Links</p>
-            {links.github && (
-              <a href={links.github} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-primary hover:underline">
-                <Github size={12} /><span>GitHub Repo</span>
-              </a>
-            )}
-            {links.devpost && (
-              <a href={links.devpost} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-primary hover:underline">
-                <ExternalLink size={12} /><span>Devpost</span>
-              </a>
-            )}
-            {links.certificate && (
-              <a href={links.certificate} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-primary hover:underline">
-                <FileText size={12} /><span>Certificate</span>
-              </a>
-            )}
-            {links.article && (
-              <a href={links.article} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-primary hover:underline">
-                <FileText size={12} /><span>Article</span>
-              </a>
-            )}
-            {links.live && (
-              <a href={links.live} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-primary hover:underline">
-                <ExternalLink size={12} /><span>Live Demo</span>
-              </a>
-            )}
+            {links.github && (<a href={links.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><Github size={12} /><span>GitHub Repo</span></a>)}
+            {links.devpost && (<a href={links.devpost} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><ExternalLink size={12} /><span>Devpost</span></a>)}
+            {links.certificate && (<a href={links.certificate} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><FileText size={12} /><span>Certificate</span></a>)}
+            {links.article && (<a href={links.article} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><FileText size={12} /><span>Article</span></a>)}
+            {links.live && (<a href={links.live} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><ExternalLink size={12} /><span>Live Demo</span></a>)}
           </div>
         )}
-
-        {/* Tech stack card */}
         {event.technologies?.length > 0 && (
           <div className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Tech Stack</p>
             <div className="flex flex-wrap gap-1.5">
               {event.technologies.map((t, i) => (
-                <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-full border border-primary/20">
-                  {t}
-                </span>
+                <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-full border border-primary/20">{t}</span>
               ))}
             </div>
           </div>
@@ -214,7 +165,6 @@ function Sidebar({ event, links }) {
   );
 }
 
-// ── Hero cover image ───────────────────────────────────
 function EventHero({ event }) {
   const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
   if (!event.cover_image) {
@@ -239,7 +189,6 @@ function EventHero({ event }) {
   );
 }
 
-// ── Story section ───────────────────────────────────
 function StorySection({ story }) {
   if (!story?.trim()) return null;
   const paragraphs = story.split(/\n\n+/).filter(Boolean);
@@ -251,9 +200,7 @@ function StorySection({ story }) {
       </h2>
       <div className="space-y-4">
         {paragraphs.map((para, i) => (
-          <p key={i} className="text-muted-foreground leading-relaxed text-[15px]">
-            {para.trim()}
-          </p>
+          <p key={i} className="text-muted-foreground leading-relaxed text-[15px]">{para.trim()}</p>
         ))}
       </div>
     </section>
@@ -267,11 +214,23 @@ export default async function EventDetailPage({ params }) {
   try { event = await getEventBySlug(slug); } catch { notFound(); }
   if (!event) notFound();
 
-  const cfg    = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
-  // ✅ FIX: always parse links safely — Supabase may return "{}" string
   const links  = parseLinks(event.links);
   const images = Array.isArray(event.images) ? event.images.filter(Boolean) : [];
   const baseUrl = 'https://ayush-devfolio.vercel.app';
+
+  // ── SERVER-SIDE DEBUG LOGS (visible in `npm run dev` terminal) ──
+  console.log('\n===== [EventDetailPage] DEBUG ===========================');
+  console.log('slug              :', slug);
+  console.log('event.images raw  :', event.images);
+  console.log('event.images type :', typeof event.images, Array.isArray(event.images));
+  console.log('images (filtered) :', images);
+  console.log('images.length     :', images.length);
+  console.log('links raw         :', event.links);
+  console.log('links parsed      :', links);
+  console.log('cover_image       :', event.cover_image);
+  console.log('=========================================================\n');
+
+  const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -302,10 +261,21 @@ export default async function EventDetailPage({ params }) {
 
       <main className="min-h-screen pt-20 pb-24 px-4 sm:px-6 lg:px-8">
 
+        {/* ── VISIBLE DEBUG PANEL (remove after fixing) ── */}
+        <div className="max-w-7xl mx-auto mb-4 p-3 rounded-xl border border-yellow-500/40 bg-yellow-500/10 text-xs font-mono text-yellow-300 space-y-1">
+          <p className="font-bold text-yellow-400">🐛 DEBUG PANEL — remove after fix</p>
+          <p>images.length: <strong>{images.length}</strong></p>
+          <p>images raw type: <strong>{Array.isArray(event.images) ? 'array' : typeof event.images}</strong></p>
+          {images.map((url, i) => (
+            <p key={i} className="truncate">img[{i}]: {url}</p>
+          ))}
+          {images.length === 0 && <p className="text-red-400">⚠️ images array is EMPTY — gallery will not render</p>}
+          <p>links type: <strong>{typeof event.links}</strong> → parsed keys: <strong>{Object.keys(links).join(', ') || '(none)'}</strong></p>
+        </div>
+
         {/* Breadcrumb */}
         <div className="max-w-7xl mx-auto mb-8">
-          <Link href="/events"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+          <Link href="/events" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
             <ArrowLeft size={15} />
             <span>All Events</span>
           </Link>
@@ -314,41 +284,27 @@ export default async function EventDetailPage({ params }) {
         {/* 2-col layout */}
         <div className="max-w-7xl mx-auto flex gap-10 items-start">
 
-          {/* ── Main column ──────────────────────────────── */}
           <article className="flex-1 min-w-0">
 
-            {/* Hero image */}
-            <div className="mb-8">
-              <EventHero event={event} />
-            </div>
+            <div className="mb-8"><EventHero event={event} /></div>
 
-            {/* Title block */}
             <div className="mb-8">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>
-                  {cfg.label}
-                </span>
+                <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>{cfg.label}</span>
                 {event.result && (
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-full border ${resultStyle(event.result)}`}>
                     <Trophy size={9} />{event.result}
                   </span>
                 )}
                 {event.category && (
-                  <span className="px-2.5 py-1 text-[10px] font-bold rounded-full border bg-muted text-muted-foreground border-border">
-                    {event.category}
-                  </span>
+                  <span className="px-2.5 py-1 text-[10px] font-bold rounded-full border bg-muted text-muted-foreground border-border">{event.category}</span>
                 )}
               </div>
 
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-3 leading-tight">
-                {event.title}
-              </h1>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-3 leading-tight">{event.title}</h1>
 
-              {event.tagline && (
-                <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{event.tagline}</p>
-              )}
+              {event.tagline && <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{event.tagline}</p>}
 
-              {/* Meta pills */}
               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-6">
                 {fmtDate(event.date) && (
                   <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
@@ -365,11 +321,6 @@ export default async function EventDetailPage({ params }) {
                     <Clock size={12} className="text-primary" />{event.duration}
                   </span>
                 )}
-                {event.organizer && (
-                  <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
-                    <Tag size={12} className="text-primary" />{event.organizer}
-                  </span>
-                )}
                 {event.team_size > 1 && (
                   <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
                     <Users size={12} className="text-primary" />Team of {event.team_size}
@@ -377,7 +328,6 @@ export default async function EventDetailPage({ params }) {
                 )}
               </div>
 
-              {/* Action links */}
               <div className="flex flex-wrap gap-3">
                 {links.github && (
                   <a href={links.github} target="_blank" rel="noopener noreferrer"
@@ -400,7 +350,6 @@ export default async function EventDetailPage({ params }) {
               </div>
             </div>
 
-            {/* Description */}
             {event.description && (
               <section className="mb-8">
                 <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
@@ -411,11 +360,10 @@ export default async function EventDetailPage({ params }) {
               </section>
             )}
 
-            {/* Story */}
             <StorySection story={event.story} />
 
-            {/* Gallery carousel */}
-            {images.length > 0 && (
+            {/* Gallery */}
+            {images.length > 0 ? (
               <section className="mb-10">
                 <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
                   <span className="w-1 h-5 bg-primary rounded-full inline-block" />
@@ -424,9 +372,12 @@ export default async function EventDetailPage({ params }) {
                 </h2>
                 <EventGallery images={images} title={event.title} />
               </section>
+            ) : (
+              <div className="mb-10 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
+                ⚠️ Gallery section skipped — <code>images.length</code> is 0
+              </div>
             )}
 
-            {/* Certificate */}
             {event.certificate_image && (
               <section className="mb-10">
                 <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
@@ -442,16 +393,13 @@ export default async function EventDetailPage({ params }) {
               </section>
             )}
 
-            {/* Back CTA */}
             <div className="mt-12 pt-8 border-t border-border">
-              <Link href="/events"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
+              <Link href="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
                 <ArrowLeft size={16} /> Back to all events
               </Link>
             </div>
           </article>
 
-          {/* ── Sidebar ──────────────────────────────── */}
           <Sidebar event={event} links={links} />
         </div>
       </main>
