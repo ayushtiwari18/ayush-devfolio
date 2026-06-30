@@ -10,11 +10,23 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 /**
- * Supabase browser/server client.
- * Used by services/ and Server Components directly.
- * For admin mutations, prefer the server-side client with service role key.
+ * Supabase client with Next.js fetch cache disabled.
+ *
+ * WHY: Next.js App Router intercepts ALL fetch() calls and caches them
+ * with cache: 'force-cache' by default — even when revalidate=0 is set
+ * on the page. This means Supabase queries were being served from
+ * Next.js's Data Cache instead of hitting the live DB.
+ *
+ * FIX: cache: 'no-store' tells Next.js to always bypass its fetch
+ * cache for every Supabase request, so new DB content is always live.
  */
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseKey || 'placeholder-key'
+  supabaseKey || 'placeholder-key',
+  {
+    global: {
+      fetch: (url, options = {}) =>
+        fetch(url, { ...options, cache: 'no-store' }),
+    },
+  }
 );
