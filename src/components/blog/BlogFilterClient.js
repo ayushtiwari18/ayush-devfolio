@@ -2,30 +2,42 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Calendar, Clock, ArrowRight, Star, BookOpen, Flame } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, Star, BookOpen, Flame, FileText } from 'lucide-react';
+import FallbackImage from '@/components/ui/FallbackImage';
 
 const formatDate = (d) =>
   new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-// ── Featured hero card ──────────────────────────────────────────
+// ── Shared blog image fallback ────────────────────────────────
+function BlogImageFallback() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/10 via-primary/5 to-zinc-900">
+      <div className="w-12 h-12 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center">
+        <FileText size={22} className="text-primary/50" />
+      </div>
+      <span className="text-xs text-muted-foreground/60 font-medium">No cover</span>
+    </div>
+  );
+}
+
+// ── Featured hero card ────────────────────────────────────────
 function FeaturedCard({ post }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group block mb-10">
       <div className="relative rounded-2xl overflow-hidden border border-primary/30 bg-card hover:border-primary/60 transition-all duration-300 shadow-lg hover:shadow-primary/10 hover:shadow-xl">
-        {/* Cover image */}
-        {post.cover_image && (
-          <div className="relative w-full h-56 sm:h-72 overflow-hidden">
-            <Image
-              src={post.cover_image}
-              alt={post.title}
-              fill
-              className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-          </div>
-        )}
+        {/* Cover */}
+        <div className="relative w-full h-56 sm:h-72 overflow-hidden bg-zinc-900">
+          <FallbackImage
+            src={post.cover_image}
+            alt={post.title}
+            fill
+            className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+            priority
+            fallback={<BlogImageFallback />}
+            containerClassName="absolute inset-0"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent pointer-events-none" />
+        </div>
 
         <div className="p-6 sm:p-8">
           {/* Badges */}
@@ -79,28 +91,24 @@ function FeaturedCard({ post }) {
   );
 }
 
-// ── Regular grid card ───────────────────────────────────────────
+// ── Regular grid card ─────────────────────────────────────────
 function PostCard({ post }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
       <div className="h-full flex flex-col bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5">
         {/* Cover */}
-        <div className="relative w-full aspect-video bg-muted overflow-hidden flex-shrink-0">
-          {post.cover_image ? (
-            <Image
-              src={post.cover_image}
-              alt={post.title}
-              fill
-              className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <BookOpen size={32} className="text-primary/30" />
-            </div>
-          )}
-          {/* Reading time pill overlay */}
+        <div className="relative w-full aspect-video bg-zinc-900 overflow-hidden flex-shrink-0">
+          <FallbackImage
+            src={post.cover_image}
+            alt={post.title}
+            fill
+            className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            fallback={<BlogImageFallback />}
+            containerClassName="absolute inset-0"
+          />
+          {/* Reading time pill */}
           {post.reading_time && (
-            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium rounded-full flex items-center gap-1">
+            <div className="absolute bottom-2 right-2 z-10 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium rounded-full flex items-center gap-1">
               <Clock size={9} />{post.reading_time} min
             </div>
           )}
@@ -108,24 +116,17 @@ function PostCard({ post }) {
 
         {/* Body */}
         <div className="flex flex-col flex-1 p-5">
-          {/* Date */}
           <p className="text-xs text-muted-foreground mb-2.5 flex items-center gap-1.5">
             <Calendar size={11} />{formatDate(post.created_at)}
           </p>
-
-          {/* Title */}
           <h2 className="text-base font-bold text-foreground mb-2 leading-snug group-hover:text-primary transition-colors line-clamp-2">
             {post.title}
           </h2>
-
-          {/* Excerpt */}
           {post.excerpt && (
             <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4 flex-1">
               {post.excerpt}
             </p>
           )}
-
-          {/* Tags */}
           {post.tags?.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-auto">
               {post.tags.slice(0, 3).map((t, i) => (
@@ -141,7 +142,7 @@ function PostCard({ post }) {
   );
 }
 
-// ── Empty state ─────────────────────────────────────────────────
+// ── Empty state ───────────────────────────────────────────────
 function EmptyState({ activeTag, onClear }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -166,34 +167,30 @@ function EmptyState({ activeTag, onClear }) {
   );
 }
 
-// ── Main client component ───────────────────────────────────────
+// ── Main export ───────────────────────────────────────────────
 export default function BlogFilterClient({ posts }) {
   const [activeTag, setActiveTag] = useState('All');
 
-  // Build tag list with counts
   const tagCounts = useMemo(() => {
     const map = {};
     posts.forEach(p => p.tags?.forEach(t => { map[t] = (map[t] || 0) + 1; }));
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   }, [posts]);
 
-  // Split featured vs rest
   const featuredPost = posts.find(p => p.featured);
-  const filtered = useMemo(() => {
-    const base = activeTag === 'All' ? posts : posts.filter(p => p.tags?.includes(activeTag));
-    return base;
-  }, [posts, activeTag]);
 
-  const featuredFiltered = filtered.find(p => p.featured);
-  const gridPosts = filtered.filter(p => !p.featured || activeTag !== 'All');
-  // When filtering by tag, show featured in grid too (no special treatment)
+  const filtered = useMemo(() =>
+    activeTag === 'All' ? posts : posts.filter(p => p.tags?.includes(activeTag)),
+    [posts, activeTag]
+  );
+
   const showHero = activeTag === 'All' && featuredPost;
   const heroPost = showHero ? featuredPost : null;
   const listPosts = showHero ? filtered.filter(p => p.id !== featuredPost.id) : filtered;
 
   return (
     <div>
-      {/* ── Tag filter bar ── */}
+      {/* Tag filter bar */}
       {tagCounts.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-10">
           <button
@@ -205,7 +202,7 @@ export default function BlogFilterClient({ posts }) {
             }`}
           >
             All
-            <span className={`ml-1.5 text-xs ${ activeTag === 'All' ? 'text-primary-foreground/70' : 'text-muted-foreground' }`}>
+            <span className={`ml-1.5 text-xs ${activeTag === 'All' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
               {posts.length}
             </span>
           </button>
@@ -220,7 +217,7 @@ export default function BlogFilterClient({ posts }) {
               }`}
             >
               #{tag}
-              <span className={`ml-1.5 text-xs ${ activeTag === tag ? 'text-primary-foreground/70' : 'text-muted-foreground' }`}>
+              <span className={`ml-1.5 text-xs ${activeTag === tag ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                 {count}
               </span>
             </button>
@@ -228,15 +225,12 @@ export default function BlogFilterClient({ posts }) {
         </div>
       )}
 
-      {/* ── Content ── */}
+      {/* Content */}
       {filtered.length === 0 ? (
         <EmptyState activeTag={activeTag !== 'All' ? activeTag : null} onClear={() => setActiveTag('All')} />
       ) : (
         <>
-          {/* Featured hero */}
           {heroPost && <FeaturedCard post={heroPost} />}
-
-          {/* Grid */}
           {listPosts.length > 0 && (
             <>
               {heroPost && (
