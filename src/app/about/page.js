@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '@/lib/constants';
 
-// Always fetch fresh from Supabase on every request
 export const revalidate = 0;
 
 export const metadata = {
@@ -62,8 +61,7 @@ const FALLBACK_BIO =
   '5,600+ GitHub commits, hold two AWS certifications, and ship fast.';
 
 export default async function AboutPage() {
-  // Fetch profile + achievements in parallel
-  const [profileResult, dbAchievements] = await Promise.all([
+  const [profile, dbAchievements] = await Promise.all([
     supabase
       .from('profile_settings')
       .select('name,title,description,resume_url,about_bio,about_availability,about_location,about_email,about_highlights')
@@ -74,9 +72,6 @@ export default async function AboutPage() {
     getAchievements().catch(() => []),
   ]);
 
-  const profile = profileResult;
-
-  // Use DB rows if available, fall back to hardcoded constants
   const achievements = dbAchievements.length > 0 ? dbAchievements : ACHIEVEMENTS;
 
   const bio          = profile.about_bio          || FALLBACK_BIO;
@@ -108,16 +103,19 @@ export default async function AboutPage() {
             <span className="gradient-text">actually ship</span>
           </h1>
 
+          {/* Full bio — no clamp on dedicated about page */}
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-3xl mb-6">
             {bio}
           </p>
 
+          {/* All pills shown, each truncated at 260px with tooltip */}
           {highlights && (
             <div className="flex flex-wrap gap-2 mb-6">
               {highlights.map((h, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full"
+                  title={h}
+                  className="max-w-[260px] truncate px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full"
                 >
                   {h}
                 </span>
@@ -151,7 +149,6 @@ export default async function AboutPage() {
               </Button>
             </Link>
           </div>
-
         </div>
       </section>
 

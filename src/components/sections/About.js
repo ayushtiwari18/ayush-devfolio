@@ -3,14 +3,11 @@
 import { useEffect, useState } from 'react';
 import {
   Github, Code2, Rocket, BookOpen, Cloud, Trophy,
-  Shield, FlaskConical, Globe, GitBranch, MapPin, Mail,
+  Shield, FlaskConical, Globe, GitBranch, MapPin, Mail, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import { ACHIEVEMENTS } from '@/lib/constants';
 
-// ---------------------------------------------------------------------------
-// Icon map — icons are stored as strings in DB, resolved here
-// ---------------------------------------------------------------------------
 const ICON_MAP = {
   github:      Github,
   code:        Code2,
@@ -20,10 +17,6 @@ const ICON_MAP = {
   trophy:      Trophy,
 };
 
-// ---------------------------------------------------------------------------
-// Value cards — these describe who Ayush is, not numbers.
-// If you want these editable too, add a 'values' table similarly.
-// ---------------------------------------------------------------------------
 const VALUES = [
   {
     icon:  Shield,
@@ -54,9 +47,6 @@ const FALLBACK_BIO =
   'a Springer-indexed publication. Today I build production-grade MERN and Next.js systems with ' +
   '5,600+ GitHub commits, hold two AWS certifications, and ship fast.';
 
-// ---------------------------------------------------------------------------
-// StatCard — renders one achievement row from DB
-// ---------------------------------------------------------------------------
 function StatCard({ achievement, index, visible }) {
   const Icon = ICON_MAP[achievement.icon] || Rocket;
   return (
@@ -68,21 +58,14 @@ function StatCard({ achievement, index, visible }) {
         <Icon size={20} className="text-primary" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-foreground leading-none mb-1">
-          {achievement.value}
-        </p>
+        <p className="text-2xl font-bold text-foreground leading-none mb-1">{achievement.value}</p>
         <p className="text-sm font-semibold text-foreground">{achievement.label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-          {achievement.description}
-        </p>
+        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{achievement.description}</p>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// ValueCard
-// ---------------------------------------------------------------------------
 function ValueCard({ item, index, visible }) {
   const Icon = item.icon;
   return (
@@ -99,12 +82,9 @@ function ValueCard({ item, index, visible }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// ABOUT SECTION
-// achievements prop: array from DB (or ACHIEVEMENTS constant as fallback)
-// ---------------------------------------------------------------------------
 export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
   const [isMounted, setIsMounted] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
 
   const header = useReveal({ threshold: 0.1 });
@@ -118,25 +98,23 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
   const highlights   = Array.isArray(profile.about_highlights) && profile.about_highlights.length > 0
     ? profile.about_highlights : null;
 
+  // Only show first 4 pills on home page to avoid overflow; rest shown on /about
+  const visiblePills  = highlights ? highlights.slice(0, 4) : [];
+  const hiddenCount   = highlights ? highlights.length - 4 : 0;
+
   return (
     <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/20">
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
-        <div
-          ref={header.ref}
-          className="mb-16"
-          style={fadeUp(header.visible)}
-        >
+        <div ref={header.ref} className="mb-16" style={fadeUp(header.visible)}>
           {isMounted && (
             <div className="flex items-center gap-2 mb-6">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
               </span>
-              <span className="text-xs font-medium text-green-500 tracking-wide">
-                {availability}
-              </span>
+              <span className="text-xs font-medium text-green-500 tracking-wide">{availability}</span>
             </div>
           )}
 
@@ -146,20 +124,43 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
             <span className="gradient-text">actually ship</span>
           </h2>
 
-          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-3xl">
-            {bio}
-          </p>
+          {/* Bio — clamped to 4 lines on home, expandable */}
+          <div className="max-w-3xl">
+            <p className={`text-base sm:text-lg text-muted-foreground leading-relaxed ${
+              bioExpanded ? '' : 'line-clamp-4'
+            }`}>
+              {bio}
+            </p>
+            <button
+              onClick={() => setBioExpanded(v => !v)}
+              className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              {bioExpanded
+                ? <><ChevronUp size={13} />Show less</>
+                : <><ChevronDown size={13} />Read more</>}
+            </button>
+          </div>
 
-          {highlights && (
-            <div className="flex flex-wrap gap-2 mt-6">
-              {highlights.map((h, i) => (
+          {/* Highlight pills — capped at 4 + overflow badge */}
+          {visiblePills.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-6 items-center">
+              {visiblePills.map((h, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full"
+                  title={h}
+                  className="max-w-[220px] truncate px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full"
                 >
                   {h}
                 </span>
               ))}
+              {hiddenCount > 0 && (
+                <a
+                  href="/about"
+                  className="px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground border border-border rounded-full hover:border-primary/40 hover:text-primary transition-colors"
+                >
+                  +{hiddenCount} more
+                </a>
+              )}
             </div>
           )}
 
@@ -176,21 +177,15 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
           </div>
         </div>
 
-        {/* Stat strip — powered by DB */}
-        <div
-          ref={stats.ref}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-16"
-        >
+        {/* Stat strip */}
+        <div ref={stats.ref} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-16">
           {achievements.map((a, i) => (
             <StatCard key={a.id || a.label} achievement={a} index={i} visible={stats.visible} />
           ))}
         </div>
 
         {/* Value cards */}
-        <div
-          ref={values.ref}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
-        >
+        <div ref={values.ref} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {VALUES.map((v, i) => (
             <ValueCard key={v.title} item={v} index={i} visible={values.visible} />
           ))}
