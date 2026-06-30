@@ -24,8 +24,8 @@ const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
 });
 
 export default function EditBlogPostPage() {
-  const router  = useRouter();
-  const params  = useParams();
+  const router   = useRouter();
+  const params   = useParams();
   const rawDbRef = useRef(null);
 
   const [loading, setLoading]                 = useState(false);
@@ -54,9 +54,7 @@ export default function EditBlogPostPage() {
 
       rawDbRef.current = data;
 
-      // FIX 3 — explicit pick of only managed fields; no ...data spread.
-      // This prevents legacy DB columns (description, content_markdown,
-      // date, read_time, view_count) from polluting formData state.
+      // Explicit pick — no ...data spread, no legacy column pollution.
       setFormData({
         title:          data.title          || '',
         slug:           data.slug           || '',
@@ -163,18 +161,18 @@ export default function EditBlogPostPage() {
     }
   };
 
-  const handleConfirmedDelete = async () => {
-    setDeleting(true);
-    try {
-      const { error } = await supabase.from('blog_posts').delete().eq('id', params.id);
-      if (error) throw error;
-      router.push('/admin/blog');
-    } catch (err) {
-      alert('Error deleting post: ' + err.message);
-    } finally {
-      setDeleting(false);
-      setShowDeleteModal(false);
+  // FIX: Only allow the form to submit when the Save Changes button triggered it.
+  // BlockNote's internal + / drag-handle buttons have no type attribute so the
+  // browser defaults them to type="submit", firing a submit event on the form.
+  // We check e.nativeEvent.submitter — if it's not our Save button, block it.
+  const handleFormSubmit = (e) => {
+    const submitter = e.nativeEvent?.submitter;
+    const isSaveButton = submitter?.dataset?.saveBtn === 'true';
+    if (!isSaveButton) {
+      e.preventDefault();
+      return;
     }
+    handleSubmit(e);
   };
 
   const visibleCount = [formData.show_toc, formData.show_takeaways, formData.show_share].filter(Boolean).length;
@@ -218,7 +216,7 @@ export default function EditBlogPostPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           <div className="lg:col-span-2 space-y-6">
@@ -440,7 +438,16 @@ export default function EditBlogPostPage() {
               </label>
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90">
+            {/* data-save-btn marks this as the only legitimate form submitter.
+                handleFormSubmit checks e.nativeEvent.submitter.dataset.saveBtn
+                and blocks any other button (e.g. BlockNote + handle) from
+                accidentally submitting the form. */}
+            <Button
+              type="submit"
+              data-save-btn="true"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
               {loading
                 ? <span className="flex items-center justify-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />Saving...</span>
                 : <span className="flex items-center gap-2"><Save size={18} />Save Changes</span>
