@@ -11,6 +11,14 @@ import EventGallery from '@/components/events/EventGallery';
 export const revalidate    = 86400;
 export const dynamicParams = true;
 
+// ── Safe links parser ─────────────────────────────────
+// Supabase may return links as a JSON string "{}" or as an object.
+function parseLinks(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw;
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
 // ── Static params ────────────────────────────────────
 export async function generateStaticParams() {
   try {
@@ -79,9 +87,8 @@ function resultStyle(result) {
 }
 
 // ── Sidebar ──────────────────────────────────────────
-function Sidebar({ event }) {
-  const cfg   = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
-  const links = event.links || {};
+function Sidebar({ event, links }) {
+  const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
 
   return (
     <aside className="hidden xl:block w-56 shrink-0">
@@ -227,7 +234,7 @@ function EventHero({ event }) {
     <img
       src={event.cover_image}
       alt={event.title}
-      className="w-full h-64 sm:h-80 object-cover rounded-2xl border border-border"
+      className="w-full max-h-[480px] object-contain rounded-2xl border border-border bg-muted"
     />
   );
 }
@@ -235,7 +242,6 @@ function EventHero({ event }) {
 // ── Story section ───────────────────────────────────
 function StorySection({ story }) {
   if (!story?.trim()) return null;
-  // Split on double newlines for paragraphs
   const paragraphs = story.split(/\n\n+/).filter(Boolean);
   return (
     <section className="mb-10">
@@ -262,11 +268,11 @@ export default async function EventDetailPage({ params }) {
   if (!event) notFound();
 
   const cfg    = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
-  const links  = event.links || {};
-  const images = Array.isArray(event.images) ? event.images : [];
+  // ✅ FIX: always parse links safely — Supabase may return "{}" string
+  const links  = parseLinks(event.links);
+  const images = Array.isArray(event.images) ? event.images.filter(Boolean) : [];
   const baseUrl = 'https://ayush-devfolio.vercel.app';
 
-  // JSON-LD structured data
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -274,12 +280,8 @@ export default async function EventDetailPage({ params }) {
     description: event.description,
     startDate: event.date,
     endDate: event.end_date || event.date,
-    location: event.location
-      ? { '@type': 'Place', name: event.location }
-      : undefined,
-    organizer: event.organizer
-      ? { '@type': 'Organization', name: event.organizer }
-      : undefined,
+    location: event.location ? { '@type': 'Place', name: event.location } : undefined,
+    organizer: event.organizer ? { '@type': 'Organization', name: event.organizer } : undefined,
     url: `${baseUrl}/events/${slug}`,
   };
 
@@ -322,7 +324,6 @@ export default async function EventDetailPage({ params }) {
 
             {/* Title block */}
             <div className="mb-8">
-              {/* Badges row */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>
                   {cfg.label}
@@ -413,18 +414,19 @@ export default async function EventDetailPage({ params }) {
             {/* Story */}
             <StorySection story={event.story} />
 
-            {/* Gallery */}
+            {/* Gallery carousel */}
             {images.length > 0 && (
               <section className="mb-10">
                 <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
                   <span className="w-1 h-5 bg-primary rounded-full inline-block" />
                   Gallery
+                  <span className="text-sm font-normal text-muted-foreground ml-1">({images.length} photo{images.length !== 1 ? 's' : ''})</span>
                 </h2>
                 <EventGallery images={images} title={event.title} />
               </section>
             )}
 
-            {/* Certificate image */}
+            {/* Certificate */}
             {event.certificate_image && (
               <section className="mb-10">
                 <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
@@ -435,7 +437,7 @@ export default async function EventDetailPage({ params }) {
                 <img
                   src={event.certificate_image}
                   alt={`${event.title} certificate`}
-                  className="w-full max-w-lg rounded-2xl border border-border shadow-lg"
+                  className="w-full max-w-lg max-h-[480px] object-contain rounded-2xl border border-border shadow-lg bg-muted"
                 />
               </section>
             )}
@@ -450,7 +452,7 @@ export default async function EventDetailPage({ params }) {
           </article>
 
           {/* ── Sidebar ──────────────────────────────── */}
-          <Sidebar event={event} />
+          <Sidebar event={event} links={links} />
         </div>
       </main>
     </>
