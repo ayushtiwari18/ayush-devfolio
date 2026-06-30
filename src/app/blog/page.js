@@ -3,13 +3,14 @@ import { supabase } from '@/lib/supabase';
 import BlogFilterClient from '@/components/blog/BlogFilterClient';
 import { BASE_URL } from '@/app/layout';
 
-export const revalidate = 60;
+// Always fetch fresh from Supabase on every request
+export const revalidate = 0;
 
 export const metadata = {
-  title: 'Blog — Ayush Tiwari | Full Stack Development Articles',
+  title: 'Blog - Ayush Tiwari | Full Stack Development Articles',
   description:
     'Technical articles, tutorials and deep-dives on Full Stack Development, Next.js, React, ' +
-    'Node.js, network security and cloud engineering by Ayush Tiwari — developer from Jabalpur, India.',
+    'Node.js, network security and cloud engineering by Ayush Tiwari - developer from Jabalpur, India.',
   keywords: [
     'Ayush Tiwari blog', 'Full Stack Development blog India',
     'Next.js tutorials', 'React articles', 'Node.js tutorials',
@@ -18,7 +19,7 @@ export const metadata = {
   ],
   alternates: { canonical: `${BASE_URL}/blog` },
   openGraph: {
-    title:       'Blog — Ayush Tiwari | Full Stack Development Articles',
+    title:       'Blog - Ayush Tiwari | Full Stack Development Articles',
     description: 'Technical deep-dives on Full Stack Development, Next.js and cloud engineering by Ayush Tiwari.',
     url:          `${BASE_URL}/blog`,
     type:        'website',
@@ -26,7 +27,7 @@ export const metadata = {
   },
   twitter: {
     card:    'summary_large_image',
-    title:   'Blog — Ayush Tiwari',
+    title:   'Blog - Ayush Tiwari',
     creator: '@ayushtiwari18',
   },
 };

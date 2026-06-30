@@ -11,7 +11,10 @@ import { getProfileSettings } from '@/services/profile.service';
 import { getFeaturedProjects } from '@/services/projects.service';
 import { getRecentBlogPosts } from '@/services/blog.service';
 
-// Heavy / client-only sections — dynamically imported
+// Always fetch fresh from Supabase on every request
+export const revalidate = 0;
+
+// Heavy / client-only sections
 const CodingStats = dynamic(
   () => import('@/components/sections/CodingStats'),
   { ssr: false, loading: () => <SectionSkeleton minH="400px" /> }
@@ -49,7 +52,6 @@ export default async function Home() {
   ]);
 
   const profile = {
-    // —— Hero fields ——
     name:          dbProfile?.name          || HERO_COPY.name,
     title:         dbProfile?.title         || HERO_COPY.title,
     description:   dbProfile?.description   || HERO_COPY.description,
@@ -59,7 +61,6 @@ export default async function Home() {
     twitter_url:   dbProfile?.twitter_url   || null,
     resume_url:    dbProfile?.resume_url    || null,
     form_endpoint: dbProfile?.form_endpoint || null,
-    // —— About fields ——
     about_bio:          dbProfile?.about_bio          || null,
     about_availability: dbProfile?.about_availability || null,
     about_location:     dbProfile?.about_location     || null,

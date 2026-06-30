@@ -5,10 +5,13 @@ import { getPublishedCertifications } from '@/services/certifications.service';
 import CertificationsClient from '@/components/certifications/CertificationsClient';
 import { BASE_URL } from '@/app/layout';
 
+// Always fetch fresh from Supabase on every request
+export const revalidate = 0;
+
 export const metadata = {
-  title: 'Certifications — Ayush Tiwari | AWS, Oracle, Cisco',
+  title: 'Certifications - Ayush Tiwari | AWS, Oracle, Cisco',
   description:
-    'Professional certifications earned by Ayush Tiwari — AWS Cloud Practitioner, ' +
+    'Professional certifications earned by Ayush Tiwari - AWS Cloud Practitioner, ' +
     'AWS Solutions Architect, Oracle, Cisco, and 25+ industry credentials. ' +
     'Full Stack Developer from Jabalpur, Madhya Pradesh, India.',
   keywords: [
@@ -18,7 +21,7 @@ export const metadata = {
   ],
   alternates: { canonical: `${BASE_URL}/certifications` },
   openGraph: {
-    title:       'Certifications — Ayush Tiwari | AWS, Oracle, Cisco',
+    title:       'Certifications - Ayush Tiwari | AWS, Oracle, Cisco',
     description: 'AWS, Oracle, Cisco and 25+ certifications by Ayush Tiwari.',
     url:          `${BASE_URL}/certifications`,
     type:        'website',
@@ -26,7 +29,7 @@ export const metadata = {
   },
   twitter: {
     card:    'summary_large_image',
-    title:   'Certifications — Ayush Tiwari',
+    title:   'Certifications - Ayush Tiwari',
     creator: '@ayushtiwari18',
   },
 };
@@ -45,13 +48,11 @@ export default async function CertificationsPage() {
   return (
     <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-
         <Link href="/">
           <Button variant="outline" className="mb-8 hover:bg-primary/10 hover:border-primary">
             <ArrowLeft className="mr-2" size={16} />Back to Home
           </Button>
         </Link>
-
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
@@ -67,12 +68,11 @@ export default async function CertificationsPage() {
             {total > 0 && (
               <span className="ml-2 text-sm text-muted-foreground/60">
                 {total} {total === 1 ? 'credential' : 'credentials'}
-                {issuers.length > 0 && ` · ${issuers.slice(0, 3).join(', ')}${issuers.length > 3 ? ` +${issuers.length - 3} more` : ''}`}
+                {issuers.length > 0 && ` - ${issuers.slice(0, 3).join(', ')}${issuers.length > 3 ? ` +${issuers.length - 3} more` : ''}`}
               </span>
             )}
           </p>
         </div>
-
         {certifications.length > 0 ? (
           <CertificationsClient certifications={certifications} />
         ) : (

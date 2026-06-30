@@ -7,10 +7,13 @@ import EventTimelineCard from '@/components/events/EventTimelineCard';
 import EventsLoading from './loading';
 import { BASE_URL } from '@/app/layout';
 
+// Always fetch fresh from Supabase on every request
+export const revalidate = 0;
+
 export const metadata = {
-  title: 'Events & Hackathons — Ayush Tiwari',
+  title: 'Events & Hackathons - Ayush Tiwari',
   description:
-    'Hackathons, conferences, and tech events attended by Ayush Tiwari — ' +
+    'Hackathons, conferences, and tech events attended by Ayush Tiwari - ' +
     'Full Stack Developer from Jabalpur, India. My journey through the Indian tech circuit.',
   keywords: [
     'Ayush Tiwari hackathon', 'Ayush Tiwari events', 'hackathons India',
@@ -19,7 +22,7 @@ export const metadata = {
   ],
   alternates: { canonical: `${BASE_URL}/events` },
   openGraph: {
-    title:       'Events & Hackathons — Ayush Tiwari',
+    title:       'Events & Hackathons - Ayush Tiwari',
     description: 'Hackathons and tech events by Ayush Tiwari, Full Stack Developer, Jabalpur India.',
     url:          `${BASE_URL}/events`,
     type:        'website',
@@ -27,7 +30,7 @@ export const metadata = {
   },
   twitter: {
     card:    'summary_large_image',
-    title:   'Events & Hackathons — Ayush Tiwari',
+    title:   'Events & Hackathons - Ayush Tiwari',
     creator: '@ayushtiwari18',
   },
 };
@@ -67,7 +70,6 @@ async function EventsList() {
   }
 
   let cardIndex = 0;
-
   return (
     <div className="relative">
       <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
