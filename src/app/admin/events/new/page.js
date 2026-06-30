@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ImageUrlList from '@/components/admin/ImageUrlList';
+import ImageUploader from '@/components/admin/ImageUploader';
 import { createEvent } from '@/services/events.service';
 
 const TYPE_OPTIONS = [
@@ -41,7 +41,7 @@ export default function NewEventPage() {
     result: '', prize: '',
     description: '', story: '',
     cover_image: '', certificate_image: '',
-    images: [],           // string[]
+    images: [],           // string[] — uploaded Supabase URLs
     technologies: '',
     links_github: '', links_devpost: '', links_certificate: '', links_live: '', links_article: '',
     published: true, featured: false,
@@ -83,11 +83,13 @@ export default function NewEventPage() {
         story:             form.story.trim()             || null,
         cover_image:       form.cover_image.trim()       || null,
         certificate_image: form.certificate_image.trim() || null,
-        images:            form.images.filter(Boolean),
-        technologies:      form.technologies ? form.technologies.split(',').map(s => s.trim()).filter(Boolean) : [],
-        links:             Object.keys(links).length ? links : {},
-        published:         form.published,
-        featured:          form.featured,
+        images:            form.images.filter(Boolean).slice(0, 10),
+        technologies:      form.technologies
+          ? form.technologies.split(',').map(s => s.trim()).filter(Boolean)
+          : [],
+        links:   Object.keys(links).length ? links : {},
+        published: form.published,
+        featured:  form.featured,
       });
       router.push('/admin/events');
     } catch (err) {
@@ -100,28 +102,46 @@ export default function NewEventPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Link href="/admin/events"><Button type="button" variant="outline" size="sm"><ArrowLeft size={16} className="mr-1" />Back</Button></Link>
+        <Link href="/admin/events">
+          <Button type="button" variant="outline" size="sm"><ArrowLeft size={16} className="mr-1" />Back</Button>
+        </Link>
         <div>
           <h1 className="text-2xl font-bold">Add Event</h1>
           <p className="text-sm text-muted-foreground">Create a new hackathon, conference, or tech event entry</p>
         </div>
       </div>
 
-      {error && <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">{error}</div>}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">{error}</div>
+      )}
 
       {/* Core */}
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Core Info</h2>
-        <div><label className={LABEL}>Title *</label><input className={INPUT} value={form.title} onChange={e => handleTitleChange(e.target.value)} placeholder="Smart India Hackathon 2024" required /></div>
+        <div>
+          <label className={LABEL}>Title *</label>
+          <input className={INPUT} value={form.title} onChange={e => handleTitleChange(e.target.value)} placeholder="Smart India Hackathon 2024" required />
+        </div>
         <div>
           <label className={LABEL}>Slug *</label>
           <input className={INPUT} value={form.slug} onChange={e => set('slug', e.target.value)} required />
           <p className={HINT}>URL: /events/{form.slug || 'slug'}</p>
         </div>
-        <div><label className={LABEL}>Tagline</label><input className={INPUT} value={form.tagline} onChange={e => set('tagline', e.target.value)} placeholder="Built a real-time disaster relief platform in 36 hours" /></div>
+        <div>
+          <label className={LABEL}>Tagline</label>
+          <input className={INPUT} value={form.tagline} onChange={e => set('tagline', e.target.value)} placeholder="Built a real-time disaster relief platform in 36 hours" />
+        </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className={LABEL}>Type</label><select className={INPUT} value={form.type} onChange={e => set('type', e.target.value)}>{TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
-          <div><label className={LABEL}>Category</label><input className={INPUT} value={form.category} onChange={e => set('category', e.target.value)} placeholder="National Level" /></div>
+          <div>
+            <label className={LABEL}>Type</label>
+            <select className={INPUT} value={form.type} onChange={e => set('type', e.target.value)}>
+              {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={LABEL}>Category</label>
+            <input className={INPUT} value={form.category} onChange={e => set('category', e.target.value)} placeholder="National Level" />
+          </div>
         </div>
       </div>
 
@@ -156,27 +176,49 @@ export default function NewEventPage() {
       {/* Content */}
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Content</h2>
-        <div><label className={LABEL}>Description <span className="text-muted-foreground font-normal">(shown on card)</span></label><textarea rows={2} className={INPUT} value={form.description} onChange={e => set('description', e.target.value)} placeholder="1–2 sentence summary" /></div>
+        <div>
+          <label className={LABEL}>Description <span className="text-muted-foreground font-normal">(shown on card)</span></label>
+          <textarea rows={2} className={INPUT} value={form.description} onChange={e => set('description', e.target.value)} placeholder="1–2 sentence summary" />
+        </div>
         <div>
           <label className={LABEL}>Story <span className="text-muted-foreground font-normal">(full narrative on detail page)</span></label>
           <textarea rows={8} className={INPUT} value={form.story} onChange={e => set('story', e.target.value)} placeholder="Tell the full story...\n\nUse blank lines to separate paragraphs." />
           <p className={HINT}>Plain text. Blank line = new paragraph.</p>
         </div>
-        <div><label className={LABEL}>Technologies <span className="text-muted-foreground font-normal">(comma-separated)</span></label><input className={INPUT} value={form.technologies} onChange={e => set('technologies', e.target.value)} placeholder="React, Node.js, MongoDB" /></div>
+        <div>
+          <label className={LABEL}>Technologies <span className="text-muted-foreground font-normal">(comma-separated)</span></label>
+          <input className={INPUT} value={form.technologies} onChange={e => set('technologies', e.target.value)} placeholder="React, Node.js, MongoDB" />
+        </div>
       </div>
 
       {/* Media */}
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Media</h2>
-        <div><label className={LABEL}>Cover Image URL</label><input className={INPUT} value={form.cover_image} onChange={e => set('cover_image', e.target.value)} placeholder="https://..." /></div>
-        <div>
-          <label className={LABEL}>
-            Gallery Images
-            <span className="ml-2 text-xs text-muted-foreground font-normal">max 10 — shown as carousel on event page</span>
-          </label>
-          <ImageUrlList value={form.images} onChange={val => set('images', val)} />
-        </div>
-        <div><label className={LABEL}>Certificate Image URL</label><input className={INPUT} value={form.certificate_image} onChange={e => set('certificate_image', e.target.value)} placeholder="https://..." /></div>
+
+        <ImageUploader
+          label="Cover Image"
+          value={form.cover_image}
+          onChange={url => set('cover_image', url)}
+          folder="events"
+          hint="Shown as hero on the event detail page and thumbnail on listing"
+        />
+
+        <ImageUploader
+          label="Gallery Images"
+          hint={`Upload up to 10 photos — shown as carousel on event page (${form.images.length}/10 uploaded)`}
+          multiple
+          existingUrls={form.images}
+          onChange={urls => set('images', urls.slice(0, 10))}
+          folder="events/gallery"
+        />
+
+        <ImageUploader
+          label="Certificate Image"
+          value={form.certificate_image}
+          onChange={url => set('certificate_image', url)}
+          folder="events/certificates"
+          hint="Certificate or award image shown at the bottom of the event page"
+        />
       </div>
 
       {/* Links */}
@@ -195,14 +237,23 @@ export default function NewEventPage() {
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Visibility</h2>
         <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.published} onChange={e => set('published', e.target.checked)} className="w-4 h-4 accent-primary" /><span className="text-sm">Published</span></label>
-          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="w-4 h-4 accent-primary" /><span className="text-sm">Featured</span></label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.published} onChange={e => set('published', e.target.checked)} className="w-4 h-4 accent-primary" />
+            <span className="text-sm">Published</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="w-4 h-4 accent-primary" />
+            <span className="text-sm">Featured</span>
+          </label>
         </div>
       </div>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
-          {saving ? <><Loader2 size={16} className="mr-2 animate-spin" />Saving...</> : <><Save size={16} className="mr-2" />Save Event</>}
+          {saving
+            ? <><Loader2 size={16} className="mr-2 animate-spin" />Saving...</>
+            : <><Save size={16} className="mr-2" />Save Event</>
+          }
         </Button>
         <Link href="/admin/events"><Button type="button" variant="outline">Cancel</Button></Link>
       </div>

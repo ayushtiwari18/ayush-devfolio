@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ImageUrlList from '@/components/admin/ImageUrlList';
+import ImageUploader from '@/components/admin/ImageUploader';
 import { getEventById, updateEvent } from '@/services/events.service';
 
 const TYPE_OPTIONS = [
@@ -104,11 +104,13 @@ export default function EditEventPage() {
         story:             form.story.trim()             || null,
         cover_image:       form.cover_image.trim()       || null,
         certificate_image: form.certificate_image.trim() || null,
-        images:            form.images.filter(Boolean),
-        technologies:      form.technologies ? form.technologies.split(',').map(s => s.trim()).filter(Boolean) : [],
-        links:             Object.keys(links).length ? links : {},
-        published:         form.published,
-        featured:          form.featured,
+        images:            form.images.filter(Boolean).slice(0, 10),
+        technologies:      form.technologies
+          ? form.technologies.split(',').map(s => s.trim()).filter(Boolean)
+          : [],
+        links:   Object.keys(links).length ? links : {},
+        published: form.published,
+        featured:  form.featured,
       });
       router.push('/admin/events');
     } catch (err) {
@@ -134,20 +136,36 @@ export default function EditEventPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Link href="/admin/events"><Button type="button" variant="outline" size="sm"><ArrowLeft size={16} className="mr-1" />Back</Button></Link>
-        <div><h1 className="text-2xl font-bold">Edit Event</h1><p className="text-sm text-muted-foreground">{form.title}</p></div>
+        <Link href="/admin/events">
+          <Button type="button" variant="outline" size="sm"><ArrowLeft size={16} className="mr-1" />Back</Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold">Edit Event</h1>
+          <p className="text-sm text-muted-foreground">{form.title}</p>
+        </div>
       </div>
 
-      {error && <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">{error}</div>}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">{error}</div>
+      )}
 
       {/* Core */}
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Core Info</h2>
         <div><label className={LABEL}>Title *</label><input className={INPUT} value={form.title} onChange={e => set('title', e.target.value)} required /></div>
-        <div><label className={LABEL}>Slug *</label><input className={INPUT} value={form.slug} onChange={e => set('slug', e.target.value)} required /><p className={HINT}>URL: /events/{form.slug}</p></div>
+        <div>
+          <label className={LABEL}>Slug *</label>
+          <input className={INPUT} value={form.slug} onChange={e => set('slug', e.target.value)} required />
+          <p className={HINT}>URL: /events/{form.slug}</p>
+        </div>
         <div><label className={LABEL}>Tagline</label><input className={INPUT} value={form.tagline} onChange={e => set('tagline', e.target.value)} /></div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className={LABEL}>Type</label><select className={INPUT} value={form.type} onChange={e => set('type', e.target.value)}>{TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
+          <div>
+            <label className={LABEL}>Type</label>
+            <select className={INPUT} value={form.type} onChange={e => set('type', e.target.value)}>
+              {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
           <div><label className={LABEL}>Category</label><input className={INPUT} value={form.category} onChange={e => set('category', e.target.value)} /></div>
         </div>
       </div>
@@ -184,22 +202,42 @@ export default function EditEventPage() {
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Content</h2>
         <div><label className={LABEL}>Description</label><textarea rows={2} className={INPUT} value={form.description} onChange={e => set('description', e.target.value)} /></div>
-        <div><label className={LABEL}>Story</label><textarea rows={8} className={INPUT} value={form.story} onChange={e => set('story', e.target.value)} /><p className={HINT}>Plain text. Blank line = new paragraph.</p></div>
+        <div>
+          <label className={LABEL}>Story</label>
+          <textarea rows={8} className={INPUT} value={form.story} onChange={e => set('story', e.target.value)} />
+          <p className={HINT}>Plain text. Blank line = new paragraph.</p>
+        </div>
         <div><label className={LABEL}>Technologies (comma-separated)</label><input className={INPUT} value={form.technologies} onChange={e => set('technologies', e.target.value)} /></div>
       </div>
 
       {/* Media */}
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Media</h2>
-        <div><label className={LABEL}>Cover Image URL</label><input className={INPUT} value={form.cover_image} onChange={e => set('cover_image', e.target.value)} /></div>
-        <div>
-          <label className={LABEL}>
-            Gallery Images
-            <span className="ml-2 text-xs text-muted-foreground font-normal">max 10 — shown as carousel on event page</span>
-          </label>
-          <ImageUrlList value={form.images} onChange={val => set('images', val)} />
-        </div>
-        <div><label className={LABEL}>Certificate Image URL</label><input className={INPUT} value={form.certificate_image} onChange={e => set('certificate_image', e.target.value)} /></div>
+
+        <ImageUploader
+          label="Cover Image"
+          value={form.cover_image}
+          onChange={url => set('cover_image', url)}
+          folder="events"
+          hint="Shown as hero on the event detail page and thumbnail on listing"
+        />
+
+        <ImageUploader
+          label="Gallery Images"
+          hint={`Upload up to 10 photos — shown as carousel on event page (${form.images.length}/10 uploaded)`}
+          multiple
+          existingUrls={form.images}
+          onChange={urls => set('images', urls.slice(0, 10))}
+          folder="events/gallery"
+        />
+
+        <ImageUploader
+          label="Certificate Image"
+          value={form.certificate_image}
+          onChange={url => set('certificate_image', url)}
+          folder="events/certificates"
+          hint="Certificate or award image shown at the bottom of the event page"
+        />
       </div>
 
       {/* Links */}
@@ -218,14 +256,23 @@ export default function EditEventPage() {
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Visibility</h2>
         <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.published} onChange={e => set('published', e.target.checked)} className="w-4 h-4 accent-primary" /><span className="text-sm">Published</span></label>
-          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="w-4 h-4 accent-primary" /><span className="text-sm">Featured</span></label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.published} onChange={e => set('published', e.target.checked)} className="w-4 h-4 accent-primary" />
+            <span className="text-sm">Published</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="w-4 h-4 accent-primary" />
+            <span className="text-sm">Featured</span>
+          </label>
         </div>
       </div>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
-          {saving ? <><Loader2 size={16} className="mr-2 animate-spin" />Saving...</> : <><Save size={16} className="mr-2" />Save Changes</>}
+          {saving
+            ? <><Loader2 size={16} className="mr-2 animate-spin" />Saving...</>
+            : <><Save size={16} className="mr-2" />Save Changes</>
+          }
         </Button>
         <Link href="/admin/events"><Button type="button" variant="outline">Cancel</Button></Link>
       </div>
