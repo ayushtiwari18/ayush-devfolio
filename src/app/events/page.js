@@ -1,15 +1,17 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getPublishedEvents } from '@/services/events.service';
 import EventTimelineCard from '@/components/events/EventTimelineCard';
+import EventsLoading from './loading';
 
 export const metadata = {
   title: 'Events — Ayush Tiwari',
   description: 'Hackathons, conferences, and tech events — my journey through the Indian tech circuit.',
+  alternates: { canonical: 'https://ayush-devfolio.vercel.app/events' },
 };
 
-// Group events by year
 function groupByYear(events) {
   const map = {};
   events.forEach(e => {
@@ -17,11 +19,10 @@ function groupByYear(events) {
     if (!map[year]) map[year] = [];
     map[year].push(e);
   });
-  // Sort years descending
   return Object.entries(map).sort((a, b) => b[0] - a[0]);
 }
 
-export default async function EventsPage() {
+async function EventsList() {
   let events = [];
   try {
     events = await getPublishedEvents();
@@ -31,6 +32,52 @@ export default async function EventsPage() {
 
   const grouped = groupByYear(events);
 
+  if (events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <Zap size={36} className="text-primary/60" />
+        </div>
+        <h3 className="text-xl font-bold text-foreground mb-2">Events Coming Soon</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Stories from hackathons and tech events will be listed here.
+        </p>
+      </div>
+    );
+  }
+
+  let cardIndex = 0;
+
+  return (
+    <div className="relative">
+      {/* Vertical timeline line */}
+      <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+
+      <div className="space-y-12">
+        {grouped.map(([year, yearEvents]) => (
+          <div key={year}>
+            {/* Year label */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-4 h-4 rounded-full bg-primary border-2 border-background ring-2 ring-primary/30 shrink-0 z-10" />
+              <span className="text-sm font-bold text-primary uppercase tracking-widest">{year}</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            {/* Cards grid — pass index for stagger */}
+            <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {yearEvents.map(event => {
+                const idx = cardIndex++;
+                return <EventTimelineCard key={event.id} event={event} index={idx} />;
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function EventsPage() {
   return (
     <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
@@ -55,51 +102,14 @@ export default async function EventsPage() {
           </h1>
           <p className="text-lg text-muted-foreground">
             Every hackathon, conference, and tech event that shaped how I build.
-            {events.length > 0 && (
-              <span className="ml-2 text-sm text-muted-foreground/60">
-                {events.length} event{events.length !== 1 ? 's' : ''}
-              </span>
-            )}
           </p>
         </div>
 
-        {/* Timeline */}
-        {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Zap size={36} className="text-primary/60" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">Events Coming Soon</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Stories from hackathons and tech events will be listed here.
-            </p>
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Vertical timeline line */}
-            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+        {/* Suspense boundary — shows skeleton while data loads */}
+        <Suspense fallback={<EventsLoading />}>
+          <EventsList />
+        </Suspense>
 
-            <div className="space-y-12">
-              {grouped.map(([year, yearEvents]) => (
-                <div key={year}>
-                  {/* Year label */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-4 h-4 rounded-full bg-primary border-2 border-background ring-2 ring-primary/30 shrink-0 z-10" />
-                    <span className="text-sm font-bold text-primary uppercase tracking-widest">{year}</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-
-                  {/* Cards for this year */}
-                  <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {yearEvents.map(event => (
-                      <EventTimelineCard key={event.id} event={event} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );
