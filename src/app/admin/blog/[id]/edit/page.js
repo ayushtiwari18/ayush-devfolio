@@ -23,27 +23,18 @@ const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
   ),
 });
 
-// ─── columns we explicitly manage in this form ────────────────────────────────
-const MANAGED_KEYS = new Set([
-  'title', 'slug', 'content', 'excerpt', 'cover_image',
-  'tags', 'published', 'reading_time',
-  'key_takeaways', 'series_name', 'series_order',
-  'canonical_url', 'featured',
-  'show_takeaways', 'show_toc', 'show_share',
-]);
-
 export default function EditBlogPostPage() {
   const router  = useRouter();
   const params  = useParams();
-  const rawDbRef = useRef(null); // store exact DB row for diff
+  const rawDbRef = useRef(null);
 
-  const [loading, setLoading]                   = useState(false);
-  const [fetching, setFetching]                 = useState(true);
-  const [tagInput, setTagInput]                 = useState('');
-  const [takeawayInput, setTakeawayInput]       = useState('');
-  const [showDeleteModal, setShowDeleteModal]   = useState(false);
-  const [deleting, setDeleting]                 = useState(false);
-  const [visOpen, setVisOpen]                   = useState(false);
+  const [loading, setLoading]                 = useState(false);
+  const [fetching, setFetching]               = useState(true);
+  const [tagInput, setTagInput]               = useState('');
+  const [takeawayInput, setTakeawayInput]     = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting]               = useState(false);
+  const [visOpen, setVisOpen]                 = useState(false);
 
   const [formData, setFormData] = useState({
     title: '', slug: '', content: '[]', excerpt: '', cover_image: '',
@@ -56,66 +47,52 @@ export default function EditBlogPostPage() {
   useEffect(() => { fetchPost(); }, [params.id]);
 
   const fetchPost = async () => {
-    console.group('%c[Blog EDIT] fetchPost — RAW DB ROW', 'color:#6ee7b7;font-weight:bold');
     try {
       const { data, error } = await supabase
         .from('blog_posts').select('*').eq('id', params.id).single();
       if (error) throw error;
 
-      // ── DIAGNOSTIC 1: every column that came back from DB ──────────────────
-      console.log('DB columns returned:', Object.keys(data));
-      console.log('Full raw row:', data);
+      rawDbRef.current = data;
 
-      // ── DIAGNOSTIC 2: columns NOT in MANAGED_KEYS (unknown/extra) ──────────
-      const unknownCols = Object.keys(data).filter(k => !MANAGED_KEYS.has(k) && !['id','created_at','updated_at'].includes(k));
-      if (unknownCols.length)
-        console.warn('⚠️  UNKNOWN DB COLUMNS (not managed by this form — will be spread into formData via ...data):', unknownCols);
-      else
-        console.log('✅  No unknown columns — all DB fields are managed.');
-
-      rawDbRef.current = data; // stash for later diff
-
-      const normalized = {
-        ...data,                                   // <-- THIS is where unknown cols sneak in
-        tags:           data.tags           || [],
-        key_takeaways:  data.key_takeaways  || [],
+      // FIX 3 — explicit pick of only managed fields; no ...data spread.
+      // This prevents legacy DB columns (description, content_markdown,
+      // date, read_time, view_count) from polluting formData state.
+      setFormData({
+        title:          data.title          || '',
+        slug:           data.slug           || '',
         content:        data.content        ? JSON.stringify(data.content) : '[]',
         excerpt:        data.excerpt        || '',
+        cover_image:    data.cover_image    || '',
+        tags:           data.tags           || [],
+        published:      data.published      ?? true,
+        reading_time:   data.reading_time   || 1,
+        key_takeaways:  data.key_takeaways  || [],
         series_name:    data.series_name    || '',
         series_order:   data.series_order   ?? '',
         canonical_url:  data.canonical_url  || '',
-        reading_time:   data.reading_time   || 1,
         featured:       data.featured       ?? false,
         show_takeaways: data.show_takeaways ?? true,
         show_toc:       data.show_toc       ?? true,
         show_share:     data.show_share     ?? true,
-      };
-
-      console.log('Normalized formData to be set:', normalized);
-      setFormData(normalized);
+      });
     } catch (err) {
       console.error('[Blog EDIT] fetchPost error:', err);
       alert('Error loading post: ' + err.message);
     } finally {
       setFetching(false);
-      console.groupEnd();
     }
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const next = type === 'checkbox' ? checked : value;
-    console.log(`%c[Blog EDIT] handleChange  field="${name}"  old=${JSON.stringify(formData[name])}  new=${JSON.stringify(next)}`, 'color:#93c5fd');
-    setFormData(prev => ({ ...prev, [name]: next }));
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleEditorChange = useCallback((json) => {
-    console.log('%c[Blog EDIT] handleEditorChange — content length:', 'color:#c4b5fd', typeof json === 'string' ? json.length : JSON.stringify(json).length, 'type:', typeof json);
     setFormData(prev => ({ ...prev, content: json }));
   }, []);
 
   const handleMetaChange = useCallback(({ reading_time, excerpt }) => {
-    console.log('%c[Blog EDIT] handleMetaChange  reading_time=%s  excerpt=%s', 'color:#c4b5fd', reading_time, excerpt?.slice(0,60));
     setFormData(prev => ({
       ...prev,
       reading_time,
@@ -146,92 +123,43 @@ export default function EditBlogPostPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    console.group('%c[Blog EDIT] handleSubmit', 'color:#fbbf24;font-weight:bold');
-    console.log('formData snapshot at submit:', { ...formData });
-
     try {
       let contentJson;
-      try {
-        contentJson = JSON.parse(formData.content);
-        console.log('content parsed OK — blocks:', Array.isArray(contentJson) ? contentJson.length : '?');
-      } catch (parseErr) {
-        console.error('content JSON.parse failed — using []:', parseErr);
-        contentJson = [];
-      }
+      try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
 
-      // ── DIAGNOSTIC 3: strip system cols and detect unknown passthrough ──────
-      const { id, created_at, updated_at, ...rest } = formData;
-      console.log('stripped system cols — id:', id, '| created_at:', created_at, '| updated_at:', updated_at);
-
-      const extraKeysInRest = Object.keys(rest).filter(k => !MANAGED_KEYS.has(k));
-      if (extraKeysInRest.length)
-        console.warn('⚠️  EXTRA KEYS in rest (will be sent to Supabase — schema mismatch risk):', extraKeysInRest, extraKeysInRest.reduce((acc, k) => ({ ...acc, [k]: rest[k] }), {}));
-      else
-        console.log('✅  rest keys are all managed — no extra columns.');
-
-      // Build a clean payload from the allowlist only
       const payload = {
-        title:          rest.title,
-        slug:           rest.slug,
+        title:          formData.title,
+        slug:           formData.slug,
         content:        contentJson,
-        excerpt:        rest.excerpt,
-        cover_image:    rest.cover_image,
-        tags:           rest.tags,
-        published:      rest.published,
-        reading_time:   rest.reading_time,
-        key_takeaways:  rest.key_takeaways,
-        series_name:    rest.series_name,
-        series_order:   rest.series_order === '' ? null : Number(rest.series_order),
-        canonical_url:  rest.canonical_url,
-        featured:       rest.featured,
-        show_takeaways: rest.show_takeaways,
-        show_toc:       rest.show_toc,
-        show_share:     rest.show_share,
+        excerpt:        formData.excerpt,
+        cover_image:    formData.cover_image,
+        tags:           formData.tags,
+        published:      formData.published,
+        reading_time:   formData.reading_time,
+        key_takeaways:  formData.key_takeaways,
+        series_name:    formData.series_name,
+        series_order:   formData.series_order === '' ? null : Number(formData.series_order),
+        canonical_url:  formData.canonical_url,
+        featured:       formData.featured,
+        show_takeaways: formData.show_takeaways,
+        show_toc:       formData.show_toc,
+        show_share:     formData.show_share,
       };
 
-      // ── DIAGNOSTIC 4: diff payload vs raw DB row ────────────────────────────
-      if (rawDbRef.current) {
-        const changedFields = {};
-        for (const key of Object.keys(payload)) {
-          const dbVal  = key === 'content' ? rawDbRef.current[key] : rawDbRef.current[key];
-          const newVal = payload[key];
-          const dbStr  = JSON.stringify(dbVal);
-          const newStr = JSON.stringify(newVal);
-          if (dbStr !== newStr) changedFields[key] = { db: dbVal, sending: newVal };
-        }
-        if (Object.keys(changedFields).length)
-          console.log('📝 Fields that CHANGED vs DB:', changedFields);
-        else
-          console.log('ℹ️  No fields changed vs DB row (saving same data)');
-      }
-
-      console.log('[Blog EDIT] Final payload being sent:', payload);
-      console.log('[Blog EDIT] Payload keys:', Object.keys(payload));
-
+      console.log('[Blog EDIT] payload:', payload);
       const { data, error } = await supabase
         .from('blog_posts').update(payload).eq('id', params.id).select();
-
-      console.log('[Blog EDIT] Supabase response  data:', data, '  error:', error);
+      console.log('[Blog EDIT] response:', { data, error });
 
       if (error) {
-        console.error('[Blog EDIT] Supabase UPDATE error details:', {
-          message:  error.message,
-          code:     error.code,
-          details:  error.details,
-          hint:     error.hint,
-        });
+        console.error('[Blog EDIT] Supabase error:', error);
         throw error;
       }
-
-      console.log('[Blog EDIT] ✅ Save successful — redirecting');
       router.push('/admin/blog');
     } catch (err) {
-      console.error('[Blog EDIT] submit failed:', err);
       alert('Error updating post: ' + (err.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
-      console.groupEnd();
     }
   };
 

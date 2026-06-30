@@ -39,23 +39,37 @@ function extractExcerpt(blocks) {
 }
 
 export default function BlogEditor({ value, onChange, onMetaChange }) {
-  const onChangeRef = useRef(onChange);
+  const onChangeRef     = useRef(onChange);
   const onMetaChangeRef = useRef(onMetaChange);
+  // FIX 1 guard: flip to true after the first real DB content is loaded
+  // so subsequent user edits never trigger a replaceBlocks() override.
+  const hasInitialized  = useRef(false);
+
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => { onMetaChangeRef.current = onMetaChange; }, [onMetaChange]);
 
-  const editor = useCreateBlockNote({
-    initialContent: (() => {
-      try {
-        const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-        return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined;
-      } catch {
-        return undefined;
-      }
-    })(),
-  });
+  // Initialize editor with empty content — the real content arrives via the
+  // useEffect below once the async fetchPost completes and value changes.
+  const editor = useCreateBlockNote();
 
-  // Subscribe to document changes via the correct BlockNote API
+  // FIX 1 — Re-initialize editor when the real DB value arrives asynchronously.
+  // useCreateBlockNote() can't react to prop changes so we drive it manually.
+  // hasInitialized ensures we do this ONCE only; after that user edits own the content.
+  useEffect(() => {
+    if (!editor || hasInitialized.current) return;
+    try {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        editor.replaceBlocks(editor.document, parsed);
+        hasInitialized.current = true;
+        console.log('[BlogEditor] replaceBlocks on init — blocks:', parsed.length);
+      }
+    } catch (e) {
+      console.error('[BlogEditor] replaceBlocks failed:', e);
+    }
+  }, [editor, value]);
+
+  // Subscribe to document changes via the BlockNote onChange API
   useEffect(() => {
     if (!editor) return;
     const unsubscribe = editor.onChange(() => {
@@ -71,19 +85,17 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
   }, [editor]);
 
   return (
-    // stopPropagation on the wrapper div prevents ANY button click inside
-    // BlockNote from bubbling up to the parent <form> as a submit event.
-    // We do NOT call preventDefault here — that would break editor interactions.
+    // FIX 2 — stopPropagation on BOTH click and submit capture so BlockNote's
+    // internal +/slash-menu buttons never bubble up to the parent <form>
+    // and trigger an unintended form submission + router redirect.
     <div
       className="bn-editor-wrapper min-h-[500px] rounded-xl border border-border bg-background overflow-hidden"
       onClickCapture={(e) => {
-        if (
-          e.target.tagName === 'BUTTON' ||
-          e.target.closest?.('button')
-        ) {
+        if (e.target.tagName === 'BUTTON' || e.target.closest?.('button')) {
           e.stopPropagation();
         }
       }}
+      onSubmitCapture={(e) => e.stopPropagation()}
     >
       <BlockNoteView editor={editor} theme="dark" />
     </div>
