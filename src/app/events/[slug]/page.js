@@ -8,7 +8,7 @@ import {
 import { getEventBySlug, getAllEventSlugs } from '@/services/events.service';
 import EventGallery from '@/components/events/EventGallery';
 
-export const revalidate    = 0;  // 🔧 DEBUG: disable cache so every request is fresh
+export const revalidate    = 86400;
 export const dynamicParams = true;
 
 function parseLinks(raw) {
@@ -88,9 +88,7 @@ function Sidebar({ event, links }) {
       <div className="sticky top-28 space-y-4">
         <div className="bg-card border border-border rounded-xl p-4 space-y-3">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Info</p>
-          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>
-            {cfg.label}
-          </span>
+          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>{cfg.label}</span>
           {event.result && (
             <div className="flex items-start gap-2 text-xs">
               <Trophy size={12} className="text-primary shrink-0 mt-0.5" />
@@ -99,26 +97,22 @@ function Sidebar({ event, links }) {
           )}
           {fmtShort(event.date) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Calendar size={12} className="text-primary shrink-0" />
-              <span>{fmtShort(event.date)}</span>
+              <Calendar size={12} className="text-primary shrink-0" /><span>{fmtShort(event.date)}</span>
             </div>
           )}
           {event.location && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <MapPin size={12} className="text-primary shrink-0" />
-              <span>{event.location}</span>
+              <MapPin size={12} className="text-primary shrink-0" /><span>{event.location}</span>
             </div>
           )}
           {event.duration && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock size={12} className="text-primary shrink-0" />
-              <span>{event.duration}</span>
+              <Clock size={12} className="text-primary shrink-0" /><span>{event.duration}</span>
             </div>
           )}
           {event.organizer && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Tag size={12} className="text-primary shrink-0" />
-              <span>{event.organizer}</span>
+              <Tag size={12} className="text-primary shrink-0" /><span>{event.organizer}</span>
             </div>
           )}
           {event.team_size > 1 && (
@@ -129,14 +123,12 @@ function Sidebar({ event, links }) {
           )}
           {event.role && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Award size={12} className="text-primary shrink-0" />
-              <span>{event.role}</span>
+              <Award size={12} className="text-primary shrink-0" /><span>{event.role}</span>
             </div>
           )}
           {event.prize && (
             <div className="flex items-center gap-2 text-xs text-yellow-400">
-              <Trophy size={12} className="shrink-0" />
-              <span>{event.prize}</span>
+              <Trophy size={12} className="shrink-0" /><span>{event.prize}</span>
             </div>
           )}
         </div>
@@ -184,7 +176,7 @@ function EventHero({ event }) {
     <img
       src={event.cover_image}
       alt={event.title}
-      className="w-full max-h-[480px] object-contain rounded-2xl border border-border bg-muted"
+      className="w-full h-[480px] object-contain rounded-2xl border border-border bg-muted"
     />
   );
 }
@@ -207,7 +199,6 @@ function StorySection({ story }) {
   );
 }
 
-// ── Page ─────────────────────────────────────────────
 export default async function EventDetailPage({ params }) {
   const { slug } = await params;
   let event;
@@ -217,20 +208,7 @@ export default async function EventDetailPage({ params }) {
   const links  = parseLinks(event.links);
   const images = Array.isArray(event.images) ? event.images.filter(Boolean) : [];
   const baseUrl = 'https://ayush-devfolio.vercel.app';
-
-  // ── SERVER-SIDE DEBUG LOGS (visible in `npm run dev` terminal) ──
-  console.log('\n===== [EventDetailPage] DEBUG ===========================');
-  console.log('slug              :', slug);
-  console.log('event.images raw  :', event.images);
-  console.log('event.images type :', typeof event.images, Array.isArray(event.images));
-  console.log('images (filtered) :', images);
-  console.log('images.length     :', images.length);
-  console.log('links raw         :', event.links);
-  console.log('links parsed      :', links);
-  console.log('cover_image       :', event.cover_image);
-  console.log('=========================================================\n');
-
-  const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
+  const cfg     = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -260,30 +238,13 @@ export default async function EventDetailPage({ params }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
       <main className="min-h-screen pt-20 pb-24 px-4 sm:px-6 lg:px-8">
-
-        {/* ── VISIBLE DEBUG PANEL (remove after fixing) ── */}
-        <div className="max-w-7xl mx-auto mb-4 p-3 rounded-xl border border-yellow-500/40 bg-yellow-500/10 text-xs font-mono text-yellow-300 space-y-1">
-          <p className="font-bold text-yellow-400">🐛 DEBUG PANEL — remove after fix</p>
-          <p>images.length: <strong>{images.length}</strong></p>
-          <p>images raw type: <strong>{Array.isArray(event.images) ? 'array' : typeof event.images}</strong></p>
-          {images.map((url, i) => (
-            <p key={i} className="truncate">img[{i}]: {url}</p>
-          ))}
-          {images.length === 0 && <p className="text-red-400">⚠️ images array is EMPTY — gallery will not render</p>}
-          <p>links type: <strong>{typeof event.links}</strong> → parsed keys: <strong>{Object.keys(links).join(', ') || '(none)'}</strong></p>
-        </div>
-
-        {/* Breadcrumb */}
         <div className="max-w-7xl mx-auto mb-8">
           <Link href="/events" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft size={15} />
-            <span>All Events</span>
+            <ArrowLeft size={15} /><span>All Events</span>
           </Link>
         </div>
 
-        {/* 2-col layout */}
         <div className="max-w-7xl mx-auto flex gap-10 items-start">
-
           <article className="flex-1 min-w-0">
 
             <div className="mb-8"><EventHero event={event} /></div>
@@ -302,7 +263,6 @@ export default async function EventDetailPage({ params }) {
               </div>
 
               <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-3 leading-tight">{event.title}</h1>
-
               {event.tagline && <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{event.tagline}</p>}
 
               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-6">
@@ -362,8 +322,7 @@ export default async function EventDetailPage({ params }) {
 
             <StorySection story={event.story} />
 
-            {/* Gallery */}
-            {images.length > 0 ? (
+            {images.length > 0 && (
               <section className="mb-10">
                 <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
                   <span className="w-1 h-5 bg-primary rounded-full inline-block" />
@@ -372,10 +331,6 @@ export default async function EventDetailPage({ params }) {
                 </h2>
                 <EventGallery images={images} title={event.title} />
               </section>
-            ) : (
-              <div className="mb-10 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
-                ⚠️ Gallery section skipped — <code>images.length</code> is 0
-              </div>
             )}
 
             {event.certificate_image && (
@@ -388,7 +343,7 @@ export default async function EventDetailPage({ params }) {
                 <img
                   src={event.certificate_image}
                   alt={`${event.title} certificate`}
-                  className="w-full max-w-lg max-h-[480px] object-contain rounded-2xl border border-border shadow-lg bg-muted"
+                  className="w-full h-[480px] object-contain rounded-2xl border border-border shadow-lg bg-muted"
                 />
               </section>
             )}

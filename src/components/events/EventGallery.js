@@ -43,17 +43,21 @@ export default function EventGallery({ images = [], title = '' }) {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* ── Main image — adaptive height, never crops ── */}
-        <div className="relative w-full rounded-2xl overflow-hidden border border-border bg-muted group flex items-center justify-center min-h-[200px] max-h-[560px]">
+        {/*
+          Main image container:
+          - explicit h-[480px] so object-contain has a real parent height to work against
+          - bg-muted fills the letterbox areas around portrait/square images
+        */}
+        <div className="relative w-full h-[480px] rounded-2xl overflow-hidden border border-border bg-muted group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             key={active}
             src={images[active]}
             alt={`${title} — photo ${active + 1}`}
-            className="w-full max-h-[560px] object-contain transition-opacity duration-300"
+            className="w-full h-full object-contain transition-opacity duration-300"
           />
 
-          {/* Prev / Next arrows — hover reveal */}
+          {/* Prev / Next arrows */}
           {total > 1 && (
             <>
               <button
@@ -73,7 +77,7 @@ export default function EventGallery({ images = [], title = '' }) {
             </>
           )}
 
-          {/* Expand to lightbox */}
+          {/* Expand button */}
           <button
             onClick={() => setLightbox(true)}
             className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/80 rounded-full text-white transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm z-10"
@@ -90,7 +94,7 @@ export default function EventGallery({ images = [], title = '' }) {
           )}
         </div>
 
-        {/* ── Dot indicators ── */}
+        {/* Dot indicators */}
         {total > 1 && (
           <div className="flex items-center justify-center gap-1.5 mt-3">
             {images.map((_, i) => (
@@ -108,7 +112,7 @@ export default function EventGallery({ images = [], title = '' }) {
           </div>
         )}
 
-        {/* ── Thumbnail strip ── */}
+        {/* Thumbnail strip */}
         {total > 1 && (
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-none">
             {images.map((src, i) => (
@@ -130,7 +134,7 @@ export default function EventGallery({ images = [], title = '' }) {
         )}
       </div>
 
-      {/* ── Lightbox ── */}
+      {/* Lightbox */}
       {lightbox && (
         <div
           className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
