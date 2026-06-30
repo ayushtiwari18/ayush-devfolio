@@ -1,3 +1,5 @@
+'use client';
+
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
@@ -34,7 +36,7 @@ function headingId(content) {
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-// ── Copy-code button (client interaction via inline onclick) ──
+// ── Copy-code button ──────────────────────────────────────────
 function CopyButton({ code }) {
   return (
     <button
