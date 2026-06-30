@@ -1,47 +1,78 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
 import {
   Award, ExternalLink, X, Calendar, Hash,
   ShieldCheck, Link2, Tag, ChevronRight, LayoutGrid,
 } from 'lucide-react';
-import FallbackImage from '@/components/ui/FallbackImage';
 
-// ── helpers ────────────────────────────────────────────────────
-const fmt = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : null;
+// ── helpers ───────────────────────────────────────────────────
+const fmt = (d) => d
+  ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+  : null;
 
-// ── Fallback placeholder ────────────────────────────────────────────
-function CertFallback({ title, large = false }) {
+// ── Shared fallback placeholder ────────────────────────────────
+function CertFallback({ large = false }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/10 via-primary/5 to-zinc-900">
+    <div className="w-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/10 via-primary/5 to-zinc-900"
+      style={{ height: large ? 220 : 140 }}
+    >
       <div className={`rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center ${
         large ? 'w-20 h-20' : 'w-10 h-10'
       }`}>
-        <Award size={large ? 36 : 18} className="text-primary/60" />
+        <Award size={large ? 36 : 20} className="text-primary/60" />
       </div>
-      {large && <span className="text-xs text-muted-foreground/60 font-medium mt-1 px-4 text-center">{title}</span>}
+      {!large && <span className="text-[10px] text-muted-foreground/50 font-medium">No image</span>}
     </div>
   );
 }
 
-// ── Detail Modal ──────────────────────────────────────────────────
+// ── Adaptive image for card (plain img + onError) ───────────────
+function CertCardImage({ src, alt }) {
+  const [failed, setFailed] = useState(!src);
+  if (failed) return <CertFallback large={false} />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setFailed(true)}
+      className="w-full h-auto block"
+      style={{ maxHeight: 200, minHeight: 100, objectFit: 'contain', padding: '12px', background: 'transparent' }}
+    />
+  );
+}
+
+// ── Modal image (plain img + onError) ───────────────────────
+function CertModalImage({ src, alt }) {
+  const [failed, setFailed] = useState(!src);
+  if (failed) return <CertFallback large />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setFailed(true)}
+      className="w-full h-auto block"
+      style={{ maxHeight: 380, objectFit: 'contain' }}
+    />
+  );
+}
+
+// ── Detail Modal ──────────────────────────────────────────
 function CertModal({ cert, onClose }) {
   if (!cert) return null;
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Panel */}
       <div
         className="relative z-10 w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
-        {/* Close */}
+        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-primary/10 hover:border-primary/40 transition-all"
@@ -49,30 +80,14 @@ function CertModal({ cert, onClose }) {
           <X size={15} />
         </button>
 
-        {/* Certificate image — adaptive, no crop */}
-        <div className="relative w-full bg-zinc-950 flex items-center justify-center overflow-hidden" style={{ minHeight: 200, maxHeight: 380 }}>
-          {cert.image ? (
-            <div className="relative w-full" style={{ minHeight: 200, maxHeight: 380 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={cert.image}
-                alt={cert.title}
-                className="w-full h-auto object-contain block"
-                style={{ maxHeight: 380 }}
-              />
-            </div>
-          ) : (
-            <div className="relative w-full h-48">
-              <CertFallback title={cert.title} large />
-            </div>
-          )}
-          {/* Bottom fade */}
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+        {/* Certificate image — adaptive ratio, never cropped */}
+        <div className="w-full bg-zinc-950 overflow-hidden">
+          <CertModalImage src={cert.image} alt={cert.title} />
+          <div className="h-8 bg-gradient-to-t from-card to-transparent -mt-8 pointer-events-none" />
         </div>
 
-        {/* Details */}
+        {/* Scrollable details */}
         <div className="overflow-y-auto p-6 flex-1">
-          {/* Category badge */}
           {cert.category && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-semibold rounded-full mb-3">
               <Tag size={10} />{cert.category}
@@ -80,7 +95,7 @@ function CertModal({ cert, onClose }) {
           )}
 
           <h2 className="text-xl font-bold text-foreground mb-1 leading-snug">{cert.title}</h2>
-          <p className="text-base text-primary font-semibold mb-4">{cert.issuer}</p>
+          <p className="text-base text-primary font-semibold mb-5">{cert.issuer}</p>
 
           {/* Info grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
@@ -158,35 +173,18 @@ function CertModal({ cert, onClose }) {
   );
 }
 
-// ── Cert card ───────────────────────────────────────────────────────
+// ── Cert card ────────────────────────────────────────────────
 function CertCard({ cert, onClick }) {
   return (
     <button
       onClick={() => onClick(cert)}
       className="group w-full text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
     >
-      {/* Adaptive image — natural ratio, no crop */}
-      <div className="relative w-full bg-zinc-950 overflow-hidden" style={{ minHeight: 120 }}>
-        <FallbackImage
-          src={cert.image}
-          alt={cert.title}
-          fill={false}
-          width={0}
-          height={0}
-          sizes="100vw"
-          className="w-full h-auto object-contain block"
-          style={{ maxHeight: 200, minHeight: 120, objectFit: 'contain', padding: '12px' }}
-          fallback={
-            <div className="relative" style={{ height: 140 }}>
-              <CertFallback title={cert.title} />
-            </div>
-          }
-          containerClassName="w-full"
-          unoptimized
-        />
-        {/* Category badge on image */}
+      {/* Image area — adaptive ratio, no crop */}
+      <div className="relative w-full bg-zinc-950 overflow-hidden">
+        <CertCardImage src={cert.image} alt={cert.title} />
         {cert.category && (
-          <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium rounded-full">
+          <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium rounded-full z-10">
             {cert.category}
           </span>
         )}
@@ -215,7 +213,6 @@ function CertCard({ cert, onClick }) {
           </p>
         )}
 
-        {/* Footer */}
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/60">
           <span className="text-[10px] text-muted-foreground/60 font-medium">
             {cert.credential_id ? `ID: ${cert.credential_id.slice(0, 12)}…` : 'Click to view'}
@@ -229,12 +226,11 @@ function CertCard({ cert, onClick }) {
   );
 }
 
-// ── Main export ────────────────────────────────────────────────────
+// ── Main export ───────────────────────────────────────────────
 export default function CertificationsClient({ certifications }) {
   const [selected, setSelected] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
 
-  // Build category list
   const categories = useMemo(() => {
     const cats = new Set();
     certifications.forEach(c => { if (c.category) cats.add(c.category); });
@@ -250,7 +246,7 @@ export default function CertificationsClient({ certifications }) {
 
   return (
     <>
-      {/* Category filter — only show if categories exist */}
+      {/* Category filter */}
       {categories.length > 2 && (
         <div className="flex flex-wrap items-center gap-2 mb-10">
           {categories.map(cat => (
