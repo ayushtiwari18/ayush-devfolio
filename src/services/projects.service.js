@@ -7,7 +7,7 @@ export async function getPublishedProjects() {
     .from('projects')
     .select('*')
     .eq('published', true)
-    .order('order', { ascending: true })
+    .order('order_index', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -20,7 +20,7 @@ export async function getFeaturedProjects() {
     .select('*')
     .eq('published', true)
     .eq('featured', true)
-    .order('order', { ascending: true })
+    .order('order_index', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(3);
 
@@ -56,14 +56,8 @@ export async function getPublishedProjectSlugs() {
 
 // ── Related content ────────────────────────────────────────
 
-/**
- * Returns up to 3 published projects that share at least one
- * tag with the provided tags array, excluding currentSlug.
- * Falls back to empty array on error (non-critical).
- */
 export async function getRelatedProjects(tags = [], currentSlug) {
   if (!tags || tags.length === 0) return [];
-
   try {
     const { data, error } = await supabase
       .from('projects')
@@ -71,9 +65,8 @@ export async function getRelatedProjects(tags = [], currentSlug) {
       .eq('published', true)
       .neq('slug', currentSlug)
       .overlaps('tags', tags)
-      .order('order', { ascending: true })
+      .order('order_index', { ascending: true, nullsFirst: false })
       .limit(3);
-
     if (error) return [];
     return data || [];
   } catch {
@@ -81,13 +74,8 @@ export async function getRelatedProjects(tags = [], currentSlug) {
   }
 }
 
-/**
- * Fetches related blog posts by slug array.
- * Falls back to empty array — non-critical.
- */
 export async function getRelatedBlogs(slugs = []) {
   if (!slugs || slugs.length === 0) return [];
-
   try {
     const { data, error } = await supabase
       .from('blog_posts')
@@ -95,7 +83,6 @@ export async function getRelatedBlogs(slugs = []) {
       .eq('published', true)
       .in('slug', slugs)
       .limit(3);
-
     if (error) return [];
     return data || [];
   } catch {
@@ -104,12 +91,10 @@ export async function getRelatedBlogs(slugs = []) {
 }
 
 // ── Views (future) ─────────────────────────────────────────
-
-// NOTE: increment_project_views RPC not in DB yet — silently skip.
 export async function incrementProjectViews(slug) {
   try {
     await supabase.rpc('increment_project_views', { project_slug: slug });
   } catch {
-    // Non-critical — views tracking is a future feature
+    // Non-critical
   }
 }
