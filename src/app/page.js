@@ -10,6 +10,7 @@ import { HERO_COPY, ACHIEVEMENTS } from '@/lib/constants';
 import { getProfileSettings } from '@/services/profile.service';
 import { getFeaturedProjects } from '@/services/projects.service';
 import { getRecentBlogPosts } from '@/services/blog.service';
+import { getAchievements } from '@/services/achievements.service';
 
 // Always fetch fresh from Supabase on every request
 export const revalidate = 0;
@@ -45,10 +46,11 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [dbProfile, featuredProjects, recentPosts] = await Promise.all([
+  const [dbProfile, featuredProjects, recentPosts, dbAchievements] = await Promise.all([
     getProfileSettings().catch(() => null),
     getFeaturedProjects().catch(() => []),
     getRecentBlogPosts(3).catch(() => []),
+    getAchievements().catch(() => []),
   ]);
 
   const profile = {
@@ -68,10 +70,13 @@ export default async function Home() {
     about_highlights:   dbProfile?.about_highlights   || null,
   };
 
+  // Use DB rows if available, otherwise fall back to hardcoded constants
+  const achievements = dbAchievements.length > 0 ? dbAchievements : ACHIEVEMENTS;
+
   return (
     <main id="main-content" className="min-h-screen">
       <Hero profile={profile} />
-      <About profile={profile} achievements={ACHIEVEMENTS} />
+      <About profile={profile} achievements={achievements} />
       <Experience />
       <Education />
       <Skills />

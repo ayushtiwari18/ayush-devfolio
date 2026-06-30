@@ -9,7 +9,7 @@ import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import { ACHIEVEMENTS } from '@/lib/constants';
 
 // ---------------------------------------------------------------------------
-// Icon map
+// Icon map — icons are stored as strings in DB, resolved here
 // ---------------------------------------------------------------------------
 const ICON_MAP = {
   github:      Github,
@@ -21,7 +21,8 @@ const ICON_MAP = {
 };
 
 // ---------------------------------------------------------------------------
-// Value cards
+// Value cards — these describe who Ayush is, not numbers.
+// If you want these editable too, add a 'values' table similarly.
 // ---------------------------------------------------------------------------
 const VALUES = [
   {
@@ -54,7 +55,7 @@ const FALLBACK_BIO =
   '5,600+ GitHub commits, hold two AWS certifications, and ship fast.';
 
 // ---------------------------------------------------------------------------
-// StatCard
+// StatCard — renders one achievement row from DB
 // ---------------------------------------------------------------------------
 function StatCard({ achievement, index, visible }) {
   const Icon = ICON_MAP[achievement.icon] || Rocket;
@@ -100,9 +101,9 @@ function ValueCard({ item, index, visible }) {
 
 // ---------------------------------------------------------------------------
 // ABOUT SECTION
+// achievements prop: array from DB (or ACHIEVEMENTS constant as fallback)
 // ---------------------------------------------------------------------------
 export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
-  // isMounted guards animate-ping from causing SSR/client HTML mismatch
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
 
@@ -127,7 +128,6 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
           className="mb-16"
           style={fadeUp(header.visible)}
         >
-          {/* Availability badge — only rendered client-side to avoid hydration mismatch */}
           {isMounted && (
             <div className="flex items-center gap-2 mb-6">
               <span className="relative flex h-2.5 w-2.5">
@@ -176,13 +176,13 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
           </div>
         </div>
 
-        {/* Stat strip */}
+        {/* Stat strip — powered by DB */}
         <div
           ref={stats.ref}
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-16"
         >
           {achievements.map((a, i) => (
-            <StatCard key={a.label} achievement={a} index={i} visible={stats.visible} />
+            <StatCard key={a.id || a.label} achievement={a} index={i} visible={stats.visible} />
           ))}
         </div>
 
