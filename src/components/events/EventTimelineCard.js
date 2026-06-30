@@ -1,41 +1,40 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Calendar, MapPin, Users, Trophy,
-  ArrowRight, Tag, Clock,
+  ArrowRight, Clock,
 } from 'lucide-react';
 
-// ── helpers ─────────────────────────────────────────────
+// ── helpers ───────────────────────────────────────────────
 const fmt = (d) => d
   ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
   : null;
 
 const TYPE_CONFIG = {
-  hackathon:   { label: 'Hackathon',   color: 'bg-violet-500/15 text-violet-400 border-violet-500/30',  dot: 'bg-violet-500'  },
-  conference:  { label: 'Conference',  color: 'bg-blue-500/15   text-blue-400   border-blue-500/30',    dot: 'bg-blue-500'    },
-  workshop:    { label: 'Workshop',    color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-500' },
-  fest:        { label: 'Fest',        color: 'bg-pink-500/15   text-pink-400   border-pink-500/30',    dot: 'bg-pink-500'    },
-  competition: { label: 'Competition', color: 'bg-orange-500/15  text-orange-400 border-orange-500/30', dot: 'bg-orange-500'  },
-  other:       { label: 'Event',       color: 'bg-primary/15    text-primary    border-primary/30',     dot: 'bg-primary'     },
-};
-
-const RESULT_CONFIG = {
-  winner:      'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-  finalist:    'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  participant: 'bg-zinc-500/15  text-zinc-400  border-zinc-500/30',
+  hackathon:   { label: 'Hackathon',   color: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
+  conference:  { label: 'Conference',  color: 'bg-blue-500/15   text-blue-400   border-blue-500/30'   },
+  workshop:    { label: 'Workshop',    color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  fest:        { label: 'Fest',        color: 'bg-pink-500/15   text-pink-400   border-pink-500/30'   },
+  competition: { label: 'Competition', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
+  other:       { label: 'Event',       color: 'bg-primary/15    text-primary    border-primary/30'    },
 };
 
 function resultStyle(result) {
-  if (!result) return RESULT_CONFIG.participant;
+  if (!result) return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
   const r = result.toLowerCase();
-  if (r.includes('win') || r.includes('1st') || r.includes('first')) return RESULT_CONFIG.winner;
-  if (r.includes('final') || r.includes('2nd') || r.includes('top')) return RESULT_CONFIG.finalist;
-  return RESULT_CONFIG.participant;
+  if (r.includes('win') || r.includes('1st') || r.includes('first'))
+    return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
+  if (r.includes('final') || r.includes('2nd') || r.includes('top'))
+    return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
+  return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
 }
 
-// ── Cover image with fallback ──────────────────────────────
-function EventCover({ src, alt, type }) {
-  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.other;
-  if (!src) {
+// ── Cover with useState fallback ───────────────────────────
+function EventCover({ src, alt }) {
+  const [failed, setFailed] = useState(!src);
+  if (failed) {
     return (
       <div className="w-full h-44 flex items-center justify-center bg-gradient-to-br from-primary/10 via-primary/5 to-zinc-900">
         <div className="w-14 h-14 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center">
@@ -50,10 +49,7 @@ function EventCover({ src, alt, type }) {
       src={src}
       alt={alt}
       className="w-full h-44 object-cover"
-      onError={e => {
-        e.currentTarget.style.display = 'none';
-        e.currentTarget.nextSibling.style.display = 'flex';
-      }}
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -69,13 +65,7 @@ export default function EventTimelineCard({ event }) {
 
         {/* Cover */}
         <div className="relative overflow-hidden">
-          <EventCover src={event.cover_image} alt={event.title} type={event.type} />
-          {/* Hidden fallback div (shown via JS onError) */}
-          <div className="w-full h-44 items-center justify-center bg-gradient-to-br from-primary/10 via-primary/5 to-zinc-900 hidden">
-            <div className="w-14 h-14 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center">
-              <Trophy size={26} className="text-primary/50" />
-            </div>
-          </div>
+          <EventCover src={event.cover_image} alt={event.title} />
 
           {/* Image count pill */}
           {imgs.length > 0 && (
@@ -112,24 +102,16 @@ export default function EventTimelineCard({ event }) {
           {/* Meta row */}
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground mb-3">
             {fmt(event.date) && (
-              <span className="flex items-center gap-1">
-                <Calendar size={10} />{fmt(event.date)}
-              </span>
+              <span className="flex items-center gap-1"><Calendar size={10} />{fmt(event.date)}</span>
             )}
             {event.location && (
-              <span className="flex items-center gap-1">
-                <MapPin size={10} />{event.location}
-              </span>
+              <span className="flex items-center gap-1"><MapPin size={10} />{event.location}</span>
             )}
             {event.duration && (
-              <span className="flex items-center gap-1">
-                <Clock size={10} />{event.duration}
-              </span>
+              <span className="flex items-center gap-1"><Clock size={10} />{event.duration}</span>
             )}
             {event.team_size > 1 && (
-              <span className="flex items-center gap-1">
-                <Users size={10} />Team of {event.team_size}
-              </span>
+              <span className="flex items-center gap-1"><Users size={10} />Team of {event.team_size}</span>
             )}
           </div>
 
@@ -151,9 +133,7 @@ export default function EventTimelineCard({ event }) {
 
           {/* CTA */}
           <div className="flex items-center justify-between pt-3 border-t border-border/60">
-            <span className="text-[10px] text-muted-foreground/60">
-              {event.organizer || ''}
-            </span>
+            <span className="text-[10px] text-muted-foreground/60">{event.organizer || ''}</span>
             <span className="flex items-center gap-1 text-xs text-primary font-semibold group-hover:gap-2 transition-all">
               Read story <ArrowRight size={12} />
             </span>
