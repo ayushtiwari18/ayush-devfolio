@@ -3,39 +3,41 @@
 import { supabase } from '@/lib/supabase';
 
 /**
- * Server Action: save contact message to Supabase `contact_messages` table.
- * Optionally sends an email via Resend if RESEND_API_KEY is set.
+ * Inserts into the existing `contact_messages` table.
  *
- * Supabase table schema (run once in SQL editor):
- * -----------------------------------------------
- * create table contact_messages (
- *   id          uuid primary key default gen_random_uuid(),
- *   name        text not null,
- *   email       text not null,
- *   subject     text not null,
- *   message     text not null,
- *   created_at  timestamptz default now()
- * );
- * -----------------------------------------------
+ * Schema:
+ *   id           uuid (auto)
+ *   name         text
+ *   email        text
+ *   subject      text
+ *   message      text
+ *   created_at   timestamptz (auto)
+ *   responded_at timestamptz (null)
+ *   status       text  → default 'unread'
  */
 export async function submitContactForm({ name, email, subject, message }) {
-  // Basic server-side guard
   if (!name?.trim() || !email?.trim() || !subject?.trim() || !message?.trim()) {
     return { success: false, message: 'All fields are required.' };
   }
 
   try {
-    // 1️⃣  Save to Supabase
-    const { error: dbError } = await supabase
+    const { error } = await supabase
       .from('contact_messages')
-      .insert([{ name: name.trim(), email: email.trim(), subject: subject.trim(), message: message.trim() }]);
+      .insert([{
+        name:         name.trim(),
+        email:        email.trim(),
+        subject:      subject.trim(),
+        message:      message.trim(),
+        status:       'unread',
+        responded_at: null,
+      }]);
 
-    if (dbError) {
-      console.error('[contact action] Supabase insert error:', dbError);
-      // Don’t fail hard — still try to send email
+    if (error) {
+      console.error('[contact action] Supabase error:', error);
+      return { success: false, message: 'Could not save your message. Please try again or email me directly.' };
     }
 
-    // 2️⃣  Send email via Resend (optional — only if RESEND_API_KEY is configured)
+    // Optional: send email via Resend if key is configured
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
       try {
@@ -47,29 +49,29 @@ export async function submitContactForm({ name, email, subject, message }) {
           },
           body: JSON.stringify({
             from: 'Portfolio Contact <onboarding@resend.dev>',
-            to: ['ayushtiwari102003@gmail.com'],
+            to:   ['ayushtiwari102003@gmail.com'],
             reply_to: email.trim(),
             subject: `[Portfolio] ${subject} — from ${name}`,
             html: `
-              <h2>New contact message from your portfolio</h2>
-              <table style="border-collapse:collapse;width:100%">
-                <tr><td style="padding:8px;font-weight:bold">Name</td><td style="padding:8px">${name}</td></tr>
-                <tr><td style="padding:8px;font-weight:bold">Email</td><td style="padding:8px">${email}</td></tr>
-                <tr><td style="padding:8px;font-weight:bold">Subject</td><td style="padding:8px">${subject}</td></tr>
-                <tr><td style="padding:8px;font-weight:bold">Message</td><td style="padding:8px;white-space:pre-wrap">${message}</td></tr>
+              <h2 style="font-family:sans-serif">New contact message</h2>
+              <table style="font-family:sans-serif;border-collapse:collapse;width:100%">
+                <tr><td style="padding:8px 16px;font-weight:600;background:#f4f4f5">Name</td><td style="padding:8px 16px">${name}</td></tr>
+                <tr><td style="padding:8px 16px;font-weight:600;background:#f4f4f5">Email</td><td style="padding:8px 16px">${email}</td></tr>
+                <tr><td style="padding:8px 16px;font-weight:600;background:#f4f4f5">Subject</td><td style="padding:8px 16px">${subject}</td></tr>
+                <tr><td style="padding:8px 16px;font-weight:600;background:#f4f4f5;vertical-align:top">Message</td><td style="padding:8px 16px;white-space:pre-wrap">${message}</td></tr>
               </table>
             `,
           }),
         });
         if (!res.ok) console.error('[contact action] Resend error:', await res.text());
-      } catch (emailErr) {
-        console.error('[contact action] Resend fetch error:', emailErr);
+      } catch (e) {
+        console.error('[contact action] Resend fetch failed:', e);
       }
     }
 
     return { success: true, message: 'Thanks for reaching out! I’ll reply within 24 hours.' };
   } catch (err) {
     console.error('[contact action] Unexpected error:', err);
-    return { success: false, message: 'Something went wrong. Please try again or email me directly.' };
+    return { success: false, message: 'Something went wrong. Please try again.' };
   }
 }
