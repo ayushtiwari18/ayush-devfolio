@@ -3,6 +3,7 @@ import '../styles/globals.css';
 import PublicShell from '@/components/layout/PublicShell';
 import BfCacheManager from '@/components/BfCacheManager';
 import AdminKeyTrigger from '@/components/AdminKeyTrigger';
+import PWAInit from '@/components/pwa/PWAInit';
 import { SEO_KEYWORDS } from '@/lib/constants';
 
 // ----------------------------------------------------------------------------
@@ -194,7 +195,6 @@ const professionalServiceSchema = {
   provider:          { '@type': 'Person', '@id': `${BASE_URL}/#person` },
 };
 
-// BreadcrumbList for main routes — helps Google understand site structure
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type':    'BreadcrumbList',
@@ -219,14 +219,12 @@ export default function RootLayout({ children }) {
       className={`scroll-smooth dark ${inter.variable} ${clashDisplay.variable} ${jetbrainsMono.variable}`}
     >
       <head>
-        {/* Preconnect */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://supabase.co" />
         <link rel="dns-prefetch" href="https://xnlndzezjfcllcwiqtbf.supabase.co" />
 
-        {/* Geo meta tags — India / Jabalpur signals for regional search */}
         <meta name="geo.region"    content="IN-MP" />
         <meta name="geo.placename" content="Jabalpur, Madhya Pradesh, India" />
         <meta name="geo.position"  content="23.1815;79.9864" />
@@ -235,30 +233,16 @@ export default function RootLayout({ children }) {
         <meta name="revisit-after" content="7 days" />
         <meta name="rating"        content="general" />
 
-        {/* Person schema */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-        />
-        {/* WebSite schema + SearchAction */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-        />
-        {/* ProfessionalService schema */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(professionalServiceSchema) }}
-        />
-        {/* BreadcrumbList schema */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(professionalServiceSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       </head>
       <body className={`${inter.className} relative`}>
         <AdminKeyTrigger />
         <BfCacheManager />
+        {/* PWA — registers Service Worker + shows install prompt */}
+        <PWAInit />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium focus:shadow-lg focus:outline-none"
