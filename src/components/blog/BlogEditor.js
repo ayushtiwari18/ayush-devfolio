@@ -38,23 +38,78 @@ function extractExcerpt(blocks) {
   return '';
 }
 
+// ─── DIAGNOSTIC: intercept ALL form submits on the document ──────────────────
+// This runs once when the module loads and catches any submit regardless of
+// where it originated — inside a portal, outside the wrapper, anywhere.
+if (typeof window !== 'undefined') {
+  window.__bnSubmitDebugAttached = window.__bnSubmitDebugAttached || false;
+  if (!window.__bnSubmitDebugAttached) {
+    window.__bnSubmitDebugAttached = true;
+    document.addEventListener('submit', (e) => {
+      console.group('%c[BlogEditor DEBUG] 🚨 FORM SUBMIT INTERCEPTED on document', 'color:red;font-weight:bold;font-size:14px');
+      console.log('submitting element:', e.target);
+      console.log('submit target tagName:', e.target?.tagName);
+      console.log('submit target id:', e.target?.id);
+      console.log('submit target className:', e.target?.className);
+      console.log('composed path (full bubble chain):',
+        e.composedPath().map(n => {
+          if (n === document) return 'document';
+          if (n === window) return 'window';
+          if (n?.tagName) return `${n.tagName.toLowerCase()}${n.id ? '#'+n.id : ''}${n.className ? '.'+String(n.className).split(' ').filter(Boolean).join('.') : ''}`;
+          return String(n);
+        })
+      );
+      console.groupEnd();
+    }, true); // capture phase — fires before anything can stopPropagation
+  }
+}
+
 export default function BlogEditor({ value, onChange, onMetaChange }) {
   const onChangeRef     = useRef(onChange);
   const onMetaChangeRef = useRef(onMetaChange);
-  // FIX 1 guard: flip to true after the first real DB content is loaded
-  // so subsequent user edits never trigger a replaceBlocks() override.
   const hasInitialized  = useRef(false);
+  const wrapperRef      = useRef(null);
 
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => { onMetaChangeRef.current = onMetaChange; }, [onMetaChange]);
 
-  // Initialize editor with empty content — the real content arrives via the
-  // useEffect below once the async fetchPost completes and value changes.
   const editor = useCreateBlockNote();
 
-  // FIX 1 — Re-initialize editor when the real DB value arrives asynchronously.
-  // useCreateBlockNote() can't react to prop changes so we drive it manually.
-  // hasInitialized ensures we do this ONCE only; after that user edits own the content.
+  // ─── DIAGNOSTIC: watch ALL clicks on document in capture phase ──────────────
+  // Tells us: which element was clicked, is it inside our wrapper or a portal,
+  // is it a button, what's its full DOM path.
+  useEffect(() => {
+    const handler = (e) => {
+      const target = e.target;
+      const isButton = target.tagName === 'BUTTON' || target.closest?.('button');
+      if (!isButton) return; // only log button clicks to keep console clean
+
+      const insideWrapper = wrapperRef.current?.contains(target);
+      const btn = target.tagName === 'BUTTON' ? target : target.closest('button');
+
+      console.group('%c[BlogEditor DEBUG] 🖱️ BUTTON CLICK detected', 'color:#f59e0b;font-weight:bold');
+      console.log('clicked element:', target);
+      console.log('nearest button:', btn);
+      console.log('button type attr:', btn?.getAttribute('type') ?? '(none — defaults to submit!)');
+      console.log('button textContent:', btn?.textContent?.trim()?.slice(0, 80));
+      console.log('button aria-label:', btn?.getAttribute('aria-label'));
+      console.log('inside editor wrapper div?', insideWrapper);
+      console.log('inside document.body directly (portal)?', !insideWrapper);
+      console.log('composedPath:',
+        e.composedPath().slice(0, 8).map(n => {
+          if (n === document) return 'document';
+          if (n === window) return 'window';
+          if (n?.tagName) return `${n.tagName.toLowerCase()}${n.id ? '#'+n.id : ''}${n.className ? '.'+String(n.className).split(' ').filter(Boolean).slice(0,3).join('.') : ''}`;
+          return String(n);
+        })
+      );
+      console.groupEnd();
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, []);
+
+  // FIX 1 — replaceBlocks on first real async value
   useEffect(() => {
     if (!editor || hasInitialized.current) return;
     try {
@@ -69,7 +124,7 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
     }
   }, [editor, value]);
 
-  // Subscribe to document changes via the BlockNote onChange API
+  // Subscribe to document changes
   useEffect(() => {
     if (!editor) return;
     const unsubscribe = editor.onChange(() => {
@@ -85,10 +140,8 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
   }, [editor]);
 
   return (
-    // FIX 2 — stopPropagation on BOTH click and submit capture so BlockNote's
-    // internal +/slash-menu buttons never bubble up to the parent <form>
-    // and trigger an unintended form submission + router redirect.
     <div
+      ref={wrapperRef}
       className="bn-editor-wrapper min-h-[500px] rounded-xl border border-border bg-background overflow-hidden"
       onClickCapture={(e) => {
         if (e.target.tagName === 'BUTTON' || e.target.closest?.('button')) {
