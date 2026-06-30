@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getAchievements } from '@/services/achievements.service';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import TimelineContainer from '@/components/timeline/TimelineContainer';
@@ -9,7 +10,8 @@ import {
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '@/lib/constants';
 
-export const revalidate = 60;
+// Always fetch fresh from Supabase on every request
+export const revalidate = 0;
 
 export const metadata = {
   title: 'About — Ayush Tiwari | Full Stack Developer',
@@ -20,9 +22,6 @@ export const metadata = {
   alternates: { canonical: 'https://ayush-devfolio-nine.vercel.app/about' },
 };
 
-// ---------------------------------------------------------------------------
-// Icon map — matches ACHIEVEMENTS[].icon strings
-// ---------------------------------------------------------------------------
 const ICON_MAP = {
   github:      Github,
   code:        Code2,
@@ -32,9 +31,6 @@ const ICON_MAP = {
   trophy:      Trophy,
 };
 
-// ---------------------------------------------------------------------------
-// Value cards — Ayush-specific
-// ---------------------------------------------------------------------------
 const VALUES = [
   {
     icon:  Shield,
@@ -65,22 +61,23 @@ const FALLBACK_BIO =
   'a Springer-indexed publication. Today I build production-grade MERN and Next.js systems with ' +
   '5,600+ GitHub commits, hold two AWS certifications, and ship fast.';
 
-// ---------------------------------------------------------------------------
-// Page — Server Component
-// ---------------------------------------------------------------------------
 export default async function AboutPage() {
-  // Fetch profile from DB
-  let profile = {};
-  try {
-    const { data } = await supabase
+  // Fetch profile + achievements in parallel
+  const [profileResult, dbAchievements] = await Promise.all([
+    supabase
       .from('profile_settings')
       .select('name,title,description,resume_url,about_bio,about_availability,about_location,about_email,about_highlights')
       .limit(1)
-      .maybeSingle();
-    if (data) profile = data;
-  } catch {
-    // Supabase unreachable — render with fallbacks
-  }
+      .maybeSingle()
+      .then(({ data }) => data || {})
+      .catch(() => ({})),
+    getAchievements().catch(() => []),
+  ]);
+
+  const profile = profileResult;
+
+  // Use DB rows if available, fall back to hardcoded constants
+  const achievements = dbAchievements.length > 0 ? dbAchievements : ACHIEVEMENTS;
 
   const bio          = profile.about_bio          || FALLBACK_BIO;
   const availability = profile.about_availability || 'Open to opportunities';
@@ -93,13 +90,10 @@ export default async function AboutPage() {
   return (
     <main id="main-content" className="min-h-screen">
 
-      {/* ═══════════════════════════════════════════════
-          HERO — availability badge, headline, bio, CTAs
-      ═══════════════════════════════════════════════ */}
+      {/* HERO */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <div className="max-w-4xl mx-auto">
 
-          {/* Availability badge */}
           <div className="flex items-center gap-2 mb-6">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -114,12 +108,10 @@ export default async function AboutPage() {
             <span className="gradient-text">actually ship</span>
           </h1>
 
-          {/* Bio */}
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-3xl mb-6">
             {bio}
           </p>
 
-          {/* Highlight pills */}
           {highlights && (
             <div className="flex flex-wrap gap-2 mb-6">
               {highlights.map((h, i) => (
@@ -133,7 +125,6 @@ export default async function AboutPage() {
             </div>
           )}
 
-          {/* Quick info strip */}
           <div className="flex flex-wrap gap-5 mb-8">
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin size={14} className="text-primary shrink-0" />{location}
@@ -146,7 +137,6 @@ export default async function AboutPage() {
             </a>
           </div>
 
-          {/* CTAs */}
           <div className="flex flex-wrap gap-3">
             {resumeUrl && (
               <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
@@ -165,18 +155,16 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          STAT STRIP — real ACHIEVEMENTS from constants
-      ═══════════════════════════════════════════════ */}
+      {/* STAT STRIP — from DB */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <p className="section-label text-center mb-10">By the Numbers</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {ACHIEVEMENTS.map((a) => {
+            {achievements.map((a) => {
               const Icon = ICON_MAP[a.icon] || Rocket;
               return (
                 <div
-                  key={a.label}
+                  key={a.id || a.label}
                   className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -194,9 +182,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          VALUE CARDS — what Ayush brings
-      ═══════════════════════════════════════════════ */}
+      {/* VALUE CARDS */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/20">
         <div className="max-w-6xl mx-auto">
           <p className="section-label text-center mb-3">What I Bring</p>
@@ -223,14 +209,10 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          TIMELINE — untouched
-      ═══════════════════════════════════════════════ */}
+      {/* TIMELINE */}
       <TimelineContainer />
 
-      {/* ═══════════════════════════════════════════════
-          CTA
-      ═══════════════════════════════════════════════ */}
+      {/* CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="section-heading mb-4">
