@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Calendar, Clock, ArrowLeft, Tag, BookOpen, Star } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft, BookOpen, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import BlogContent from '@/components/blog/BlogContent';
@@ -10,21 +10,6 @@ import BlogTakeaways from '@/components/blog/BlogTakeaways';
 import SeriesBanner from '@/components/blog/SeriesBanner';
 
 const BASE_URL = 'https://ayush-devfolio.vercel.app';
-
-// Safe description — works whether content is JSON array, string, or null
-function safeDescription(post) {
-  if (post.excerpt) return post.excerpt.substring(0, 160);
-  if (!post.content) return '';
-  if (typeof post.content === 'string') {
-    try {
-      const blocks = JSON.parse(post.content);
-      if (Array.isArray(blocks)) return extractTextFromBlocks(blocks).substring(0, 160);
-    } catch {}
-    return post.content.replace(/[#*`>_~]/g, '').trim().substring(0, 160);
-  }
-  if (Array.isArray(post.content)) return extractTextFromBlocks(post.content).substring(0, 160);
-  return '';
-}
 
 function extractTextFromBlocks(blocks) {
   let text = '';
@@ -40,6 +25,20 @@ function extractTextFromBlocks(blocks) {
   };
   walk(blocks);
   return text.trim();
+}
+
+function safeDescription(post) {
+  if (post.excerpt) return post.excerpt.substring(0, 160);
+  if (!post.content) return '';
+  if (typeof post.content === 'string') {
+    try {
+      const blocks = JSON.parse(post.content);
+      if (Array.isArray(blocks)) return extractTextFromBlocks(blocks).substring(0, 160);
+    } catch {}
+    return post.content.replace(/[#*`>_~]/g, '').trim().substring(0, 160);
+  }
+  if (Array.isArray(post.content)) return extractTextFromBlocks(post.content).substring(0, 160);
+  return '';
 }
 
 export async function generateMetadata({ params }) {
@@ -59,9 +58,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${post.title} — Ayush Tiwari`,
     description,
-    alternates: {
-      canonical: post.canonical_url || `${BASE_URL}/blog/${slug}`,
-    },
+    alternates: { canonical: post.canonical_url || `${BASE_URL}/blog/${slug}` },
     openGraph: {
       title: `${post.title} — Ayush Tiwari`,
       description,
@@ -98,20 +95,21 @@ export default async function BlogPostPage({ params }) {
   if (!post) notFound();
 
   const description = safeDescription(post);
+  const postUrl = `${BASE_URL}/blog/${slug}`;
 
   const articleLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
     description,
-    url: `${BASE_URL}/blog/${slug}`,
+    url: postUrl,
     datePublished: post.created_at,
     dateModified: post.updated_at || post.created_at,
     author: { '@type': 'Person', name: 'Ayush Tiwari', url: BASE_URL },
     publisher: { '@type': 'Person', name: 'Ayush Tiwari', url: BASE_URL },
     ...(post.cover_image && { image: post.cover_image }),
     ...(post.tags?.length > 0 && { keywords: post.tags.join(', ') }),
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/blog/${slug}` },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
   };
 
   const breadcrumbLd = {
@@ -120,11 +118,9 @@ export default async function BlogPostPage({ params }) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
       { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE_URL}/blog` },
-      { '@type': 'ListItem', position: 3, name: post.title, item: `${BASE_URL}/blog/${slug}` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: postUrl },
     ],
   };
-
-  const postUrl = `${BASE_URL}/blog/${slug}`;
 
   return (
     <>
@@ -134,61 +130,59 @@ export default async function BlogPostPage({ params }) {
       <main className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
 
-          {/* Back */}
           <Link href="/blog">
             <Button variant="outline" className="mb-8 hover:bg-primary/10 hover:border-primary">
               <ArrowLeft className="mr-2" size={16} />Back to Blog
             </Button>
           </Link>
 
-          {/* Cover */}
+          {/* Cover image */}
           {post.cover_image && (
-            <div className="relative w-full h-64 sm:h-[420px] rounded-2xl overflow-hidden mb-10 bg-gradient-to-br from-primary/20 to-accent/20">
+            <div className="relative w-full h-64 sm:h-[420px] rounded-2xl overflow-hidden mb-10 shadow-2xl shadow-black/30">
               <Image src={post.cover_image} alt={post.title} fill className="object-cover" priority />
               {post.featured && (
-                <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/90 text-black text-xs font-bold rounded-full">
-                  <Star size={12} fill="currentColor" /> Featured
+                <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/90 backdrop-blur-sm text-black text-xs font-bold rounded-full shadow">
+                  <Star size={11} fill="currentColor" /> Featured
                 </div>
               )}
+              {/* Gradient overlay for text legibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
             </div>
           )}
 
-          {/* Series Banner */}
+          {/* Series banner */}
           {post.series_name && (
-            <SeriesBanner
-              seriesName={post.series_name}
-              seriesOrder={post.series_order}
-            />
+            <SeriesBanner seriesName={post.series_name} seriesOrder={post.series_order} />
           )}
 
           {/* 2-col layout */}
-          <div className="flex flex-col xl:flex-row gap-10">
+          <div className="flex flex-col xl:flex-row gap-12">
 
-            {/* ── Main Article ── */}
+            {/* ── Main article ── */}
             <article className="flex-1 min-w-0">
 
               {/* Meta row */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-5">
-                <div className="flex items-center gap-2">
-                  <Calendar size={15} />
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={14} />
                   <span>{formatDate(post.created_at)}</span>
                 </div>
                 {post.reading_time && (
-                  <div className="flex items-center gap-2">
-                    <Clock size={15} />
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={14} />
                     <span>{post.reading_time} min read</span>
                   </div>
                 )}
                 {post.series_name && (
-                  <div className="flex items-center gap-2">
-                    <BookOpen size={15} />
-                    <span>Part {post.series_order} of {post.series_name}</span>
+                  <div className="flex items-center gap-1.5">
+                    <BookOpen size={14} />
+                    <span>Part {post.series_order} · {post.series_name}</span>
                   </div>
                 )}
               </div>
 
               {/* Title */}
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-[1.15] tracking-tight">
                 {post.title}
               </h1>
 
@@ -196,32 +190,40 @@ export default async function BlogPostPage({ params }) {
               {post.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-8">
                   {post.tags.map((tag, i) => (
-                    <span key={i} className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20 hover:bg-primary/20 transition-colors">
+                    <span key={i}
+                      className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
                       #{tag}
                     </span>
                   ))}
                 </div>
               )}
 
-              {/* Excerpt callout */}
+              {/* Excerpt / lede */}
               {post.excerpt && (
-                <div className="relative pl-5 py-4 pr-5 mb-8 bg-primary/5 border border-primary/20 rounded-xl">
+                <div className="relative pl-5 py-4 pr-5 mb-8 bg-primary/5 border border-primary/15 rounded-xl">
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
-                  <p className="text-base text-foreground/80 italic leading-relaxed font-medium">
+                  <p className="text-base text-foreground/75 italic leading-relaxed">
                     {post.excerpt}
                   </p>
                 </div>
               )}
 
-              {/* Block content */}
-              <BlogContent content={post.content} />
-
-              {/* Key Takeaways */}
+              {/* Key Takeaways — TOP (what you'll learn) */}
               {post.show_takeaways !== false && post.key_takeaways?.length > 0 && (
-                <BlogTakeaways items={post.key_takeaways} />
+                <BlogTakeaways items={post.key_takeaways} position="top" />
               )}
 
-              {/* Footer nav */}
+              {/* Article body */}
+              <div className="mt-8">
+                <BlogContent content={post.content} />
+              </div>
+
+              {/* Key Takeaways — BOTTOM (summary) */}
+              {post.show_takeaways !== false && post.key_takeaways?.length > 0 && (
+                <BlogTakeaways items={post.key_takeaways} position="bottom" />
+              )}
+
+              {/* Footer */}
               <footer className="mt-12 pt-8 border-t border-border">
                 <Link href="/blog">
                   <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
@@ -231,13 +233,12 @@ export default async function BlogPostPage({ params }) {
               </footer>
             </article>
 
-            {/* ── Sticky Sidebar ── */}
+            {/* ── Sticky sidebar ── */}
             <aside className="xl:w-72 shrink-0">
               <BlogSidebar
                 content={post.content}
                 postUrl={postUrl}
                 postTitle={post.title}
-                createdAt={post.created_at}
                 readingTime={post.reading_time}
                 tags={post.tags || []}
                 showToc={post.show_toc !== false}
