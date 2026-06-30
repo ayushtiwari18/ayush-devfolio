@@ -20,6 +20,7 @@ import {
   Layers,
   GraduationCap,
   Briefcase,
+  Trophy,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -71,6 +72,7 @@ export default function AdminLayout({ children }) {
     { name: 'Experience',     href: '/admin/experience',     icon: Briefcase       },
     { name: 'Education',      href: '/admin/education',      icon: GraduationCap   },
     { name: 'Skills',         href: '/admin/skills',         icon: Layers          },
+    { name: 'Achievements',   href: '/admin/achievements',   icon: Trophy          },
     { name: 'Certifications', href: '/admin/certifications', icon: Award           },
     { name: 'Events',         href: '/admin/events',         icon: Zap             },
     { name: 'Status',         href: '/admin/status',         icon: Code2           },
