@@ -4,107 +4,182 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
+    --background:         210 40% 98%;
+    --foreground:         222.2 84% 4.9%;
+    --card:               0 0% 100%;
+    --card-foreground:    222.2 84% 4.9%;
+    --popover:            0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 221.2 83% 53.3%;
+    --primary:            221.2 83% 53.3%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary:          217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+    --muted:              210 40% 96.1%;
+    --muted-foreground:   215.4 16.3% 46.9%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent:             199 89% 48%;
+    --accent-foreground:  210 40% 98%;
 
-    --accent: 221.2 83% 53.3%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 84.2% 60.2%;
+    --destructive:        0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83% 53.3%;
-
-    --radius: 0.5rem;
-    /* sidebar-* tokens removed — no sidebar in this portfolio (Commit 3 CSS purge) */
+    --border:             214.3 31.8% 91.4%;
+    --input:              214.3 31.8% 91.4%;
+    --ring:               221.2 83% 53.3%;
+    --radius:             0.5rem;
   }
 
   .dark {
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 47.4% 11.2%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 47.4% 11.2%;
+    --background:         222.2 47.4% 11.2%;
+    --foreground:         210 40% 98%;
+    --card:               222.2 47.4% 11.2%;
+    --card-foreground:    210 40% 98%;
+    --popover:            222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
+    --primary:            217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary:          217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+    --muted:              217.2 32.6% 17.5%;
+    --muted-foreground:   215 20.2% 65.1%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --accent:             199 89% 55%;
+    --accent-foreground:  222.2 47.4% 11.2%;
 
-    --accent: 217.2 91.2% 59.8%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 62.8% 30.6%;
+    --destructive:        0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
-    /* sidebar-* tokens removed — no sidebar in this portfolio (Commit 3 CSS purge) */
+    --border:             217.2 32.6% 17.5%;
+    --input:              217.2 32.6% 17.5%;
+    --ring:               217.2 91.2% 59.8%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
   body {
     @apply bg-background text-foreground;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
-  }
+  html { scroll-behavior: smooth; }
 
-  ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
-  }
-
+  ::-webkit-scrollbar       { width: 10px; }
+  ::-webkit-scrollbar-track { background: hsl(var(--background)); }
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--primary) / 0.5);
     border-radius: 5px;
   }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
+}
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary));
-  }
+/* =============================================================
+   KEYFRAMES — defined in global scope (outside any @layer)
+   Tailwind @layer components can cause animation-name:none
+   when keyframes are scoped inside the same layer.
+   ALL keyframes live here at the top level.
+   ============================================================= */
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-reverse {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes gradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes profile-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes ring-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ring-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+@keyframes profile-shine {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.7; }
+  50%       { transform: scale(1.2); opacity: 1;   }
 }
 
 @layer components {
+  /* ==========================================================
+     TYPOGRAPHY UTILITIES
+     ========================================================== */
+
+  .font-display {
+    font-family: var(--font-display, var(--font-inter, ui-sans-serif));
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  .font-mono-code {
+    font-family: var(--font-mono, ui-monospace);
+    font-feature-settings: 'liga' 1, 'calt' 1;
+  }
+
+  .section-label {
+    @apply text-xs font-semibold tracking-[0.2em] uppercase text-primary;
+    font-family: var(--font-mono, ui-monospace);
+  }
+
+  .section-heading {
+    font-family: var(--font-display, var(--font-inter, ui-sans-serif));
+    @apply text-4xl sm:text-5xl font-bold text-foreground leading-tight tracking-tight;
+  }
+
+  /* ==========================================================
+     SKELETON LOADERS
+     ========================================================== */
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted))       0%,
+      hsl(var(--muted) / 0.6) 50%,
+      hsl(var(--muted))       100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+    border-radius: var(--radius);
+  }
+
+  .skeleton-card {
+    @apply skeleton rounded-xl;
+    min-height: 200px;
+  }
+
+  /* ==========================================================
+     GRADIENT & GLASS UTILITIES
+     ========================================================== */
+
   .gradient-text {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(
@@ -112,6 +187,17 @@
       hsl(var(--primary)),
       hsl(var(--accent))
     );
+  }
+
+  .gradient-text-display {
+    @apply bg-clip-text text-transparent font-display;
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent))  60%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% auto;
   }
 
   .bg-radial-gradient {
@@ -124,31 +210,33 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
+  .glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   .card-glow {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
     transition: box-shadow 0.3s ease;
   }
-
   .card-glow:hover {
     box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
   }
 
+  .card-glow-accent:hover {
+    box-shadow: 0 0 40px hsl(var(--accent) / 0.25);
+  }
+
   .neon-border {
     border: 2px solid transparent;
-    background-image: linear-gradient(
-        hsl(var(--background)),
-        hsl(var(--background))
-      ),
+    background-image:
+      linear-gradient(hsl(var(--background)), hsl(var(--background))),
       linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
     background-origin: border-box;
     background-clip: padding-box, border-box;
   }
 
-  /*
-   * animated-gradient — scoped behind prefers-reduced-motion: no-preference
-   * Previously ran unconditionally, burning GPU on every page load.
-   * Now only activates for users who have NOT requested reduced motion.
-   */
   @media (prefers-reduced-motion: no-preference) {
     .animated-gradient {
       background: linear-gradient(
@@ -161,79 +249,76 @@
       background-size: 400% 400%;
       animation: gradient 15s ease infinite;
     }
-
-    @keyframes gradient {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
   }
 
-  /* hover-lift — promote to compositor layer ahead of time */
   .hover-lift {
     @apply transition-transform duration-300;
     will-change: transform;
   }
+  .hover-lift:hover { @apply -translate-y-2; }
 
-  .hover-lift:hover {
-    @apply -translate-y-2;
+  .hover-lift-sm {
+    @apply transition-transform duration-200;
+    will-change: transform;
   }
+  .hover-lift-sm:hover { @apply -translate-y-1; }
 
   /* ==========================================================
-     PROFILE IMAGE — Commit 3 CSS animation replacements
-     Replaces 6 Framer Motion infinite loops with compositor-
-     thread CSS animations. Zero JS main-thread cost.
-     All animations respect prefers-reduced-motion via the
-     global override at the bottom of this file.
+     INFINITE MARQUEE — Skills Section
+     Keyframes are in global scope above — NOT inside @layer.
+     React sets animationDuration inline (overrides 30s default).
+     overflow-hidden is on .marquee-row only, never on <section>.
      ========================================================== */
 
-  /* Glow pulse — replaces glowVariants (opacity + scale, 3s, Infinity) */
-  @keyframes profile-glow {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50%       { opacity: 0.8; transform: scale(1.1); }
-  }
-  .profile-glow-pulse {
-    animation: profile-glow 3s ease-in-out infinite;
-  }
-
-  /* CW ring — replaces animate={{ rotate: 360 }} duration:20 */
-  @keyframes ring-cw {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
-  .profile-ring-cw {
-    animation: ring-cw 20s linear infinite;
+  .marquee-track {
+    display: flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    min-width: 100%;
+    will-change: transform;
   }
 
-  /* CCW ring — replaces animate={{ rotate: -360 }} duration:15 */
-  @keyframes ring-ccw {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(-360deg); }
-  }
-  .profile-ring-ccw {
-    animation: ring-ccw 15s linear infinite;
+  .marquee-track--forward {
+    animation: marquee 30s linear infinite;
   }
 
-  /* Shine pulse — replaces animate={{ opacity: [0.2,0.4,0.2] }} duration:4 */
-  @keyframes profile-shine {
-    0%, 100% { opacity: 0.2; }
-    50%       { opacity: 0.4; }
-  }
-  .profile-shine {
-    animation: profile-shine 4s ease-in-out infinite;
+  .marquee-track--reverse {
+    animation: marquee-reverse 30s linear infinite;
   }
 
-  /* Dot pulse — replaces scale+opacity pulse, duration:2 */
-  @keyframes dot-pulse {
-    0%, 100% { transform: scale(1);   opacity: 0.7; }
-    50%       { transform: scale(1.2); opacity: 1;   }
+  .marquee-row:hover .marquee-track {
+    animation-play-state: paused;
   }
-  .profile-dot-pulse {
-    animation: dot-pulse 2s ease-in-out infinite;
+
+  .marquee-fade {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
   }
 
   /* ==========================================================
-     TIMELINE — Phase 2
+     PROFILE IMAGE
+     ========================================================== */
+
+  .profile-glow-pulse { animation: profile-glow 3s ease-in-out infinite; }
+  .profile-ring-cw    { animation: ring-cw 20s linear infinite; }
+  .profile-ring-ccw   { animation: ring-ccw 15s linear infinite; }
+  .profile-shine      { animation: profile-shine 4s ease-in-out infinite; }
+  .profile-dot-pulse  { animation: dot-pulse 2s ease-in-out infinite; }
+
+  /* ==========================================================
+     TIMELINE
      ========================================================== */
 
   .ripple-overlay {
@@ -242,26 +327,17 @@
     pointer-events: none;
     will-change: filter;
   }
-
-  .ripple-overlay[data-ripple='active'] {
-    opacity: 1;
-  }
+  .ripple-overlay[data-ripple='active'] { opacity: 1; }
 
   @media (pointer: coarse) {
-    .ripple-overlay {
-      display: none;
-    }
-    .video-preview-wrapper {
-      transition: opacity 0.2s ease;
-    }
+    .ripple-overlay { display: none; }
+    .video-preview-wrapper { transition: opacity 0.2s ease; }
   }
 
-  .timeline-event-wrapper {
-    opacity: 1;
-  }
+  .timeline-event-wrapper { opacity: 1; }
 
   /* ==========================================================
-     PROJECT HERO — Phase 3
+     PROJECT HERO
      ========================================================== */
 
   .project-ripple-overlay {
@@ -269,12 +345,7 @@
     will-change: filter, opacity;
     transition: opacity 0.35s ease;
   }
-
-  @media (pointer: coarse) {
-    .project-ripple-overlay {
-      display: none;
-    }
-  }
+  @media (pointer: coarse) { .project-ripple-overlay { display: none; } }
 }
 
 @layer utilities {
@@ -282,20 +353,16 @@
     text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
   }
 
+  .text-glow-accent {
+    text-shadow: 0 0 20px hsl(var(--accent) / 0.5);
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /*
-   * Reduced motion — global override
-   * Covers all CSS animations added in Commit 3 (profile-* classes),
-   * plus Phase 2 Timeline and Phase 3 Project Hero.
-   */
   @media (prefers-reduced-motion: reduce) {
     .profile-glow-pulse,
     .profile-ring-cw,
@@ -305,7 +372,12 @@
     .ripple-overlay,
     .project-ripple-overlay,
     .video-preview-wrapper,
-    .timeline-event-wrapper * {
+    .timeline-event-wrapper *,
+    .skeleton,
+    .skeleton-card,
+    .animated-gradient,
+    .gradient-text-display,
+    [data-animate] {
       transition: none !important;
       animation: none !important;
     }

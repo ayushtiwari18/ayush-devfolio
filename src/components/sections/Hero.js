@@ -14,28 +14,20 @@ const SolarSystem = dynamic(
 
 /**
  * StarfieldSkeleton — HYDRATION SAFE.
- *
- * Previous version used Math.random() directly in JSX render,
- * producing different values on server vs client → hydration mismatch
- * → React warning + forced re-render of the entire skeleton.
- *
- * Fix: stars array is generated ONCE on the client inside useEffect,
- * stored in a ref. On SSR / first render, renders a simple dark gradient
- * (no stars). Stars are painted client-side after mount — zero mismatch.
+ * Stars generated once on client via useEffect, never on server.
  */
 function StarfieldSkeleton() {
   const [stars, setStars] = useState([]);
 
   useEffect(() => {
-    // Generate star data once on client — stable, no SSR involvement.
     const generated = Array.from({ length: 80 }, (_, i) => ({
       id: i,
-      w:  (((i * 7 + 13) % 20) / 10 + 0.5).toFixed(2),
-      h:  (((i * 11 + 7) % 20) / 10 + 0.5).toFixed(2),
-      top:  (((i * 37 + 19) % 1000) / 10).toFixed(2),
-      left: (((i * 53 + 23) % 1000) / 10).toFixed(2),
+      w:     (((i * 7  + 13) % 20) / 10 + 0.5).toFixed(2),
+      h:     (((i * 11 +  7) % 20) / 10 + 0.5).toFixed(2),
+      top:   (((i * 37 + 19) % 1000) / 10).toFixed(2),
+      left:  (((i * 53 + 23) % 1000) / 10).toFixed(2),
       opacity: (0.4 + ((i * 17) % 60) / 100).toFixed(2),
-      dur: (1.5 + ((i * 29) % 20) / 10).toFixed(2),
+      dur:   (1.5 + ((i * 29) % 20) / 10).toFixed(2),
       delay: ((i * 43) % 200 / 100).toFixed(2),
     }));
     setStars(generated);
@@ -54,19 +46,18 @@ function StarfieldSkeleton() {
               key={s.id}
               className="absolute rounded-full bg-white"
               style={{
-                width: s.w + 'px',
-                height: s.h + 'px',
-                top: s.top + '%',
-                left: s.left + '%',
-                opacity: s.opacity,
-                animation: `pulse ${s.dur}s ease-in-out infinite`,
+                width:          s.w + 'px',
+                height:         s.h + 'px',
+                top:            s.top + '%',
+                left:           s.left + '%',
+                opacity:        s.opacity,
+                animation:      `pulse ${s.dur}s ease-in-out infinite`,
                 animationDelay: s.delay + 's',
               }}
             />
           ))}
         </div>
       )}
-      {/* Static sun glow — same on SSR and CSR, no mismatch */}
       <div
         className="absolute rounded-full"
         style={{
@@ -82,27 +73,39 @@ function StarfieldSkeleton() {
 }
 
 /**
- * 7-phase staggered reveal (all timers relative to onReady):
- *   phase 0 = nothing visible
- *   phase 1 = badge          (+500ms)
- *   phase 2 = h1 name        (+900ms)
- *   phase 3 = h2 title       (+1300ms)
- *   phase 4 = description    (+1700ms)
- *   phase 5 = buttons        (+2100ms)
- *   phase 6 = profile image  (+2700ms)
- *   phase 7 = scroll         (+3000ms)
+ * Hero — 7-phase cinematic reveal.
  *
- * No Framer Motion here — all transitions are pure CSS via inline style.
- * This prevents framer-motion-vendor.js from being included in the Hero chunk.
+ * Animation sequence (intentional, unchanged):
+ *   Solar System loads first → onReady fires → text phases in 1-by-1 → image last.
+ *
+ * What changed in this version:
+ *   1. Controls moved from z-20 → z-10  (was colliding with navbar z-50)
+ *   2. 5s timeout fallback: if WebGL never fires onReady (slow device / no GPU),
+ *      revealPhase starts automatically so content is never permanently hidden.
+ *      On normal devices this timeout is cancelled and never fires.
  */
 export default function Hero({ profile }) {
   const [showOrbits,  setShowOrbits]  = useState(false);
   const [autoRotate,  setAutoRotate]  = useState(true);
   const [sceneReady,  setSceneReady]  = useState(false);
   const [revealPhase, setRevealPhase] = useState(0);
-  const timersRef = useRef([]);
+  const timersRef    = useRef([]);
+  const fallbackRef  = useRef(null);
+
+  // 5-second fallback: if onReady never fires, start the reveal anyway
+  useEffect(() => {
+    fallbackRef.current = setTimeout(() => {
+      if (!sceneReady) {
+        handleSceneReady();
+      }
+    }, 5000);
+    return () => clearTimeout(fallbackRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSceneReady = useCallback(() => {
+    // Cancel the 5s fallback if WebGL loaded normally
+    clearTimeout(fallbackRef.current);
     setSceneReady(true);
     const delays = [500, 900, 1300, 1700, 2100, 2700, 3000];
     timersRef.current = delays.map((d, i) =>
@@ -110,7 +113,6 @@ export default function Hero({ profile }) {
     );
   }, []);
 
-  // Clean up all timers on unmount
   useEffect(() => {
     return () => timersRef.current.forEach(clearTimeout);
   }, []);
@@ -139,7 +141,7 @@ export default function Hero({ profile }) {
         <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} onReady={handleSceneReady} />
       </div>
 
-      {/* Skeleton — hydration-safe, fades out when solar system is ready */}
+      {/* Skeleton — fades out when solar system ready */}
       <div
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ opacity: sceneReady ? 0 : 1, transition: 'opacity 1.2s cubic-bezier(0.16,1,0.3,1)' }}
@@ -190,16 +192,18 @@ export default function Hero({ profile }) {
         </div>
       </div>
 
-      {/* Controls — fade in after scene ready */}
+      {/* Controls — z-10 (was z-20, was colliding with navbar) */}
       <div
-        className="absolute top-20 sm:top-24 right-2 sm:right-4 z-20 flex flex-col gap-2"
+        className="absolute top-20 sm:top-24 right-2 sm:right-4 z-10 flex flex-col gap-2"
         style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 0.6s ease 1.8s', pointerEvents: sceneReady ? 'auto' : 'none' }}
       >
         <button
           onClick={() => setShowOrbits(v => !v)}
           aria-label={showOrbits ? 'Hide orbit paths' : 'Show orbit paths'}
           className={`px-3 py-2 sm:px-4 sm:py-2 backdrop-blur-md rounded-lg text-xs sm:text-sm font-medium transition-all shadow-lg ${
-            showOrbits ? 'bg-primary/30 border-2 border-primary text-white' : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20'
+            showOrbits
+              ? 'bg-primary/30 border-2 border-primary text-white'
+              : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20'
           }`}
         >
           <span className="hidden sm:inline">{showOrbits ? '✓ Orbits ON' : 'Show Orbits'}</span>
@@ -207,9 +211,11 @@ export default function Hero({ profile }) {
         </button>
         <button
           onClick={() => setAutoRotate(v => !v)}
-          aria-label={autoRotate ? 'Pause' : 'Resume'}
+          aria-label={autoRotate ? 'Pause rotation' : 'Resume rotation'}
           className={`px-3 py-2 sm:px-4 sm:py-2 backdrop-blur-md rounded-lg text-xs sm:text-sm font-medium transition-all shadow-lg ${
-            autoRotate ? 'bg-accent/30 border-2 border-accent text-white' : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20'
+            autoRotate
+              ? 'bg-accent/30 border-2 border-accent text-white'
+              : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20'
           }`}
         >
           <span className="hidden sm:inline">{autoRotate ? '⏸ Playing' : '▶ Paused'}</span>

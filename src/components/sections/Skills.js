@@ -1,16 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import { useReveal, fadeUp } from '@/components/animations/useReveal';
 
-const CATEGORIES = [
-  { id: 'frontend', label: 'Frontend'       },
-  { id: 'backend',  label: 'Backend'        },
-  { id: 'tools',    label: 'Tools & DevOps' },
-  { id: 'other',    label: 'Other'          },
-];
+// ---------------------------------------------------------------------------
+// Keyframes injected directly — bypasses Tailwind purge/@layer entirely
+// Uses -25% translateX because we duplicate 4x (1/4 of total = 1 copy width)
+// ---------------------------------------------------------------------------
+const MARQUEE_CSS = `
+@keyframes marquee-quad {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-25%); }
+}
+@keyframes marquee-quad-reverse {
+  0%   { transform: translateX(-25%); }
+  100% { transform: translateX(0); }
+}
+.marquee-row:hover .marquee-track {
+  animation-play-state: paused !important;
+}
+`;
 
-// Fallback — shown per-category while DB loads or if that category is empty
+// ---------------------------------------------------------------------------
+// DATA
+// ---------------------------------------------------------------------------
 const FALLBACK = {
   frontend: [
     { name: 'React',        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg' },
@@ -19,6 +33,7 @@ const FALLBACK = {
     { name: 'Tailwind CSS', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg' },
     { name: 'JavaScript',   icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
     { name: 'HTML/CSS',     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
+    { name: 'Three.js',     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/threejs/threejs-original.svg' },
   ],
   backend: [
     { name: 'Node.js',    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg' },
@@ -29,34 +44,43 @@ const FALLBACK = {
     { name: 'REST APIs',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg' },
   ],
   tools: [
-    { name: 'Git',    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
-    { name: 'GitHub', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
-    { name: 'Docker', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
-    { name: 'Vercel', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vercel/vercel-original.svg' },
-    { name: 'AWS',    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg' },
-    { name: 'VS Code',icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg' },
+    { name: 'Git',     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
+    { name: 'GitHub',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
+    { name: 'Docker',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
+    { name: 'Vercel',  icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vercel/vercel-original.svg' },
+    { name: 'AWS',     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg' },
+    { name: 'VS Code', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg' },
   ],
   other: [
-    { name: 'Problem Solving',    icon: null },
-    { name: 'System Design',      icon: null },
-    { name: 'Team Collaboration', icon: null },
-    { name: 'Agile/Scrum',        icon: null },
-    { name: 'Technical Writing',  icon: null },
-    { name: 'UI/UX Design',       icon: null },
+    { name: 'Problem Solving',    emoji: '\u{1F9E9}' },
+    { name: 'System Design',      emoji: '\u{1F3D7}\uFE0F' },
+    { name: 'Team Collaboration', emoji: '\u{1F91D}' },
+    { name: 'Agile / Scrum',      emoji: '\u{1F504}' },
+    { name: 'Technical Writing',  emoji: '\u270D\uFE0F' },
+    { name: 'UI / UX Design',     emoji: '\u{1F3A8}' },
   ],
 };
 
-function SkillIcon({ src, name, size = 40 }) {
+// ---------------------------------------------------------------------------
+// SkillIcon — slug-safe: if src doesn’t start with http, treat as devicon slug
+// ---------------------------------------------------------------------------
+function resolveIcon(src) {
+  if (!src) return null;
+  if (src.startsWith('http')) return src;
+  const slug = src.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${slug}/${slug}-original.svg`;
+}
+
+function SkillIcon({ src, name, size = 22 }) {
   const [err, setErr] = useState(false);
+  const resolved = resolveIcon(src);
   useEffect(() => setErr(false), [src]);
 
-  if (!src || err) {
-    // Letter avatar fallback
+  if (!resolved || err) {
     return (
       <div
-        style={{ width: size, height: size }}
-        className="rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold"
-        style={{ width: size, height: size, fontSize: size * 0.42 }}
+        style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
+        className="rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0"
       >
         {name?.[0]?.toUpperCase() ?? '?'}
       </div>
@@ -65,18 +89,90 @@ function SkillIcon({ src, name, size = 40 }) {
 
   return (
     <Image
-      src={src} alt={name}
-      width={size} height={size}
-      className="object-contain"
+      src={resolved}
+      alt={name}
+      width={size}
+      height={size}
+      className="object-contain shrink-0"
       onError={() => setErr(true)}
       unoptimized
     />
   );
 }
 
+// ---------------------------------------------------------------------------
+// SkillPill
+// ---------------------------------------------------------------------------
+function SkillPill({ skill }) {
+  return (
+    <div
+      className="inline-flex items-center gap-2.5 mx-2 px-4 py-2.5 bg-card border border-border rounded-full hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 cursor-default select-none"
+      style={{ flexShrink: 0 }}
+    >
+      {skill.emoji ? (
+        <span style={{ fontSize: 18, lineHeight: 1 }} role="img" aria-hidden="true">
+          {skill.emoji}
+        </span>
+      ) : (
+        <SkillIcon src={skill.icon} name={skill.name} size={22} />
+      )}
+      <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+        {skill.name}
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MarqueeRow
+// 4x duplication ensures track is always wider than viewport — no gap/jump
+// translateX(-25%) = scroll exactly one copy width seamlessly
+// Animation 100% inline — no CSS class dependency
+// ---------------------------------------------------------------------------
+function MarqueeRow({ skills, direction = 'forward', duration = '30s' }) {
+  // 4x duplication: translateX(-25%) scrolls exactly 1 copy, always seamless
+  const items = useMemo(
+    () => [...skills, ...skills, ...skills, ...skills],
+    [skills]
+  );
+
+  return (
+    <div
+      className="marquee-row overflow-hidden py-2"
+      style={{
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+        maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+      }}
+    >
+      <div
+        className="marquee-track"
+        style={{
+          display: 'flex',
+          flexWrap: 'nowrap',
+          width: 'max-content',
+          willChange: 'transform',
+          animationName: direction === 'forward' ? 'marquee-quad' : 'marquee-quad-reverse',
+          animationDuration: duration,
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite',
+          animationPlayState: 'running',
+        }}
+      >
+        {items.map((skill, i) => (
+          <SkillPill key={`${skill.name}-${i}`} skill={skill} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SKILLS SECTION
+// ---------------------------------------------------------------------------
 export default function Skills() {
-  const [activeCategory, setActiveCategory] = useState('frontend');
   const [dbSkills, setDbSkills] = useState(null);
+  const header = useReveal({ threshold: 0.1 });
+  const rows   = useReveal({ threshold: 0.05 });
 
   useEffect(() => {
     fetch('/api/public/skills')
@@ -85,64 +181,79 @@ export default function Skills() {
       .catch(() => setDbSkills([]));
   }, []);
 
-  const getSkills = (catId) => {
+  // Memoised so row arrays don’t change reference on unrelated re-renders
+  const get = useMemo(() => (catId) => {
     if (!dbSkills) return FALLBACK[catId] || [];
     const group = dbSkills.filter(s => s.category === catId);
     return group.length > 0 ? group : FALLBACK[catId] || [];
-  };
+  }, [dbSkills]);
 
-  const displayed = getSkills(activeCategory);
+  const row1 = useMemo(() => get('frontend'),                     [get]);
+  const row2 = useMemo(() => get('backend'),                      [get]);
+  const row3 = useMemo(() => [...get('tools'), ...get('other')],  [get]);
+
+  const isLoading = dbSkills === null;
 
   return (
-    <section id="skills" className="py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+    <>
+      {/* Keyframes injected directly — Tailwind cannot purge or override these */}
+      <style dangerouslySetInnerHTML={{ __html: MARQUEE_CSS }} />
 
-        <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-            Skills &amp; <span className="gradient-text">Expertise</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Technologies and tools I use to bring ideas to life
+      <section id="skills" className="py-section px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header reveal — translateY only on heading, never on marquee rows */}
+          <div
+            ref={header.ref}
+            className="text-center mb-16"
+            style={fadeUp(header.visible)}
+          >
+            <p className="section-label mb-3">Tech Stack</p>
+            <h2 className="section-heading mb-4">
+              Skills &amp; <span className="gradient-text">Expertise</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Technologies I use to build production-grade systems
+            </p>
+          </div>
+        </div>
+
+        {/* Marquee rows — opacity fade-in only, NO translateY (avoids GPU layer conflict) */}
+        <div
+          ref={rows.ref}
+          className="space-y-3"
+          style={{
+            opacity:    rows.visible ? 1 : 0,
+            transition: 'opacity 0.7s ease',
+          }}
+        >
+          {isLoading ? (
+            <div className="space-y-3 px-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex gap-3 overflow-hidden">
+                  {[...Array(8)].map((_, j) => (
+                    <div key={j} className="skeleton rounded-full shrink-0" style={{ width: 130, height: 44 }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <MarqueeRow skills={row1} direction="forward" duration="40s" />
+              <MarqueeRow skills={row2} direction="reverse" duration="35s" />
+              <MarqueeRow skills={row3} direction="forward" duration="45s" />
+            </>
+          )}
+        </div>
+
+        <div
+          className="max-w-6xl mx-auto mt-8 text-center"
+          style={{ opacity: rows.visible ? 1 : 0, transition: 'opacity 0.7s ease 0.3s' }}
+        >
+          <p className="text-xs text-muted-foreground">
+            Hover any row to pause &nbsp;·&nbsp; Row 1: Frontend &nbsp;·&nbsp; Row 2: Backend &nbsp;·&nbsp; Row 3: Tools &amp; Soft Skills
           </p>
         </div>
-
-        {/* Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {CATEGORIES.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setActiveCategory(category.id)}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                activeCategory === category.id
-                  ? 'bg-primary text-white'
-                  : 'bg-card border border-border text-foreground hover:border-primary hover:text-primary'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Skills Icon Grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-          {displayed.map((skill, index) => (
-            <div
-              key={skill.id || index}
-              className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-3
-                         hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10
-                         hover:-translate-y-1 transition-all duration-200 group cursor-default"
-            >
-              <div className="w-10 h-10 flex items-center justify-center">
-                <SkillIcon src={skill.icon} name={skill.name} size={40} />
-              </div>
-              <span className="text-xs font-semibold text-foreground text-center leading-tight group-hover:text-primary transition-colors">
-                {skill.name}
-              </span>
-            </div>
-          ))}
-        </div>
-
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

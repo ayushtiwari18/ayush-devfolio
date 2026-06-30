@@ -4,11 +4,31 @@ import { ArrowLeft, ExternalLink, Code2 } from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 import { getPublishedProjects } from '@/services/projects.service';
+import { BASE_URL } from '@/app/layout';
 
 export const metadata = {
-  title: 'Projects - Ayush Tiwari',
-  description: 'Browse all my projects — full-stack web apps, open source tools, and creative builds.',
-  alternates: { canonical: 'https://ayush-devfolio.vercel.app/projects' },
+  title: 'Projects — Ayush Tiwari | Full Stack Developer',
+  description:
+    'Production-grade projects by Ayush Tiwari — Full Stack Developer from Jabalpur, India. ' +
+    'MERN Stack, Next.js, Node.js, AWS, Three.js builds. Open source contributions and live deployments.',
+  keywords: [
+    'Ayush Tiwari projects', 'Ayush Tiwari portfolio', 'Full Stack projects India',
+    'MERN Stack projects', 'Next.js projects', 'React projects', 'Node.js projects',
+    'open source projects India', 'web developer Jabalpur',
+  ],
+  alternates: { canonical: `${BASE_URL}/projects` },
+  openGraph: {
+    title:       'Projects — Ayush Tiwari | Full Stack Developer',
+    description: 'Production-grade MERN, Next.js and AWS projects by Ayush Tiwari.',
+    url:          `${BASE_URL}/projects`,
+    type:        'website',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card:    'summary_large_image',
+    title:   'Projects — Ayush Tiwari',
+    creator: '@ayushtiwari18',
+  },
 };
 
 export default async function ProjectsPage() {
@@ -116,7 +136,7 @@ export default async function ProjectsPage() {
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">Projects Coming Soon!</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              I’m currently adding my projects to the database. Check back soon!
+              I&apos;m currently adding my projects to the database. Check back soon!
             </p>
             <div className="flex gap-4 justify-center">
               <a href="https://github.com/ayushtiwari18" target="_blank" rel="noopener noreferrer">

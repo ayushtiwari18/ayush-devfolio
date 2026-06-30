@@ -12,7 +12,7 @@ const navLinks = [
   { href: ROUTES.PROJECTS,       label: 'Projects'      },
   { href: ROUTES.BLOG,           label: 'Blog'          },
   { href: ROUTES.CERTIFICATIONS, label: 'Certifications'},
-  { href: ROUTES.HACKATHONS,     label: 'Hackathons'    },
+  { href: ROUTES.EVENTS,         label: 'Events'        },
   { href: ROUTES.CONTACT,        label: 'Contact'       },
 ];
 

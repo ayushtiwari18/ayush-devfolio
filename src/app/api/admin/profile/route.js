@@ -3,9 +3,10 @@
  * GET   — return current profile_settings row
  * PATCH — update profile_settings row (requires x-admin-secret header)
  *
- * Real DB columns: id, name, title, description, resume_url,
+ * DB columns: id, name, title, description, resume_url,
  *   github_url, linkedin_url, twitter_url, form_endpoint, image_url,
- *   created_at, updated_at
+ *   about_bio, about_location, about_email, about_availability,
+ *   about_highlights (jsonb), created_at, updated_at
  */
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
@@ -40,6 +41,9 @@ export async function GET() {
           image_url: null, resume_url: null,
           github_url: null, linkedin_url: null,
           twitter_url: null, form_endpoint: null,
+          about_bio: null, about_location: null,
+          about_email: null, about_availability: null,
+          about_highlights: null,
         })
         .select()
         .single();
@@ -62,13 +66,20 @@ export async function PATCH(request) {
   try {
     const body = await request.json();
     const {
-      id, name, title, description, image_url,
+      id,
+      // Hero fields
+      name, title, description, image_url,
       resume_url, github_url, linkedin_url, twitter_url, form_endpoint,
+      // About fields
+      about_bio, about_location, about_email,
+      about_availability, about_highlights,
     } = body;
 
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
     const updates = { updated_at: new Date().toISOString() };
+
+    // Hero fields
     if (name          !== undefined) updates.name          = name;
     if (title         !== undefined) updates.title         = title;
     if (description   !== undefined) updates.description   = description;
@@ -78,6 +89,13 @@ export async function PATCH(request) {
     if (linkedin_url  !== undefined) updates.linkedin_url  = linkedin_url;
     if (twitter_url   !== undefined) updates.twitter_url   = twitter_url;
     if (form_endpoint !== undefined) updates.form_endpoint = form_endpoint;
+
+    // About fields
+    if (about_bio          !== undefined) updates.about_bio          = about_bio;
+    if (about_location     !== undefined) updates.about_location     = about_location;
+    if (about_email        !== undefined) updates.about_email        = about_email;
+    if (about_availability !== undefined) updates.about_availability = about_availability;
+    if (about_highlights   !== undefined) updates.about_highlights   = about_highlights;
 
     const { data, error } = await serviceClient()
       .from('profile_settings')
