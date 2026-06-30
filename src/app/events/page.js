@@ -5,11 +5,31 @@ import { Button } from '@/components/ui/button';
 import { getPublishedEvents } from '@/services/events.service';
 import EventTimelineCard from '@/components/events/EventTimelineCard';
 import EventsLoading from './loading';
+import { BASE_URL } from '@/app/layout';
 
 export const metadata = {
-  title: 'Events — Ayush Tiwari',
-  description: 'Hackathons, conferences, and tech events — my journey through the Indian tech circuit.',
-  alternates: { canonical: 'https://ayush-devfolio.vercel.app/events' },
+  title: 'Events & Hackathons — Ayush Tiwari',
+  description:
+    'Hackathons, conferences, and tech events attended by Ayush Tiwari — ' +
+    'Full Stack Developer from Jabalpur, India. My journey through the Indian tech circuit.',
+  keywords: [
+    'Ayush Tiwari hackathon', 'Ayush Tiwari events', 'hackathons India',
+    'tech events Jabalpur', 'developer events Madhya Pradesh',
+    'coding competitions India', 'Ayush Tiwari developer',
+  ],
+  alternates: { canonical: `${BASE_URL}/events` },
+  openGraph: {
+    title:       'Events & Hackathons — Ayush Tiwari',
+    description: 'Hackathons and tech events by Ayush Tiwari, Full Stack Developer, Jabalpur India.',
+    url:          `${BASE_URL}/events`,
+    type:        'website',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card:    'summary_large_image',
+    title:   'Events & Hackathons — Ayush Tiwari',
+    creator: '@ayushtiwari18',
+  },
 };
 
 function groupByYear(events) {
@@ -50,20 +70,15 @@ async function EventsList() {
 
   return (
     <div className="relative">
-      {/* Vertical timeline line */}
       <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
-
       <div className="space-y-12">
         {grouped.map(([year, yearEvents]) => (
           <div key={year}>
-            {/* Year label */}
             <div className="flex items-center gap-4 mb-6">
               <div className="w-4 h-4 rounded-full bg-primary border-2 border-background ring-2 ring-primary/30 shrink-0 z-10" />
               <span className="text-sm font-bold text-primary uppercase tracking-widest">{year}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
-
-            {/* Cards grid — pass index for stagger */}
             <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
               {yearEvents.map(event => {
                 const idx = cardIndex++;
@@ -81,15 +96,11 @@ export default function EventsPage() {
   return (
     <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-
-        {/* Back */}
         <Link href="/">
           <Button variant="outline" className="mb-8 hover:bg-primary/10 hover:border-primary">
             <ArrowLeft className="mr-2" size={16} />Back to Home
           </Button>
         </Link>
-
-        {/* Header */}
         <div className="mb-14">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
@@ -104,12 +115,9 @@ export default function EventsPage() {
             Every hackathon, conference, and tech event that shaped how I build.
           </p>
         </div>
-
-        {/* Suspense boundary — shows skeleton while data loads */}
         <Suspense fallback={<EventsLoading />}>
           <EventsList />
         </Suspense>
-
       </div>
     </main>
   );

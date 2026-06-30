@@ -1,19 +1,33 @@
 import { PenLine } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import BlogFilterClient from '@/components/blog/BlogFilterClient';
+import { BASE_URL } from '@/app/layout';
 
-const BASE_URL = 'https://ayush-devfolio.vercel.app';
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Blog — Ayush Tiwari',
-  description: 'Technical articles, tutorials and deep-dives on Full Stack Development, Next.js, React, SEO and cloud-native engineering by Ayush Tiwari.',
+  title: 'Blog — Ayush Tiwari | Full Stack Development Articles',
+  description:
+    'Technical articles, tutorials and deep-dives on Full Stack Development, Next.js, React, ' +
+    'Node.js, network security and cloud engineering by Ayush Tiwari — developer from Jabalpur, India.',
+  keywords: [
+    'Ayush Tiwari blog', 'Full Stack Development blog India',
+    'Next.js tutorials', 'React articles', 'Node.js tutorials',
+    'network security blog', 'web developer blog Jabalpur',
+    'Ayush Tiwari articles', 'MERN Stack blog',
+  ],
   alternates: { canonical: `${BASE_URL}/blog` },
   openGraph: {
-    title: 'Blog — Ayush Tiwari',
-    description: 'Technical articles and deep-dives on Full Stack Development by Ayush Tiwari.',
-    url: `${BASE_URL}/blog`,
-    type: 'website',
+    title:       'Blog — Ayush Tiwari | Full Stack Development Articles',
+    description: 'Technical deep-dives on Full Stack Development, Next.js and cloud engineering by Ayush Tiwari.',
+    url:          `${BASE_URL}/blog`,
+    type:        'website',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card:    'summary_large_image',
+    title:   'Blog — Ayush Tiwari',
+    creator: '@ayushtiwari18',
   },
 };
 
@@ -33,8 +47,6 @@ export default async function BlogPage() {
   return (
     <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-
-        {/* ── Page header ── */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
@@ -52,10 +64,7 @@ export default async function BlogPage() {
             )}
           </p>
         </div>
-
-        {/* ── Filter + cards (client) ── */}
         <BlogFilterClient posts={posts} />
-
       </div>
     </main>
   );

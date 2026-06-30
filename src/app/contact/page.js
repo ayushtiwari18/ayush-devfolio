@@ -1,11 +1,32 @@
 import Link from 'next/link';
 import { Mail, MapPin, Github, Linkedin } from 'lucide-react';
 import ContactForm from '@/components/contact/ContactForm';
+import { BASE_URL } from '@/app/layout';
 
 export const metadata = {
-  title: 'Contact — Ayush Tiwari',
-  description: 'Get in touch with me for collaborations, projects, and opportunities.',
-  alternates: { canonical: 'https://ayush-devfolio.vercel.app/contact' },
+  title: 'Contact — Ayush Tiwari | Hire Full Stack Developer India',
+  description:
+    'Contact Ayush Tiwari — Full Stack Developer from Jabalpur, Madhya Pradesh, India. ' +
+    'Available for freelance projects, full-time roles, and collaborations. ' +
+    'MERN Stack, Next.js, AWS expert.',
+  keywords: [
+    'hire Ayush Tiwari', 'contact Ayush Tiwari', 'Full Stack Developer India hire',
+    'freelance developer Jabalpur', 'hire MERN developer India',
+    'Next.js developer for hire', 'web developer contact India',
+  ],
+  alternates: { canonical: `${BASE_URL}/contact` },
+  openGraph: {
+    title:       'Contact — Ayush Tiwari | Hire Full Stack Developer India',
+    description: 'Hire Ayush Tiwari — Full Stack Developer, Jabalpur India. Available for projects and roles.',
+    url:          `${BASE_URL}/contact`,
+    type:        'website',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card:    'summary_large_image',
+    title:   'Contact — Ayush Tiwari',
+    creator: '@ayushtiwari18',
+  },
 };
 
 const INFO_CARDS = [
@@ -31,7 +52,7 @@ const INFO_CARDS = [
     icon: Linkedin,
     label: 'LinkedIn',
     value: 'Ayush Tiwari',
-    href: 'https://www.linkedin.com/in/ayushtiwari18',
+    href: 'https://www.linkedin.com/in/tiwariaayush',
   },
 ];
 
@@ -39,22 +60,17 @@ export default function ContactPage() {
   return (
     <main className="min-h-screen pt-24 pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-
-        {/* Header */}
         <div className="text-center mb-14">
           <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Contact</p>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-foreground mb-4">
-            Let’s <span className="text-primary">Work Together</span>
+            Let&apos;s <span className="text-primary">Work Together</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Have a project in mind or just want to say hi? Fill out the form and I’ll get back to you within 24 hours.
+            Have a project in mind or just want to say hi? Fill out the form and I&apos;ll get back to you within 24 hours.
           </p>
         </div>
 
-        {/* 2-col layout */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-
-          {/* Left — info cards (2 cols) */}
           <aside className="lg:col-span-2 space-y-4">
             {INFO_CARDS.map(({ icon: Icon, label, value, href }) => {
               const inner = (
@@ -84,8 +100,6 @@ export default function ContactPage() {
                 </div>
               );
             })}
-
-            {/* Availability badge */}
             <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-3">
               <span className="relative flex h-2.5 w-2.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -94,8 +108,6 @@ export default function ContactPage() {
               <p className="text-sm text-emerald-400 font-medium">Available for new opportunities</p>
             </div>
           </aside>
-
-          {/* Right — contact form (3 cols) */}
           <div className="lg:col-span-3">
             <ContactForm />
           </div>

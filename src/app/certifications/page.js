@@ -3,10 +3,32 @@ import { ArrowLeft, Award, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getPublishedCertifications } from '@/services/certifications.service';
 import CertificationsClient from '@/components/certifications/CertificationsClient';
+import { BASE_URL } from '@/app/layout';
 
 export const metadata = {
-  title: 'Certifications — Ayush Tiwari',
-  description: 'Professional certifications and courses — Oracle, Cisco, and 25+ more credentials.',
+  title: 'Certifications — Ayush Tiwari | AWS, Oracle, Cisco',
+  description:
+    'Professional certifications earned by Ayush Tiwari — AWS Cloud Practitioner, ' +
+    'AWS Solutions Architect, Oracle, Cisco, and 25+ industry credentials. ' +
+    'Full Stack Developer from Jabalpur, Madhya Pradesh, India.',
+  keywords: [
+    'Ayush Tiwari certifications', 'AWS certified Ayush Tiwari',
+    'AWS Cloud Practitioner India', 'Oracle certification', 'Cisco certification',
+    'developer certifications India', 'cloud certifications Jabalpur',
+  ],
+  alternates: { canonical: `${BASE_URL}/certifications` },
+  openGraph: {
+    title:       'Certifications — Ayush Tiwari | AWS, Oracle, Cisco',
+    description: 'AWS, Oracle, Cisco and 25+ certifications by Ayush Tiwari.',
+    url:          `${BASE_URL}/certifications`,
+    type:        'website',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card:    'summary_large_image',
+    title:   'Certifications — Ayush Tiwari',
+    creator: '@ayushtiwari18',
+  },
 };
 
 export default async function CertificationsPage() {
@@ -30,7 +52,6 @@ export default async function CertificationsPage() {
           </Button>
         </Link>
 
-        {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
@@ -52,7 +73,6 @@ export default async function CertificationsPage() {
           </p>
         </div>
 
-        {/* Client: filter + grid + modal */}
         {certifications.length > 0 ? (
           <CertificationsClient certifications={certifications} />
         ) : (
