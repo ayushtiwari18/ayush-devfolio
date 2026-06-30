@@ -3,23 +3,36 @@
 import { useEffect, useState, useRef } from 'react';
 import { Calendar, Clock, Tag, Twitter, Linkedin, Link2, Check } from 'lucide-react';
 
+// Extract headings from BlockNote JSON blocks (not markdown)
 function extractHeadings(content) {
   if (!content) return [];
-  const lines = content.split('\n');
-  const headings = [];
-  for (const line of lines) {
-    const m2 = line.match(/^## (.+)/);
-    const m3 = line.match(/^### (.+)/);
-    if (m2) {
-      const text = m2[1].trim();
-      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      headings.push({ level: 2, text, id });
-    } else if (m3) {
-      const text = m3[1].trim();
-      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      headings.push({ level: 3, text, id });
-    }
+  let blocks;
+  try {
+    blocks = typeof content === 'string' ? JSON.parse(content) : content;
+  } catch {
+    return [];
   }
+  if (!Array.isArray(blocks)) return [];
+
+  const headings = [];
+  const walk = (blocks) => {
+    for (const block of blocks) {
+      if (block.type === 'heading') {
+        const level = block.props?.level || 2;
+        const text = (block.content || [])
+          .filter(i => i.type === 'text')
+          .map(i => i.text)
+          .join('')
+          .trim();
+        if (text) {
+          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          headings.push({ level, text, id });
+        }
+      }
+      if (block.children?.length) walk(block.children);
+    }
+  };
+  walk(blocks);
   return headings;
 }
 

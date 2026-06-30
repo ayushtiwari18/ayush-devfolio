@@ -11,6 +11,37 @@ import SeriesBanner from '@/components/blog/SeriesBanner';
 
 const BASE_URL = 'https://ayush-devfolio.vercel.app';
 
+// Safe description — works whether content is JSON array, string, or null
+function safeDescription(post) {
+  if (post.excerpt) return post.excerpt.substring(0, 160);
+  if (!post.content) return '';
+  if (typeof post.content === 'string') {
+    try {
+      const blocks = JSON.parse(post.content);
+      if (Array.isArray(blocks)) return extractTextFromBlocks(blocks).substring(0, 160);
+    } catch {}
+    return post.content.replace(/[#*`>_~]/g, '').trim().substring(0, 160);
+  }
+  if (Array.isArray(post.content)) return extractTextFromBlocks(post.content).substring(0, 160);
+  return '';
+}
+
+function extractTextFromBlocks(blocks) {
+  let text = '';
+  const walk = (blocks) => {
+    for (const block of blocks) {
+      if (Array.isArray(block.content)) {
+        for (const inline of block.content) {
+          if (inline.type === 'text') text += inline.text + ' ';
+        }
+      }
+      if (block.children?.length) walk(block.children);
+    }
+  };
+  walk(blocks);
+  return text.trim();
+}
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const { data: post } = await supabase
@@ -22,8 +53,7 @@ export async function generateMetadata({ params }) {
 
   if (!post) return { title: 'Post Not Found' };
 
-  const description = post.excerpt ||
-    post.content?.replace(/[#*`>_~]/g, '').trim().substring(0, 160) || '';
+  const description = safeDescription(post);
   const ogImage = post.cover_image || `${BASE_URL}/opengraph-image`;
 
   return {
@@ -67,11 +97,13 @@ export default async function BlogPostPage({ params }) {
 
   if (!post) notFound();
 
+  const description = safeDescription(post);
+
   const articleLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
-    description: post.excerpt || post.content?.replace(/[#*`>_~]/g, '').trim().substring(0, 160) || '',
+    description,
     url: `${BASE_URL}/blog/${slug}`,
     datePublished: post.created_at,
     dateModified: post.updated_at || post.created_at,
@@ -181,7 +213,7 @@ export default async function BlogPostPage({ params }) {
                 </div>
               )}
 
-              {/* Markdown body */}
+              {/* Block content */}
               <BlogContent content={post.content} />
 
               {/* Key Takeaways */}
