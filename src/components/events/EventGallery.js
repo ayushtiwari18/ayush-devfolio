@@ -1,100 +1,196 @@
 'use client';
 
-import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, ChevronLeft, ChevronRight, ZoomIn, Expand } from 'lucide-react';
 
 export default function EventGallery({ images = [], title = '' }) {
-  const [lightbox, setLightbox] = useState(null); // index or null
+  const [active,   setActive]   = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+  const carouselRef = useRef(null);
+  const touchStartX = useRef(null);
 
-  if (!images.length) return null;
+  const total = images.length;
+  const prev  = useCallback(() => setActive(i => (i - 1 + total) % total), [total]);
+  const next  = useCallback(() => setActive(i => (i + 1) % total), [total]);
 
-  const prev = () => setLightbox(i => (i - 1 + images.length) % images.length);
-  const next = () => setLightbox(i => (i + 1) % images.length);
+  // Keyboard nav for carousel
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const handler = (e) => {
+      if (e.key === 'ArrowLeft')  prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    el.addEventListener('keydown', handler);
+    return () => el.removeEventListener('keydown', handler);
+  }, [prev, next]);
 
-  const handleKey = (e) => {
-    if (e.key === 'Escape')     setLightbox(null);
-    if (e.key === 'ArrowRight') next();
-    if (e.key === 'ArrowLeft')  prev();
+  // Touch swipe
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd   = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? next() : prev();
+    touchStartX.current = null;
   };
+
+  if (!total) return null;
 
   return (
     <>
-      {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {images.map((src, i) => (
+      {/* ── Carousel ──────────────────────────────────────────── */}
+      <div
+        ref={carouselRef}
+        tabIndex={0}
+        className="outline-none select-none"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Main image */}
+        <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-border bg-muted group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            key={active}
+            src={images[active]}
+            alt={`${title} — photo ${active + 1}`}
+            className="w-full h-full object-cover transition-opacity duration-300"
+          />
+
+          {/* Overlay controls */}
+          <div className="absolute inset-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            {total > 1 && (
+              <button
+                onClick={prev}
+                className="p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors backdrop-blur-sm"
+                aria-label="Previous"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            )}
+            <div className="flex-1" />
+            {total > 1 && (
+              <button
+                onClick={next}
+                className="p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors backdrop-blur-sm"
+                aria-label="Next"
+              >
+                <ChevronRight size={20} />
+              </button>
+            )}
+          </div>
+
+          {/* Expand / zoom button */}
           <button
-            key={i}
-            onClick={() => setLightbox(i)}
-            className="group relative rounded-xl overflow-hidden border border-border aspect-video hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={() => setLightbox(true)}
+            className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors backdrop-blur-sm opacity-0 group-hover:opacity-100"
+            aria-label="View fullscreen"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt={`${title} photo ${i + 1}`}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-              <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
+            <Expand size={16} />
           </button>
-        ))}
+
+          {/* Counter pill */}
+          {total > 1 && (
+            <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+              {active + 1} / {total}
+            </div>
+          )}
+        </div>
+
+        {/* Dot indicators */}
+        {total > 1 && total <= 10 && (
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                aria-label={`Go to photo ${i + 1}`}
+                className={`rounded-full transition-all duration-200 ${
+                  i === active
+                    ? 'w-5 h-2 bg-primary'
+                    : 'w-2 h-2 bg-muted-foreground/40 hover:bg-muted-foreground/70'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Thumbnail strip — shown when 2+ images */}
+        {total > 1 && (
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-none">
+            {images.map((src, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                className={`relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                  i === active
+                    ? 'border-primary shadow-md shadow-primary/20 scale-105'
+                    : 'border-transparent opacity-60 hover:opacity-100 hover:border-border'
+                }`}
+                aria-label={`Photo ${i + 1}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Lightbox */}
-      {lightbox !== null && (
+      {/* ── Lightbox ──────────────────────────────────────────── */}
+      {lightbox && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-          onKeyDown={handleKey}
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLightbox(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape')     setLightbox(false);
+            if (e.key === 'ArrowLeft')  prev();
+            if (e.key === 'ArrowRight') next();
+          }}
           tabIndex={0}
           role="dialog"
           aria-modal="true"
-          aria-label="Image viewer"
+          aria-label="Fullscreen image viewer"
         >
           {/* Close */}
           <button
-            onClick={() => setLightbox(null)}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
+            onClick={() => setLightbox(false)}
+            className="absolute top-4 right-4 p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white z-10"
             aria-label="Close"
           >
             <X size={20} />
           </button>
 
-          {/* Prev */}
-          {images.length > 1 && (
+          {total > 1 && (
             <button
               onClick={e => { e.stopPropagation(); prev(); }}
-              className="absolute left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
+              className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white z-10"
               aria-label="Previous"
             >
               <ChevronLeft size={24} />
             </button>
           )}
 
-          {/* Image */}
-          <div onClick={e => e.stopPropagation()} className="max-w-5xl max-h-[85vh] flex items-center justify-center">
+          <div onClick={e => e.stopPropagation()} className="max-w-5xl max-h-[88vh] flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={images[lightbox]}
-              alt={`${title} photo ${lightbox + 1}`}
-              className="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl"
+              src={images[active]}
+              alt={`${title} — photo ${active + 1}`}
+              className="max-w-full max-h-[88vh] rounded-xl object-contain shadow-2xl"
             />
           </div>
 
-          {/* Next */}
-          {images.length > 1 && (
+          {total > 1 && (
             <button
               onClick={e => { e.stopPropagation(); next(); }}
-              className="absolute right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
+              className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white z-10"
               aria-label="Next"
             >
               <ChevronRight size={24} />
             </button>
           )}
 
-          {/* Counter */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-white/10 rounded-full text-white text-xs">
-            {lightbox + 1} / {images.length}
+            {active + 1} / {total}
           </div>
         </div>
       )}

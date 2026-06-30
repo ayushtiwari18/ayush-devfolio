@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ImageUrlList from '@/components/admin/ImageUrlList';
 import { getEventById, updateEvent } from '@/services/events.service';
 
 const TYPE_OPTIONS = [
@@ -22,8 +23,8 @@ const HINT    = 'text-xs text-muted-foreground mt-1';
 const SECTION = 'bg-card border border-border rounded-xl p-6 space-y-4';
 
 export default function EditEventPage() {
-  const router      = useRouter();
-  const { id }      = useParams();
+  const router  = useRouter();
+  const { id }  = useParams();
   const [loading, setLoading] = useState(true);
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState(null);
@@ -32,37 +33,37 @@ export default function EditEventPage() {
   useEffect(() => {
     if (!id) return;
     getEventById(id)
-      .then(event => {
-        const links = event.links || {};
+      .then(ev => {
+        const links = ev.links || {};
         setForm({
-          title:             event.title || '',
-          slug:              event.slug  || '',
-          tagline:           event.tagline || '',
-          type:              event.type || 'hackathon',
-          category:          event.category || '',
-          organizer:         event.organizer || '',
-          location:          event.location || '',
-          date:              event.date || '',
-          end_date:          event.end_date || '',
-          duration:          event.duration || '',
-          team_size:         event.team_size || 1,
-          team_name:         event.team_name || '',
-          role:              event.role || '',
-          result:            event.result || '',
-          prize:             event.prize || '',
-          description:       event.description || '',
-          story:             event.story || '',
-          cover_image:       event.cover_image || '',
-          certificate_image: event.certificate_image || '',
-          images:            (event.images || []).join(', '),
-          technologies:      (event.technologies || []).join(', '),
+          title:             ev.title             || '',
+          slug:              ev.slug              || '',
+          tagline:           ev.tagline           || '',
+          type:              ev.type              || 'hackathon',
+          category:          ev.category          || '',
+          organizer:         ev.organizer         || '',
+          location:          ev.location          || '',
+          date:              ev.date              || '',
+          end_date:          ev.end_date          || '',
+          duration:          ev.duration          || '',
+          team_size:         ev.team_size         || 1,
+          team_name:         ev.team_name         || '',
+          role:              ev.role              || '',
+          result:            ev.result            || '',
+          prize:             ev.prize             || '',
+          description:       ev.description       || '',
+          story:             ev.story             || '',
+          cover_image:       ev.cover_image       || '',
+          certificate_image: ev.certificate_image || '',
+          images:            Array.isArray(ev.images) ? ev.images : [],
+          technologies:      (ev.technologies || []).join(', '),
           links_github:      links.github      || '',
           links_devpost:     links.devpost     || '',
           links_certificate: links.certificate || '',
           links_live:        links.live        || '',
           links_article:     links.article     || '',
-          published:         event.published ?? true,
-          featured:          event.featured   ?? false,
+          published:         ev.published  ?? true,
+          featured:          ev.featured   ?? false,
         });
       })
       .catch(() => setError('Failed to load event.'))
@@ -86,24 +87,24 @@ export default function EditEventPage() {
       await updateEvent(id, {
         title:             form.title.trim(),
         slug:              form.slug.trim(),
-        tagline:           form.tagline.trim() || null,
+        tagline:           form.tagline.trim()           || null,
         type:              form.type,
-        category:          form.category.trim() || null,
-        organizer:         form.organizer.trim() || null,
-        location:          form.location.trim() || null,
-        date:              form.date || null,
-        end_date:          form.end_date || null,
-        duration:          form.duration.trim() || null,
-        team_size:         Number(form.team_size) || 1,
-        team_name:         form.team_name.trim() || null,
-        role:              form.role.trim() || null,
-        result:            form.result.trim() || null,
-        prize:             form.prize.trim() || null,
-        description:       form.description.trim() || null,
-        story:             form.story.trim() || null,
-        cover_image:       form.cover_image.trim() || null,
+        category:          form.category.trim()          || null,
+        organizer:         form.organizer.trim()         || null,
+        location:          form.location.trim()          || null,
+        date:              form.date                     || null,
+        end_date:          form.end_date                 || null,
+        duration:          form.duration.trim()          || null,
+        team_size:         Number(form.team_size)        || 1,
+        team_name:         form.team_name.trim()         || null,
+        role:              form.role.trim()              || null,
+        result:            form.result.trim()            || null,
+        prize:             form.prize.trim()             || null,
+        description:       form.description.trim()       || null,
+        story:             form.story.trim()             || null,
+        cover_image:       form.cover_image.trim()       || null,
         certificate_image: form.certificate_image.trim() || null,
-        images:            form.images ? form.images.split(',').map(s => s.trim()).filter(Boolean) : [],
+        images:            form.images.filter(Boolean),
         technologies:      form.technologies ? form.technologies.split(',').map(s => s.trim()).filter(Boolean) : [],
         links:             Object.keys(links).length ? links : {},
         published:         form.published,
@@ -133,46 +134,21 @@ export default function EditEventPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Link href="/admin/events">
-          <Button type="button" variant="outline" size="sm"><ArrowLeft size={16} className="mr-1" />Back</Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Edit Event</h1>
-          <p className="text-sm text-muted-foreground">{form.title}</p>
-        </div>
+        <Link href="/admin/events"><Button type="button" variant="outline" size="sm"><ArrowLeft size={16} className="mr-1" />Back</Button></Link>
+        <div><h1 className="text-2xl font-bold">Edit Event</h1><p className="text-sm text-muted-foreground">{form.title}</p></div>
       </div>
 
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">{error}</div>
-      )}
+      {error && <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">{error}</div>}
 
       {/* Core */}
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Core Info</h2>
-        <div>
-          <label className={LABEL}>Title *</label>
-          <input className={INPUT} value={form.title} onChange={e => set('title', e.target.value)} required />
-        </div>
-        <div>
-          <label className={LABEL}>Slug *</label>
-          <input className={INPUT} value={form.slug} onChange={e => set('slug', e.target.value)} required />
-          <p className={HINT}>URL: /events/{form.slug}</p>
-        </div>
-        <div>
-          <label className={LABEL}>Tagline</label>
-          <input className={INPUT} value={form.tagline} onChange={e => set('tagline', e.target.value)} />
-        </div>
+        <div><label className={LABEL}>Title *</label><input className={INPUT} value={form.title} onChange={e => set('title', e.target.value)} required /></div>
+        <div><label className={LABEL}>Slug *</label><input className={INPUT} value={form.slug} onChange={e => set('slug', e.target.value)} required /><p className={HINT}>URL: /events/{form.slug}</p></div>
+        <div><label className={LABEL}>Tagline</label><input className={INPUT} value={form.tagline} onChange={e => set('tagline', e.target.value)} /></div>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={LABEL}>Type</label>
-            <select className={INPUT} value={form.type} onChange={e => set('type', e.target.value)}>
-              {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL}>Category</label>
-            <input className={INPUT} value={form.category} onChange={e => set('category', e.target.value)} />
-          </div>
+          <div><label className={LABEL}>Type</label><select className={INPUT} value={form.type} onChange={e => set('type', e.target.value)}>{TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
+          <div><label className={LABEL}>Category</label><input className={INPUT} value={form.category} onChange={e => set('category', e.target.value)} /></div>
         </div>
       </div>
 
@@ -208,11 +184,7 @@ export default function EditEventPage() {
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Content</h2>
         <div><label className={LABEL}>Description</label><textarea rows={2} className={INPUT} value={form.description} onChange={e => set('description', e.target.value)} /></div>
-        <div>
-          <label className={LABEL}>Story</label>
-          <textarea rows={8} className={INPUT} value={form.story} onChange={e => set('story', e.target.value)} />
-          <p className={HINT}>Plain text. Separate paragraphs with a blank line.</p>
-        </div>
+        <div><label className={LABEL}>Story</label><textarea rows={8} className={INPUT} value={form.story} onChange={e => set('story', e.target.value)} /><p className={HINT}>Plain text. Blank line = new paragraph.</p></div>
         <div><label className={LABEL}>Technologies (comma-separated)</label><input className={INPUT} value={form.technologies} onChange={e => set('technologies', e.target.value)} /></div>
       </div>
 
@@ -220,7 +192,13 @@ export default function EditEventPage() {
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Media</h2>
         <div><label className={LABEL}>Cover Image URL</label><input className={INPUT} value={form.cover_image} onChange={e => set('cover_image', e.target.value)} /></div>
-        <div><label className={LABEL}>Gallery Images (comma-separated URLs)</label><textarea rows={2} className={INPUT} value={form.images} onChange={e => set('images', e.target.value)} /></div>
+        <div>
+          <label className={LABEL}>
+            Gallery Images
+            <span className="ml-2 text-xs text-muted-foreground font-normal">max 10 — shown as carousel on event page</span>
+          </label>
+          <ImageUrlList value={form.images} onChange={val => set('images', val)} />
+        </div>
         <div><label className={LABEL}>Certificate Image URL</label><input className={INPUT} value={form.certificate_image} onChange={e => set('certificate_image', e.target.value)} /></div>
       </div>
 
@@ -240,14 +218,8 @@ export default function EditEventPage() {
       <div className={SECTION}>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Visibility</h2>
         <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.published} onChange={e => set('published', e.target.checked)} className="w-4 h-4 accent-primary" />
-            <span className="text-sm">Published</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="w-4 h-4 accent-primary" />
-            <span className="text-sm">Featured</span>
-          </label>
+          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.published} onChange={e => set('published', e.target.checked)} className="w-4 h-4 accent-primary" /><span className="text-sm">Published</span></label>
+          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="w-4 h-4 accent-primary" /><span className="text-sm">Featured</span></label>
         </div>
       </div>
 
