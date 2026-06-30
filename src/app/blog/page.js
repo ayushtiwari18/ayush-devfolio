@@ -24,7 +24,7 @@ export default async function BlogPage() {
   try {
     const { data, error } = await supabase
       .from('blog_posts')
-      .select('id, title, slug, content, cover_image, created_at, reading_time, tags')
+      .select('id, title, slug, excerpt, cover_image, created_at, reading_time, tags')
       .eq('published', true)
       .order('created_at', { ascending: false });
     if (!error) posts = data || [];
@@ -67,7 +67,7 @@ export default async function BlogPage() {
                       </div>
                       <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{post.title}</h2>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {post.content?.replace(/[#*`>_~]/g, '').trim().substring(0, 140)}
+                        {post.excerpt?.substring(0, 140) || ''}
                       </p>
                       {post.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-1">
