@@ -54,7 +54,6 @@ export default function EditBlogPostPage() {
 
       rawDbRef.current = data;
 
-      // Explicit pick — no ...data spread, no legacy column pollution.
       setFormData({
         title:          data.title          || '',
         slug:           data.slug           || '',
@@ -144,15 +143,10 @@ export default function EditBlogPostPage() {
         show_share:     formData.show_share,
       };
 
-      console.log('[Blog EDIT] payload:', payload);
       const { data, error } = await supabase
         .from('blog_posts').update(payload).eq('id', params.id).select();
-      console.log('[Blog EDIT] response:', { data, error });
 
-      if (error) {
-        console.error('[Blog EDIT] Supabase error:', error);
-        throw error;
-      }
+      if (error) throw error;
       router.push('/admin/blog');
     } catch (err) {
       alert('Error updating post: ' + (err.message || JSON.stringify(err)));
@@ -161,10 +155,9 @@ export default function EditBlogPostPage() {
     }
   };
 
-  // FIX: Only allow the form to submit when the Save Changes button triggered it.
-  // BlockNote's internal + / drag-handle buttons have no type attribute so the
-  // browser defaults them to type="submit", firing a submit event on the form.
-  // We check e.nativeEvent.submitter — if it's not our Save button, block it.
+  // Only allow form submit when the Save button triggered it.
+  // BlockNote + handle buttons have no type attr → default to submit → would redirect.
+  // data-save-btn="true" on the Save button is the passport.
   const handleFormSubmit = (e) => {
     const submitter = e.nativeEvent?.submitter;
     const isSaveButton = submitter?.dataset?.saveBtn === 'true';
@@ -173,6 +166,21 @@ export default function EditBlogPostPage() {
       return;
     }
     handleSubmit(e);
+  };
+
+  // Restored: was accidentally dropped in previous rewrite
+  const handleConfirmedDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('blog_posts').delete().eq('id', params.id);
+      if (error) throw error;
+      router.push('/admin/blog');
+    } catch (err) {
+      alert('Error deleting post: ' + err.message);
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   const visibleCount = [formData.show_toc, formData.show_takeaways, formData.show_share].filter(Boolean).length;
@@ -438,10 +446,6 @@ export default function EditBlogPostPage() {
               </label>
             </div>
 
-            {/* data-save-btn marks this as the only legitimate form submitter.
-                handleFormSubmit checks e.nativeEvent.submitter.dataset.saveBtn
-                and blocks any other button (e.g. BlockNote + handle) from
-                accidentally submitting the form. */}
             <Button
               type="submit"
               data-save-btn="true"
