@@ -14,7 +14,6 @@ import FallbackImage from '@/components/ui/FallbackImage';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { supabase } from '@/lib/supabase';
 
-// Dynamically import editor — no SSR (BlockNote is client-only)
 const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
   ssr: false,
   loading: () => (
@@ -115,21 +114,23 @@ export default function EditBlogPostPage() {
     try {
       let contentJson;
       try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
-      // Destructure id out — never send id or created_at in an update payload
-      const { id, created_at, ...rest } = formData;
+      // Strip id, created_at, updated_at — never send these in an update payload
+      const { id, created_at, updated_at, ...rest } = formData;
       const payload = {
         ...rest,
         content:      contentJson,
         series_order: formData.series_order === '' ? null : Number(formData.series_order),
-        updated_at:   new Date().toISOString(),
       };
-      const { error } = await supabase.from('blog_posts').update(payload).eq('id', params.id);
+      console.log('[Blog EDIT] payload:', payload);
+      const { data, error } = await supabase.from('blog_posts').update(payload).eq('id', params.id).select();
+      console.log('[Blog EDIT] response:', { data, error });
       if (error) {
-        console.error('Supabase update error:', error);
+        console.error('[Blog EDIT] Supabase error:', error);
         throw error;
       }
       router.push('/admin/blog');
     } catch (err) {
+      console.error('[Blog EDIT] submit failed:', err);
       alert('Error updating post: ' + (err.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
@@ -194,10 +195,8 @@ export default function EditBlogPostPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Main col ── */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Title & Slug */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-foreground mb-2">Title *</label>
@@ -212,7 +211,6 @@ export default function EditBlogPostPage() {
               </div>
             </div>
 
-            {/* Excerpt */}
             <div className="bg-card border border-border rounded-xl p-6">
               <label className="block text-sm font-medium text-foreground mb-2">
                 Excerpt
@@ -223,7 +221,6 @@ export default function EditBlogPostPage() {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
             </div>
 
-            {/* Block Editor */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -243,7 +240,6 @@ export default function EditBlogPostPage() {
               />
             </div>
 
-            {/* Key Takeaways */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -279,7 +275,6 @@ export default function EditBlogPostPage() {
               )}
             </div>
 
-            {/* Series */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
@@ -306,7 +301,6 @@ export default function EditBlogPostPage() {
               </div>
             </div>
 
-            {/* Canonical URL */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -322,7 +316,6 @@ export default function EditBlogPostPage() {
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
 
-            {/* Visibility */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <button type="button" onClick={() => setVisOpen(v => !v)}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors">
@@ -362,7 +355,6 @@ export default function EditBlogPostPage() {
             </div>
           </div>
 
-          {/* ── Sidebar col ── */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-card border border-border rounded-xl p-6">
               <ImageUploader

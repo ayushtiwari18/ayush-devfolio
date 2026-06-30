@@ -86,7 +86,7 @@ export default function NewBlogPostPage() {
     try {
       let contentJson;
       try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
-      // Do NOT send created_at — Supabase handles it automatically
+      // Explicit payload — never send id/created_at/updated_at
       const payload = {
         title:          formData.title,
         slug:           formData.slug,
@@ -105,13 +105,16 @@ export default function NewBlogPostPage() {
         show_toc:       formData.show_toc,
         show_share:     formData.show_share,
       };
-      const { error } = await supabase.from('blog_posts').insert([payload]);
+      console.log('[Blog NEW] payload:', payload);
+      const { data, error } = await supabase.from('blog_posts').insert([payload]).select();
+      console.log('[Blog NEW] response:', { data, error });
       if (error) {
-        console.error('Supabase insert error:', error);
+        console.error('[Blog NEW] Supabase error:', error);
         throw error;
       }
       router.push('/admin/blog');
     } catch (err) {
+      console.error('[Blog NEW] submit failed:', err);
       alert('Error creating blog post: ' + (err.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
@@ -184,7 +187,6 @@ export default function NewBlogPostPage() {
               />
             </div>
 
-            {/* Key Takeaways */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -220,7 +222,6 @@ export default function NewBlogPostPage() {
               )}
             </div>
 
-            {/* Series */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
@@ -247,7 +248,6 @@ export default function NewBlogPostPage() {
               </div>
             </div>
 
-            {/* Canonical URL */}
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -263,7 +263,6 @@ export default function NewBlogPostPage() {
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
 
-            {/* Visibility */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <button type="button" onClick={() => setVisOpen(v => !v)}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors">
@@ -303,7 +302,6 @@ export default function NewBlogPostPage() {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-card border border-border rounded-xl p-6">
               <ImageUploader
