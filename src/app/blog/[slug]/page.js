@@ -11,6 +11,9 @@ import SeriesBanner from '@/components/blog/SeriesBanner';
 
 const BASE_URL = 'https://ayush-devfolio.vercel.app';
 
+// Always fetch fresh from Supabase on every request
+export const revalidate = 0;
+
 function extractTextFromBlocks(blocks) {
   let text = '';
   const walk = (blocks) => {
@@ -136,7 +139,6 @@ export default async function BlogPostPage({ params }) {
             </Button>
           </Link>
 
-          {/* Cover image */}
           {post.cover_image && (
             <div className="relative w-full h-64 sm:h-[420px] rounded-2xl overflow-hidden mb-10 shadow-2xl shadow-black/30">
               <Image src={post.cover_image} alt={post.title} fill className="object-cover" priority />
@@ -145,23 +147,18 @@ export default async function BlogPostPage({ params }) {
                   <Star size={11} fill="currentColor" /> Featured
                 </div>
               )}
-              {/* Gradient overlay for text legibility */}
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
             </div>
           )}
 
-          {/* Series banner */}
           {post.series_name && (
             <SeriesBanner seriesName={post.series_name} seriesOrder={post.series_order} />
           )}
 
-          {/* 2-col layout */}
           <div className="flex flex-col xl:flex-row gap-12">
 
-            {/* ── Main article ── */}
             <article className="flex-1 min-w-0">
 
-              {/* Meta row */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-5">
                 <div className="flex items-center gap-1.5">
                   <Calendar size={14} />
@@ -181,12 +178,10 @@ export default async function BlogPostPage({ params }) {
                 )}
               </div>
 
-              {/* Title */}
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-[1.15] tracking-tight">
                 {post.title}
               </h1>
 
-              {/* Tags */}
               {post.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-8">
                   {post.tags.map((tag, i) => (
@@ -198,7 +193,6 @@ export default async function BlogPostPage({ params }) {
                 </div>
               )}
 
-              {/* Excerpt / lede */}
               {post.excerpt && (
                 <div className="relative pl-5 py-4 pr-5 mb-8 bg-primary/5 border border-primary/15 rounded-xl">
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
@@ -208,22 +202,18 @@ export default async function BlogPostPage({ params }) {
                 </div>
               )}
 
-              {/* Key Takeaways — TOP (what you'll learn) */}
               {post.show_takeaways !== false && post.key_takeaways?.length > 0 && (
                 <BlogTakeaways items={post.key_takeaways} position="top" />
               )}
 
-              {/* Article body */}
               <div className="mt-8">
                 <BlogContent content={post.content} />
               </div>
 
-              {/* Key Takeaways — BOTTOM (summary) */}
               {post.show_takeaways !== false && post.key_takeaways?.length > 0 && (
                 <BlogTakeaways items={post.key_takeaways} position="bottom" />
               )}
 
-              {/* Footer */}
               <footer className="mt-12 pt-8 border-t border-border">
                 <Link href="/blog">
                   <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
@@ -233,7 +223,6 @@ export default async function BlogPostPage({ params }) {
               </footer>
             </article>
 
-            {/* ── Sticky sidebar ── */}
             <aside className="xl:w-72 shrink-0">
               <BlogSidebar
                 content={post.content}

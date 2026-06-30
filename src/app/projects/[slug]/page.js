@@ -21,7 +21,8 @@ const ArchitectureViewer = dynamic(
   { ssr: false }
 );
 
-export const revalidate   = 86400;
+// Always fetch fresh from Supabase — never serve stale cached project pages
+export const revalidate   = 0;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
@@ -61,7 +62,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// ── Sticky sidebar TOC ────────────────────────────────────────────────────
+// ── Sticky sidebar TOC ─────────────────────────────────────────────
 const TOC_ITEMS = [
   { id: 'overview',     label: 'Overview' },
   { id: 'problem-statement', label: 'Problem' },
@@ -90,7 +91,6 @@ function Sidebar({ project }) {
   return (
     <aside className="hidden xl:block w-56 shrink-0">
       <div className="sticky top-28 space-y-6">
-        {/* TOC */}
         {hasSections && (
           <div className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">On This Page</p>
@@ -108,7 +108,6 @@ function Sidebar({ project }) {
           </div>
         )}
 
-        {/* Project meta */}
         <div className="bg-card border border-border rounded-xl p-4 space-y-3">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Project Info</p>
           {project.duration && (
@@ -147,7 +146,7 @@ function Sidebar({ project }) {
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────
+// ── Page ───────────────────────────────────────────────────────────────────
 export default async function ProjectDetailPage({ params }) {
   const { slug } = await params;
   let project;
@@ -181,7 +180,6 @@ export default async function ProjectDetailPage({ params }) {
     ],
   };
 
-  // Visibility defaults (true if column not set yet)
   const show = (key) => project[key] !== false;
 
   return (
@@ -191,7 +189,6 @@ export default async function ProjectDetailPage({ params }) {
 
       <main className="min-h-screen pt-20 pb-24 px-4 sm:px-6 lg:px-8">
 
-        {/* Breadcrumb */}
         <div className="max-w-7xl mx-auto mb-8">
           <Link href="/projects"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
@@ -200,7 +197,6 @@ export default async function ProjectDetailPage({ params }) {
           </Link>
         </div>
 
-        {/* Full-width hero */}
         <div className="max-w-7xl mx-auto mb-12">
           <ProjectHero
             heroImage={project.hero_image}
@@ -211,13 +207,10 @@ export default async function ProjectDetailPage({ params }) {
           />
         </div>
 
-        {/* 2-column layout */}
         <div className="max-w-7xl mx-auto flex gap-10 items-start">
 
-          {/* ── Main content column ───────────────────────────── */}
           <article className="flex-1 min-w-0">
 
-            {/* Project header */}
             <div id="overview" className="mb-12 scroll-mt-24">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {project.tags?.map(tag => (
@@ -232,7 +225,6 @@ export default async function ProjectDetailPage({ params }) {
               {project.description && (
                 <p className="text-lg text-muted-foreground leading-relaxed mb-6">{project.description}</p>
               )}
-              {/* Tech stack pills */}
               {project.technologies?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {project.technologies.map(t => (
@@ -242,7 +234,6 @@ export default async function ProjectDetailPage({ params }) {
                   ))}
                 </div>
               )}
-              {/* Action buttons */}
               <div className="flex flex-wrap gap-3">
                 {project.github_url && (
                   <a href={project.github_url} target="_blank" rel="noopener noreferrer"
@@ -259,7 +250,6 @@ export default async function ProjectDetailPage({ params }) {
               </div>
             </div>
 
-            {/* ── Case study sections ── */}
             <ProjectSection title="Problem Statement" content={project.problem_statement} />
             <ProjectSection title="Solution"          content={project.solution} />
 
@@ -319,7 +309,6 @@ export default async function ProjectDetailPage({ params }) {
             />
           </article>
 
-          {/* ── Sticky sidebar ───────────────────────────────── */}
           <Sidebar project={project} />
         </div>
       </main>
