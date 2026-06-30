@@ -86,17 +86,33 @@ export default function NewBlogPostPage() {
     try {
       let contentJson;
       try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
+      // Do NOT send created_at — Supabase handles it automatically
       const payload = {
-        ...formData,
-        content: contentJson,
-        series_order: formData.series_order === '' ? null : Number(formData.series_order),
-        created_at: new Date().toISOString(),
+        title:          formData.title,
+        slug:           formData.slug,
+        content:        contentJson,
+        excerpt:        formData.excerpt,
+        cover_image:    formData.cover_image,
+        tags:           formData.tags,
+        published:      formData.published,
+        reading_time:   formData.reading_time,
+        key_takeaways:  formData.key_takeaways,
+        series_name:    formData.series_name,
+        series_order:   formData.series_order === '' ? null : Number(formData.series_order),
+        canonical_url:  formData.canonical_url,
+        featured:       formData.featured,
+        show_takeaways: formData.show_takeaways,
+        show_toc:       formData.show_toc,
+        show_share:     formData.show_share,
       };
       const { error } = await supabase.from('blog_posts').insert([payload]);
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
       router.push('/admin/blog');
     } catch (err) {
-      alert('Error creating blog post: ' + err.message);
+      alert('Error creating blog post: ' + (err.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
     }

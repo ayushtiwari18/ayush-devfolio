@@ -85,7 +85,7 @@ export default function EditBlogPostPage() {
     setFormData(prev => ({
       ...prev,
       reading_time,
-      excerpt: prev.excerpt || excerpt, // don't overwrite if user manually set
+      excerpt: prev.excerpt || excerpt,
     }));
   }, []);
 
@@ -115,17 +115,22 @@ export default function EditBlogPostPage() {
     try {
       let contentJson;
       try { contentJson = JSON.parse(formData.content); } catch { contentJson = []; }
+      // Destructure id out — never send id or created_at in an update payload
+      const { id, created_at, ...rest } = formData;
       const payload = {
-        ...formData,
-        content: contentJson,
+        ...rest,
+        content:      contentJson,
         series_order: formData.series_order === '' ? null : Number(formData.series_order),
-        updated_at: new Date().toISOString(),
+        updated_at:   new Date().toISOString(),
       };
       const { error } = await supabase.from('blog_posts').update(payload).eq('id', params.id);
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
       router.push('/admin/blog');
     } catch (err) {
-      alert('Error updating post: ' + err.message);
+      alert('Error updating post: ' + (err.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
     }
