@@ -5,6 +5,7 @@ import BfCacheManager from '@/components/BfCacheManager';
 import AdminKeyTrigger from '@/components/AdminKeyTrigger';
 import PWAInit from '@/components/pwa/PWAInit';
 import { SEO_KEYWORDS } from '@/lib/constants';
+import { BASE_URL } from '@/lib/config';
 
 // ----------------------------------------------------------------------------
 // FONTS
@@ -42,10 +43,9 @@ const jetbrainsMono = localFont({
   preload:  false,
 });
 
-// ----------------------------------------------------------------------------
-// CANONICAL BASE URL — single source of truth for the entire app
-// ----------------------------------------------------------------------------
-export const BASE_URL = 'https://ayush-devfolio-nine.vercel.app';
+// BASE_URL is now imported from @/lib/config — keep this export
+// so any legacy import of BASE_URL from layout still works.
+export { BASE_URL };
 
 // ----------------------------------------------------------------------------
 // METADATA
@@ -241,7 +241,6 @@ export default function RootLayout({ children }) {
       <body className={`${inter.className} relative`}>
         <AdminKeyTrigger />
         <BfCacheManager />
-        {/* PWA — registers Service Worker + shows install prompt */}
         <PWAInit />
         <a
           href="#main-content"
