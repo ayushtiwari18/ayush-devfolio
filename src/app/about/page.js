@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '@/lib/constants';
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata = {
   title: 'About — Ayush Tiwari | Full Stack Developer',

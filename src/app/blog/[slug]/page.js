@@ -12,7 +12,7 @@ import SeriesBanner from '@/components/blog/SeriesBanner';
 const BASE_URL = 'https://ayush-devfolio.vercel.app';
 
 // Always fetch fresh from Supabase on every request
-export const revalidate = 0;
+export const revalidate = 60;
 
 function extractTextFromBlocks(blocks) {
   let text = '';

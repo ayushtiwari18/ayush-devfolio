@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/constants';
 import { ArrowRight, Mail, FileDown, Github, Linkedin, Twitter } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const textShadow = '0 2px 16px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.9)';
 
@@ -12,6 +14,16 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
   const githubUrl   = profile?.github_url   || 'https://github.com/ayushtiwari18';
   const linkedinUrl = profile?.linkedin_url || 'https://linkedin.com/in/tiwariaayush';
   const twitterUrl  = profile?.twitter_url  || null;
+
+  const [rollingIndex, setRollingIndex] = useState(0);
+
+  useEffect(() => {
+    if (!profile?.rolling_texts?.length) return;
+    const interval = setInterval(() => {
+      setRollingIndex((prev) => (prev + 1) % profile.rolling_texts.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [profile?.rolling_texts]);
 
   return (
     <div className="relative z-10 flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -38,25 +50,35 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
         </h1>
       </div>
 
-      {/* Phase 3 — Title */}
-      <div style={reveal(3)}>
-        <h2
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-100 mb-3 sm:mb-4"
-          style={{ textShadow }}
-        >
-          {profile?.title || 'Full Stack Developer'}
-        </h2>
-      </div>
-
-      {/* Phase 4 — Description */}
-      <div style={reveal(4)}>
-        <p
-          className="text-sm sm:text-base md:text-lg text-gray-300 max-w-xl mb-6 sm:mb-8 leading-relaxed"
-          style={{ textShadow: '0 1px 10px rgba(0,0,0,0.98)' }}
-        >
-          {profile?.description ||
-            'I build production-grade web systems using MERN Stack, Next.js, Three.js, and AWS. My research on network security is published in Springer. AWS certified — 5,600+ GitHub commits, 885+ DSA problems solved.'}
-        </p>
+      {/* Phase 3 & 4 Combined — Dynamic Rolling Title */}
+      <div style={reveal(3)} className="min-h-[70px] sm:min-h-[90px] md:min-h-[110px] lg:min-h-[120px] mb-8 sm:mb-12 flex items-start w-full">
+        {profile?.rolling_texts && profile.rolling_texts.length > 0 ? (
+          <div 
+            className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight relative w-full h-[70px] sm:h-[90px] md:h-[110px] lg:h-[120px]"
+            style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={rollingIndex}
+                initial={{ opacity: 0, y: 30, filter: 'blur(8px)', scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
+                exit={{ opacity: 0, y: -30, filter: 'blur(8px)', scale: 1.05 }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute top-0 left-0 w-full text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] pr-4 sm:pr-8 leading-snug sm:leading-tight"
+              >
+                {profile.rolling_texts[rollingIndex]}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        ) : (
+          <p
+            className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-2xl leading-relaxed"
+            style={{ textShadow: '0 1px 10px rgba(0,0,0,0.98)' }}
+          >
+            {profile?.description ||
+              'I build production-grade web systems using MERN Stack, Next.js, Three.js, and AWS. My research on network security is published in Springer. AWS certified — 5,600+ GitHub commits, 885+ DSA problems solved.'}
+          </p>
+        )}
       </div>
 
       {/* Phase 5 — CTA Buttons */}

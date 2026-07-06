@@ -31,23 +31,51 @@ export default function AdminLayout({ children }) {
   const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { checkUser(); }, []);
-
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user && pathname !== '/admin/login') {
-        router.push('/admin/login');
-        return;
+  useEffect(() => {
+    let mounted = true;
+    
+    // Check initial session
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          if (session?.user) {
+            setUser(session.user);
+          } else if (pathname !== '/admin/login') {
+            router.push('/admin/login');
+          }
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        if (mounted) setLoading(false);
       }
-      setUser(user);
-    } catch (error) {
-      console.error('Auth error:', error);
-      router.push('/admin/login');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    
+    initSession();
+
+    // Listen for auth changes (like login from /admin/login)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        if (session?.user) {
+          setUser(session.user);
+          if (pathname === '/admin/login') {
+            router.push('/admin/dashboard');
+          }
+        } else {
+          setUser(null);
+          if (pathname !== '/admin/login') {
+            router.push('/admin/login');
+          }
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [pathname, router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

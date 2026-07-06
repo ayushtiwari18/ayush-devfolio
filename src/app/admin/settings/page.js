@@ -39,6 +39,7 @@ export default function AdminSettingsPage() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [toast, setToast]           = useState(null);
   const [highlightInput, setHighlightInput] = useState('');
+  const [rollingTextInput, setRollingTextInput] = useState('');
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -68,6 +69,12 @@ export default function AdminSettingsPage() {
     setProfile(prev => ({ ...prev, [field]: value }));
 
   const highlights = Array.isArray(profile?.about_highlights) ? profile.about_highlights : [];
+  let rollingTexts = [];
+  if (typeof profile?.rolling_texts === 'string') {
+    try { rollingTexts = JSON.parse(profile.rolling_texts); } catch (e) {}
+  } else if (Array.isArray(profile?.rolling_texts)) {
+    rollingTexts = profile.rolling_texts;
+  }
 
   const addHighlight = () => {
     const trimmed = highlightInput.trim();
@@ -78,6 +85,20 @@ export default function AdminSettingsPage() {
 
   const removeHighlight = (idx) =>
     handleChange('about_highlights', highlights.filter((_, i) => i !== idx));
+
+  const addRollingText = () => {
+    const trimmed = rollingTextInput.trim();
+    if (!trimmed || rollingTexts.includes(trimmed)) return;
+    if (rollingTexts.length >= 5) {
+      showToast('error', 'Maximum 5 rolling texts allowed.');
+      return;
+    }
+    handleChange('rolling_texts', [...rollingTexts, trimmed]);
+    setRollingTextInput('');
+  };
+
+  const removeRollingText = (idx) =>
+    handleChange('rolling_texts', rollingTexts.filter((_, i) => i !== idx));
 
   const uploadImage = async (file) => {
     if (!file) return;
@@ -141,6 +162,7 @@ export default function AdminSettingsPage() {
           about_location:     profile.about_location     || null,
           about_email:        profile.about_email        || null,
           about_availability: profile.about_availability || null,
+          rolling_texts:      rollingTexts.length ? rollingTexts : null,
         }),
       });
       const json = await res.json();
@@ -272,6 +294,40 @@ export default function AdminSettingsPage() {
                     rows={4} placeholder="Short bio (2\u20133 sentences)\u2026"
                     className={inputClass + ' resize-none'} />
                   <p className="text-xs text-muted-foreground mt-1">{(profile?.description || '').length} / 300 recommended</p>
+                </div>
+                
+                <div className="pt-2 border-t border-border">
+                  <label className="block text-sm font-medium text-foreground mb-1.5 flex items-center gap-2">
+                    Rolling Text (Short Intro) <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full uppercase tracking-wider font-bold">Max 5</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-3">Replaces the static description with animated rotating text.</p>
+                  
+                  <div className="flex flex-col gap-2 mb-3">
+                    {rollingTexts.map((text, i) => (
+                      <div key={i} className="flex items-center justify-between px-3 py-2 bg-muted/50 rounded-lg border border-border/50 text-sm">
+                        <span className="truncate">{text}</span>
+                        <button onClick={() => removeRollingText(i)} className="text-muted-foreground hover:text-red-400 p-1 rounded-md transition"><X size={14} /></button>
+                      </div>
+                    ))}
+                    {rollingTexts.length === 0 && (
+                      <p className="text-sm text-muted-foreground italic py-2">No rolling texts added yet.</p>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={rollingTextInput}
+                      onChange={e => setRollingTextInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRollingText())}
+                      placeholder="e.g. MERN Stack Specialist"
+                      className={inputClass + ' flex-1'}
+                      disabled={rollingTexts.length >= 5}
+                    />
+                    <Button type="button" onClick={addRollingText} variant="outline" disabled={rollingTexts.length >= 5} className="shrink-0 border-primary/40 hover:bg-primary/10">
+                      <Plus size={18} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

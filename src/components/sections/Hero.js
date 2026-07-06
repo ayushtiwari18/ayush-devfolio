@@ -122,6 +122,7 @@ export default function Hero({ profile }) {
     title:       profile?.title       || HERO_COPY.title,
     description: profile?.description || HERO_COPY.description,
     image_url:   profile?.image_url   || null,
+    rolling_texts: profile?.rolling_texts || null,
   };
 
   const reveal = (phase) => ({

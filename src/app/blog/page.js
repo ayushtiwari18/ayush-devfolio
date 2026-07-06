@@ -4,7 +4,7 @@ import BlogFilterClient from '@/components/blog/BlogFilterClient';
 import { BASE_URL } from '@/app/layout';
 
 // Always fetch fresh from Supabase on every request
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Blog - Ayush Tiwari | Full Stack Development Articles',

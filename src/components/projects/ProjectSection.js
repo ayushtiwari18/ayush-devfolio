@@ -1,5 +1,5 @@
 import {
-  Target, Lightbulb, FolderTree, Zap, Scale, BookOpen, Telescope,
+  Target, Lightbulb, FolderTree, Zap, Scale, BookOpen, Compass,
   ShieldCheck, LayoutTemplate,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -12,7 +12,7 @@ const ICON_MAP = {
   'Performance Decisions': Zap,
   'Trade-offs Made':   Scale,
   'Lessons Learned':   BookOpen,
-  'Future Improvements': Telescope,
+  'Future Improvements': Compass,
   'Security Considerations': ShieldCheck,
   'Architecture':      LayoutTemplate,
 };
