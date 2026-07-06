@@ -10,4 +10,4 @@
  * Kept as a plain JS module with NO React, NO Supabase, NO fonts
  * so sitemap.xml can be statically generated without any heavy deps.
  */
-export const BASE_URL = 'https://ayush-devfolio-nine.vercel.app';
+export const BASE_URL = 'https://ayushtiwari.dev';
