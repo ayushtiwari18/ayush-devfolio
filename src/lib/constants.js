@@ -41,11 +41,11 @@ export const SITE_CONFIG = {
 export const HERO_COPY = {
   name: 'Ayush Tiwari',
   title: 'Full Stack Developer',
-  tagline: 'Available for opportunities',
+  tagline: 'Developer & Freelancer for Website',
   description:
-    'I build production-grade web systems using MERN Stack, Next.js, Three.js, and AWS. My research on network security is published in Springer. AWS certified — 5,600+ GitHub commits, 885+ DSA problems solved.',
+    'Welcome to the Ayush Tiwari Website. I am a Full Stack Developer & Freelancer for Website projects. I build production-grade web systems using MERN Stack, Next.js, and AWS. Check out my proof of work, project details, and blogs below. AWS certified — 5,600+ GitHub commits, 885+ DSA problems.',
   shortDescription:
-    'Full Stack Developer. Springer-published researcher. AWS certified. MERN · Next.js · Three.js · Node.js.',
+    'Freelancer for Website & Full Stack Developer. Explore my proof of work, project details, and blogs. MERN · Next.js · Node.js.',
 };
 
 // ---------------------------------------------------------------------------
@@ -154,7 +154,10 @@ export const ROUTES = {
 // ---------------------------------------------------------------------------
 export const SEO_KEYWORDS = [
   'Ayush Tiwari',
-  'Full Stack Developer',
+  'Ayush Tiwari Full Stack Developer',
+  'Ayush Tiwari Website',
+  'Freelancer for Website',
+  'Developer for Website',
   'MERN Stack Developer',
   'Next.js Developer',
   'React Developer',

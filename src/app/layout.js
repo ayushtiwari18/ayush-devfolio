@@ -53,13 +53,13 @@ export { BASE_URL };
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default:  'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js | Node.js',
-    template: '%s | Ayush Tiwari',
+    default:  'Ayush Tiwari - Full Stack Developer & Freelancer for Website',
+    template: '%s | Ayush Tiwari Website',
   },
   description:
-    'Ayush Tiwari — Full Stack Developer building production-grade web systems. ' +
-    'MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. ' +
-    '5,600+ GitHub commits. Based in Jabalpur, Madhya Pradesh, India.',
+    'Ayush Tiwari Website — Expert Full Stack Developer & Freelancer for Website development. ' +
+    'Explore my proof of work, project details, and technical blogs. MERN Stack, Next.js, AWS certified. ' +
+    'Based in Jabalpur, India.',
   keywords: SEO_KEYWORDS,
   authors:     [{ name: 'Ayush Tiwari', url: BASE_URL }],
   creator:     'Ayush Tiwari',
@@ -72,10 +72,8 @@ export const metadata = {
     locale:      'en_IN',
     url:          BASE_URL,
     siteName:    'Ayush Tiwari Portfolio',
-    title:       'Ayush Tiwari - Full Stack Developer | MERN Stack | Next.js',
-    description: 'Full Stack Developer building production-grade web systems. ' +
-                 'MERN Stack, Next.js, Node.js, AWS certified. Springer-published researcher. ' +
-                 '5,600+ GitHub commits. Jabalpur, India.',
+    title:       'Ayush Tiwari - Full Stack Developer & Freelancer for Website',
+    description: 'Explore the Ayush Tiwari Website. Developer for Website, showcasing proof of work, project details, and technical blogs. AWS certified. Jabalpur, India.',
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Ayush Tiwari - Full Stack Developer' }],
   },
   twitter: {
@@ -117,9 +115,9 @@ const personSchema = {
     'https://twitter.com/_aayush_03__',
     'https://codeforces.com/profile/ayushtiwari18',
   ],
-  jobTitle:    'Full Stack Developer',
-  description: 'Full Stack Developer specialising in MERN Stack, Next.js, and cloud-native systems. Springer-published researcher on network security. AWS certified.',
-  worksFor:    { '@type': 'Organization', name: 'Freelance' },
+  jobTitle:    'Full Stack Developer & Freelancer for Website',
+  description: 'Ayush Tiwari is an expert Full Stack Developer for Website creation. Explore my proof of work, project details, and blogs. Specialising in MERN Stack, Next.js, and cloud systems.',
+  worksFor:    { '@type': 'Organization', name: 'Ayush Tiwari Website - Freelance' },
   alumniOf: {
     '@type': 'EducationalOrganization',
     name:    'Gyan Ganga Institute of Technology and Sciences',
@@ -165,9 +163,9 @@ const websiteSchema = {
   '@context': 'https://schema.org',
   '@type':    'WebSite',
   '@id':      `${BASE_URL}/#website`,
-  name:       'Ayush Tiwari Portfolio',
+  name:       'Ayush Tiwari Website',
   url:         BASE_URL,
-  description: 'Portfolio of Ayush Tiwari — Full Stack Developer, Springer-published researcher, AWS certified. Based in Jabalpur, India.',
+  description: 'Official Ayush Tiwari Website. Full Stack Developer & Freelancer for Website projects. Showcasing proof of work, project details, and blogs.',
   author:     { '@type': 'Person', '@id': `${BASE_URL}/#person` },
   inLanguage: 'en-IN',
   potentialAction: {
@@ -183,8 +181,8 @@ const websiteSchema = {
 const professionalServiceSchema = {
   '@context':        'https://schema.org',
   '@type':           'ProfessionalService',
-  name:              'Ayush Tiwari — Full Stack Development Services',
-  description:       'Production-grade Full Stack Web Development, API Engineering, and Cloud Architecture services. Based in Jabalpur, India.',
+  name:              'Ayush Tiwari — Developer for Website & Freelancer for Website',
+  description:       'Professional Developer for Website offering Freelancer services. View my proof of work, project details, and blogs.',
   url:                BASE_URL,
   serviceType:       'Web Development',
   areaServed: [
