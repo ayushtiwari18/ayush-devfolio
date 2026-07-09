@@ -116,15 +116,22 @@ function Block({ block }) {
 
     case 'checkListItem':
       return (
-        <li className="flex items-start gap-3 mb-2.5">
-          <span className={`mt-0.5 w-4 h-4 rounded border shrink-0 flex items-center justify-center text-[10px] ${
-            props.checked ? 'bg-primary border-primary text-primary-foreground' : 'border-zinc-600'
-          }`}>
-            {props.checked && '✓'}
-          </span>
-          <span className={`text-foreground/80 leading-relaxed ${props.checked ? 'line-through opacity-40' : ''}`}>
-            <InlineContent content={content} />
-          </span>
+        <li className="flex flex-col gap-1 mb-2.5 w-full">
+          <div className="flex items-start gap-3">
+            <span className={`mt-0.5 w-4 h-4 rounded border shrink-0 flex items-center justify-center text-[10px] ${
+              props.checked ? 'bg-primary border-primary text-primary-foreground' : 'border-zinc-600'
+            }`}>
+              {props.checked && '✓'}
+            </span>
+            <span className={`text-foreground/80 leading-relaxed ${props.checked ? 'line-through opacity-40' : ''}`}>
+              <InlineContent content={content} />
+            </span>
+          </div>
+          {children.length > 0 && (
+            <div className="pl-7 mt-1 w-full">
+              <Blocks blocks={children} />
+            </div>
+          )}
         </li>
       );
 
@@ -159,9 +166,16 @@ function Block({ block }) {
 
     case 'image':
       return (
-        <figure className="my-9">
-          <div className="rounded-xl overflow-hidden border border-border shadow-lg">
-            <img src={props.url} alt={props.caption || ''} className="w-full" />
+        <figure className="my-9 flex flex-col items-center">
+          <div 
+            className="rounded-xl overflow-hidden border border-border shadow-lg"
+            style={{ maxWidth: props.previewWidth ? `${props.previewWidth}px` : '100%', width: '100%' }}
+          >
+            <img 
+              src={props.url} 
+              alt={props.caption || ''} 
+              className="w-full h-auto object-contain bg-muted/20 mx-auto" 
+            />
           </div>
           {props.caption && (
             <figcaption className="text-center text-sm text-muted-foreground mt-3 italic">
@@ -240,7 +254,7 @@ function Block({ block }) {
               <tr>
                 {header?.cells?.map((cell, i) => (
                   <th key={i} className="px-5 py-3 text-left font-semibold text-foreground text-xs uppercase tracking-wider">
-                    <InlineContent content={cell} />
+                    <InlineContent content={cell.content || cell} />
                   </th>
                 ))}
               </tr>
@@ -250,7 +264,7 @@ function Block({ block }) {
                 <tr key={ri} className={ri % 2 === 0 ? '' : 'bg-primary/3'}>
                   {row.cells?.map((cell, ci) => (
                     <td key={ci} className="px-5 py-3 text-foreground/80">
-                      <InlineContent content={cell} />
+                      <InlineContent content={cell.content || cell} />
                     </td>
                   ))}
                 </tr>
@@ -295,11 +309,18 @@ function Blocks({ blocks }) {
       result.push(
         <ul key={`ul-${i}`} className="list-none pl-0 space-y-2 mb-6">
           {items.map((item, j) => (
-            <li key={j} className="flex items-start gap-3">
-              <span className="mt-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-              <span className="text-foreground/80 leading-relaxed text-[1.02rem]">
-                <InlineContent content={item.content} />
-              </span>
+            <li key={j} className="flex flex-col gap-1 w-full">
+              <div className="flex items-start gap-3">
+                <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                <span className="text-foreground/80 leading-relaxed text-[1.02rem]">
+                  <InlineContent content={item.content} />
+                </span>
+              </div>
+              {item.children?.length > 0 && (
+                <div className="pl-5 mt-1 w-full">
+                  <Blocks blocks={item.children} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -310,13 +331,20 @@ function Blocks({ blocks }) {
       result.push(
         <ol key={`ol-${i}`} className="space-y-2 mb-6 pl-0 list-none">
           {items.map((item, j) => (
-            <li key={j} className="flex items-start gap-3">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
-                {j + 1}
-              </span>
-              <span className="text-foreground/80 leading-relaxed text-[1.02rem]">
-                <InlineContent content={item.content} />
-              </span>
+            <li key={j} className="flex flex-col gap-1 w-full">
+              <div className="flex items-start gap-3">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                  {j + 1}
+                </span>
+                <span className="text-foreground/80 leading-relaxed text-[1.02rem]">
+                  <InlineContent content={item.content} />
+                </span>
+              </div>
+              {item.children?.length > 0 && (
+                <div className="pl-7 mt-1 w-full">
+                  <Blocks blocks={item.children} />
+                </div>
+              )}
             </li>
           ))}
         </ol>
