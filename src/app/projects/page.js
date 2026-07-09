@@ -7,7 +7,7 @@ import { getPublishedProjects } from '@/services/projects.service';
 import { BASE_URL } from '@/app/layout';
 
 // Always fetch fresh from Supabase on every request
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Projects - Ayush Tiwari | Full Stack Developer',

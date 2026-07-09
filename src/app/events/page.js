@@ -8,7 +8,7 @@ import EventsLoading from './loading';
 import { BASE_URL } from '@/app/layout';
 
 // Always fetch fresh from Supabase on every request
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Events & Hackathons - Ayush Tiwari',

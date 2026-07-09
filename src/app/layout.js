@@ -4,6 +4,7 @@ import PublicShell from '@/components/layout/PublicShell';
 import BfCacheManager from '@/components/BfCacheManager';
 import AdminKeyTrigger from '@/components/AdminKeyTrigger';
 import PWAInit from '@/components/pwa/PWAInit';
+import CursorPet from '@/components/CursorPet';
 import { SEO_KEYWORDS } from '@/lib/constants';
 import { BASE_URL } from '@/lib/config';
 
@@ -248,6 +249,7 @@ export default function RootLayout({ children }) {
         </a>
         <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
         <PublicShell>{children}</PublicShell>
+        <CursorPet />
       </body>
     </html>
   );

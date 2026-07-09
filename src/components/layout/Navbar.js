@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ShieldAlert } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 
 const navLinks = [
   { href: ROUTES.HOME,           label: 'Home'          },
@@ -21,10 +22,25 @@ export default function Navbar() {
   const [scrolled,       setScrolled]       = useState(false);
   const pathname = usePathname();
 
+  const [isAdmin,        setIsAdmin]        = useState(false);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Check admin session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAdmin(!!session?.user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAdmin(!!session?.user);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const isActive = (href) =>
@@ -41,13 +57,24 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <Link href={ROUTES.HOME} className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center font-bold text-white group-hover:scale-110 transition-transform">
-              AT
-            </div>
-            <span className="text-xl font-bold gradient-text hidden sm:block">Ayush Tiwari</span>
-          </Link>
+          {/* Logo & Admin Button */}
+          <div className="flex items-center gap-4">
+            <Link href={ROUTES.HOME} className="flex items-center space-x-2 group">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center font-bold text-white group-hover:scale-110 transition-transform">
+                AT
+              </div>
+              <span className="text-xl font-bold gradient-text hidden sm:block">Ayush Tiwari</span>
+            </Link>
+
+            {isAdmin && (
+              <Link
+                href="/admin/dashboard"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/20"
+              >
+                <ShieldAlert size={14} /> Admin
+              </Link>
+            )}
+          </div>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center space-x-1">
@@ -95,6 +122,16 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            
+            {isAdmin && (
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg font-medium text-red-400 hover:bg-red-500/10 transition-all mt-2 border border-red-500/20 bg-red-500/5"
+              >
+                <ShieldAlert size={18} /> Admin Portal
+              </Link>
+            )}
           </div>
         </div>
       )}

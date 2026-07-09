@@ -6,7 +6,7 @@
  * DB columns: id, name, title, description, resume_url,
  *   github_url, linkedin_url, twitter_url, form_endpoint, image_url,
  *   about_bio, about_location, about_email, about_availability,
- *   about_highlights (jsonb), created_at, updated_at
+ *   about_highlights (jsonb), rolling_texts (jsonb), created_at, updated_at
  */
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
@@ -43,7 +43,7 @@ export async function GET() {
           twitter_url: null, form_endpoint: null,
           about_bio: null, about_location: null,
           about_email: null, about_availability: null,
-          about_highlights: null,
+          about_highlights: null, rolling_texts: null,
         })
         .select()
         .single();
@@ -73,6 +73,8 @@ export async function PATCH(request) {
       // About fields
       about_bio, about_location, about_email,
       about_availability, about_highlights,
+      // New rolling texts
+      rolling_texts,
     } = body;
 
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -96,6 +98,7 @@ export async function PATCH(request) {
     if (about_email        !== undefined) updates.about_email        = about_email;
     if (about_availability !== undefined) updates.about_availability = about_availability;
     if (about_highlights   !== undefined) updates.about_highlights   = about_highlights;
+    if (rolling_texts      !== undefined) updates.rolling_texts      = rolling_texts;
 
     const { data, error } = await serviceClient()
       .from('profile_settings')

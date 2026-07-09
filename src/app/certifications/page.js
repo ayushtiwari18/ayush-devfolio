@@ -6,7 +6,7 @@ import CertificationsClient from '@/components/certifications/CertificationsClie
 import { BASE_URL } from '@/app/layout';
 
 // Always fetch fresh from Supabase on every request
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Certifications - Ayush Tiwari | AWS, Oracle, Cisco',

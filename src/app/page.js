@@ -13,7 +13,7 @@ import { getRecentBlogPosts } from '@/services/blog.service';
 import { getAchievements } from '@/services/achievements.service';
 
 // Always fetch fresh from Supabase on every request
-export const revalidate = 0;
+export const revalidate = 60;
 
 // Heavy / client-only sections
 const CodingStats = dynamic(
@@ -46,12 +46,20 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [dbProfile, featuredProjects, recentPosts, dbAchievements] = await Promise.all([
-    getProfileSettings().catch(() => null),
-    getFeaturedProjects().catch(() => []),
-    getRecentBlogPosts(3).catch(() => []),
-    getAchievements().catch(() => []),
-  ]);
+  // Execute sequentially to avoid Next.js `fetch failed` bug during concurrent no-store requests
+  const dbProfile = await getProfileSettings().catch(() => null);
+  const featuredProjects = await getFeaturedProjects().catch(() => []);
+  const recentPosts = await getRecentBlogPosts(3).catch(() => []);
+  const dbAchievements = await getAchievements().catch(() => []);
+
+  let rollingTexts = dbProfile?.rolling_texts;
+  if (typeof rollingTexts === 'string') {
+    try {
+      rollingTexts = JSON.parse(rollingTexts);
+    } catch (e) {
+      rollingTexts = [];
+    }
+  }
 
   const profile = {
     name:          dbProfile?.name          || HERO_COPY.name,
@@ -68,6 +76,7 @@ export default async function Home() {
     about_location:     dbProfile?.about_location     || null,
     about_email:        dbProfile?.about_email        || null,
     about_highlights:   dbProfile?.about_highlights   || null,
+    rolling_texts:      Array.isArray(rollingTexts) ? rollingTexts : null,
   };
 
   // Use DB rows if available, otherwise fall back to hardcoded constants
