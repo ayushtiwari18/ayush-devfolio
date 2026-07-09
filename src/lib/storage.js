@@ -30,14 +30,15 @@ const DEFAULT_BUCKET = 'portfolio';
  */
 export async function uploadImage(file, folder = 'general', bucket = DEFAULT_BUCKET) {
   try {
-    // Sanitise filename — timestamp prefix avoids collisions
-    const ext      = file.name.split('.').pop().toLowerCase();
-    const safeName = file.name
+    // Sanitise filename safely (handle missing names from blobs/compression)
+    const originalName = file.name || 'uploaded-image.jpeg';
+    const ext      = originalName.split('.').pop().toLowerCase();
+    const safeName = originalName
       .replace(/\.[^.]+$/, '')           // strip extension
       .replace(/[^a-z0-9]/gi, '-')       // slug-safe
       .toLowerCase()
       .slice(0, 40);                     // max 40 chars
-    const fileName = `${folder}/${Date.now()}-${safeName}.${ext}`;
+    const fileName = `${folder}/${Date.now()}-${safeName || 'image'}.${ext || 'jpeg'}`;
 
     const { data, error } = await supabase.storage
       .from(bucket)

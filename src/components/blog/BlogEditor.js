@@ -1,18 +1,8 @@
 import React, { useEffect, useRef, useState, Component } from 'react';
-import { BlockNoteSchema, defaultBlockSpecs, createCodeBlockSpec, filterSuggestionItems } from '@blocknote/core';
 import { 
-  useCreateBlockNote,
-  SuggestionMenuController,
-  getDefaultReactSlashMenuItems,
-  FormattingToolbarController,
-  LinkToolbarController,
-  SideMenuController,
-  FilePanelController,
-  TableHandlesController,
-  GridSuggestionMenuController
+  useCreateBlockNote
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
-import { codeBlockOptions } from '@blocknote/code-block';
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/shadcn/style.css';
 import { countWords, extractExcerpt } from '@/lib/blogUtils';
@@ -58,13 +48,7 @@ class EditorErrorBoundary extends Component {
   }
 }
 
-// 2. Custom Schema explicitly defining the language selector Code Block
-const schema = BlockNoteSchema.create({
-  blockSpecs: {
-    ...defaultBlockSpecs,
-    codeBlock: createCodeBlockSpec(codeBlockOptions),
-  },
-});
+// Standard BlockNote usage allows for robust built-in UI
 
 export default function BlogEditor({ value, onChange, onMetaChange }) {
   const onChangeRef     = useRef(onChange);
@@ -76,7 +60,6 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
   useEffect(() => { onMetaChangeRef.current = onMetaChange; }, [onMetaChange]);
 
   const editor = useCreateBlockNote({
-    schema,
     uploadFile: async (file) => {
       let fileToUpload = file;
       try {
@@ -164,7 +147,7 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
           .bn-editor-wrapper .bn-editor {
             background-color: transparent !important;
           }
-          .bn-menu-dropdown, .bn-popover, .bn-tooltip, [data-radix-popper-content-wrapper], .bn-suggestion-menu {
+          .bn-menu-dropdown, .bn-popover, .bn-tooltip, [data-radix-popper-content-wrapper], .bn-suggestion-menu, .bn-select-content {
             z-index: 99999 !important;
             background-color: hsl(var(--card)) !important;
             border: 1px solid hsl(var(--border)) !important;
@@ -181,28 +164,7 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
           }
         `}</style>
         <EditorErrorBoundary>
-          <BlockNoteView editor={editor} theme="dark">
-            <FormattingToolbarController />
-            <LinkToolbarController />
-            {/* 5. Explicitly forcing the Slash Menu to read the custom schema items */}
-            <SuggestionMenuController
-              triggerCharacter="/"
-              getItems={async (query) =>
-                filterSuggestionItems(
-                  getDefaultReactSlashMenuItems(editor),
-                  query
-                )
-              }
-            />
-            <GridSuggestionMenuController
-              triggerCharacter=":"
-              columns={10}
-              minQueryLength={2}
-            />
-            <SideMenuController />
-            <FilePanelController />
-            <TableHandlesController />
-          </BlockNoteView>
+          <BlockNoteView editor={editor} theme="dark" />
         </EditorErrorBoundary>
       </div>
     </div>
