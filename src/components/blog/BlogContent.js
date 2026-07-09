@@ -1,6 +1,12 @@
 'use client';
 
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import dynamic from 'next/dynamic';
+
+const SyntaxHighlighter = dynamic(
+  () => import('react-syntax-highlighter').then(mod => mod.Prism),
+  { ssr: false }
+);
+
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 // ── Inline content renderer ───────────────────────────────────
@@ -22,7 +28,7 @@ function InlineContent({ content }) {
     if (s.italic)        el = <em key={i} className="italic">{item.text}</em>;
     if (s.underline)     el = <u key={i} className="underline underline-offset-2">{item.text}</u>;
     if (s.strikethrough) el = <s key={i} className="line-through opacity-50">{item.text}</s>;
-    if (s.code)          el = <code key={i} className="px-1.5 py-0.5 bg-zinc-800 text-emerald-300 rounded text-[0.85em] font-mono border border-zinc-700">{item.text}</code>;
+    if (s.code)          el = <code key={i} className="px-1.5 py-0.5 bg-zinc-800/80 text-emerald-300 rounded-md text-[0.9em] font-mono border border-zinc-700/50">{item.text}</code>;
     if (s.textColor && s.textColor !== 'default') el = <span key={i} style={{ color: s.textColor }}>{item.text}</span>;
     if (s.backgroundColor && s.backgroundColor !== 'default')
       el = <mark key={i} style={{ backgroundColor: s.backgroundColor }} className="px-1 rounded text-foreground">{item.text}</mark>;
@@ -69,7 +75,7 @@ function Block({ block }) {
     case 'paragraph':
       if (!content?.length) return <div className="mb-3" />;
       return (
-        <p className={`text-foreground/85 leading-[1.9] mb-5 text-[1.05rem] ${align}`}>
+        <p className={`text-zinc-300 leading-[1.75] mb-6 text-[1.125rem] font-sans antialiased ${align}`}>
           <InlineContent content={content} />
         </p>
       );
@@ -85,17 +91,14 @@ function Block({ block }) {
         </a>
       );
       const inner = <><InlineContent content={content} /></>;
-      if (level === 1) return <h1 id={id} className={`${base} text-3xl lg:text-4xl mt-12 mb-4`}>{anchor}{inner}</h1>;
+      if (level === 1) return <h1 id={id} className={`${base} text-4xl lg:text-5xl font-extrabold tracking-tight mt-14 mb-6 text-foreground`}>{anchor}{inner}</h1>;
       if (level === 2) return (
-        <h2 id={id} className={`${base} text-2xl mt-12 mb-4`}>
+        <h2 id={id} className={`${base} text-3xl font-bold tracking-tight mt-12 mb-6 text-foreground border-b border-border/40 pb-2`}>
           {anchor}
-          <span className="inline-flex items-center gap-2">
-            <span className="text-primary text-lg font-black">//</span>
-            {inner}
-          </span>
+          {inner}
         </h2>
       );
-      return <h3 id={id} className={`${base} text-xl mt-8 mb-3 text-foreground/90`}>{anchor}{inner}</h3>;
+      return <h3 id={id} className={`${base} text-2xl font-bold tracking-tight mt-8 mb-4 text-foreground/90`}>{anchor}{inner}</h3>;
     }
 
     case 'bulletListItem':
@@ -118,12 +121,12 @@ function Block({ block }) {
       return (
         <li className="flex flex-col gap-1 mb-2.5 w-full">
           <div className="flex items-start gap-3">
-            <span className={`mt-0.5 w-4 h-4 rounded border shrink-0 flex items-center justify-center text-[10px] ${
+            <span className={`mt-1.5 w-4 h-4 rounded border shrink-0 flex items-center justify-center text-[10px] ${
               props.checked ? 'bg-primary border-primary text-primary-foreground' : 'border-zinc-600'
             }`}>
               {props.checked && '✓'}
             </span>
-            <span className={`text-foreground/80 leading-relaxed ${props.checked ? 'line-through opacity-40' : ''}`}>
+            <span className={`text-zinc-300 leading-[1.75] text-[1.125rem] font-sans antialiased ${props.checked ? 'line-through opacity-40' : ''}`}>
               <InlineContent content={content} />
             </span>
           </div>
@@ -215,8 +218,8 @@ function Block({ block }) {
 
     case 'quote':
       return (
-        <blockquote className="relative pl-6 pr-5 py-4 my-7 border-l-4 border-primary bg-primary/5 rounded-r-xl">
-          <p className="text-foreground/80 italic text-lg leading-relaxed">
+        <blockquote className="relative pl-6 pr-5 py-5 my-8 border-l-4 border-primary bg-primary/5 rounded-r-xl">
+          <p className="text-zinc-200 italic text-xl font-medium leading-relaxed">
             <InlineContent content={content} />
           </p>
         </blockquote>
@@ -312,7 +315,7 @@ function Blocks({ blocks }) {
             <li key={j} className="flex flex-col gap-1 w-full">
               <div className="flex items-start gap-3">
                 <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                <span className="text-foreground/80 leading-relaxed text-[1.02rem]">
+                <span className="text-zinc-300 leading-[1.75] text-[1.125rem] font-sans antialiased">
                   <InlineContent content={item.content} />
                 </span>
               </div>
@@ -333,10 +336,10 @@ function Blocks({ blocks }) {
           {items.map((item, j) => (
             <li key={j} className="flex flex-col gap-1 w-full">
               <div className="flex items-start gap-3">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-bold flex items-center justify-center mt-1">
                   {j + 1}
                 </span>
-                <span className="text-foreground/80 leading-relaxed text-[1.02rem]">
+                <span className="text-zinc-300 leading-[1.75] text-[1.125rem] font-sans antialiased">
                   <InlineContent content={item.content} />
                 </span>
               </div>
@@ -382,7 +385,7 @@ export default function BlogContent({ content }) {
   if (!Array.isArray(blocks)) return null;
 
   return (
-    <div className="blog-content max-w-none">
+    <div className="blog-content max-w-[750px] mx-auto w-full">
       <Blocks blocks={blocks} />
     </div>
   );
