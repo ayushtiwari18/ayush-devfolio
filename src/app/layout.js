@@ -215,7 +215,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en-IN"
-      className={`scroll-smooth dark ${inter.variable} ${clashDisplay.variable} ${jetbrainsMono.variable}`}
+      className={`dark ${inter.variable} ${clashDisplay.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
