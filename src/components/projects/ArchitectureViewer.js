@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { LayoutTemplate, AlertCircle, Loader2 } from 'lucide-react';
+import { LayoutTemplate, AlertCircle, Loader2, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 // ---------------------------------------------------------------------------
 // Mermaid renderer — loaded dynamically, never in SSR bundle
@@ -46,18 +47,50 @@ function MermaidDiagram({ code }) {
   );
 
   return (
-    <div className="relative">
+    <div className="relative w-full rounded-xl bg-muted/10 border border-border overflow-hidden group">
       {!ready && (
-        <div className="flex items-center gap-2 py-8 justify-center text-muted-foreground text-sm">
+        <div className="absolute inset-0 z-20 flex items-center gap-2 justify-center text-muted-foreground text-sm bg-background/50 backdrop-blur-sm">
           <Loader2 size={16} className="animate-spin" />
           <span>Rendering diagram…</span>
         </div>
       )}
-      <div
-        ref={ref}
-        className="w-full overflow-x-auto rounded-xl bg-muted/30 border border-border p-4"
-        style={{ display: ready ? 'block' : 'none' }}
-      />
+      
+      <TransformWrapper
+        initialScale={1}
+        minScale={0.1}
+        maxScale={15}
+        centerOnInit
+        wheel={{ step: 0.05, smoothStep: 0.002 }}
+      >
+        {({ zoomIn, zoomOut, resetTransform }) => (
+          <>
+            {/* Floating Zoom Toolbar - Reveals on hover */}
+            <div className={`absolute top-4 right-4 z-30 flex-col gap-1.5 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border shadow-lg transition-all duration-200 ${ready ? 'flex opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0' : 'hidden'}`}>
+              <button onClick={() => zoomIn()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-md text-muted-foreground transition-colors" title="Zoom In">
+                <ZoomIn size={18} />
+              </button>
+              <button onClick={() => zoomOut()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-md text-muted-foreground transition-colors" title="Zoom Out">
+                <ZoomOut size={18} />
+              </button>
+              <div className="w-full h-[1px] bg-border my-0.5" />
+              <button onClick={() => resetTransform()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-md text-muted-foreground transition-colors" title="Reset View">
+                <Maximize size={18} />
+              </button>
+            </div>
+
+            {/* Diagram Pan/Zoom Canvas */}
+            <div className="w-full h-[500px] cursor-grab active:cursor-grabbing">
+              <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
+                <div
+                  ref={ref}
+                  className="w-full h-full flex items-center justify-center p-8 [&>svg]:min-w-[1000px]"
+                  style={{ visibility: ready ? 'visible' : 'hidden' }}
+                />
+              </TransformComponent>
+            </div>
+          </>
+        )}
+      </TransformWrapper>
     </div>
   );
 }
