@@ -71,7 +71,7 @@ export default function EventPreloader({ images = [] }) {
             initial={{ scale: 1, opacity: 1 }}
             exit={{ scale: 25, opacity: 0 }}
             transition={{ duration: 1.5, ease: [0.76, 0, 0.24, 1] }}
-            className="relative z-10 w-full max-w-sm h-auto object-contain origin-center"
+            className="relative z-10 w-full max-w-sm h-auto object-contain origin-center mix-blend-screen"
           />
         </motion.div>
       )}
