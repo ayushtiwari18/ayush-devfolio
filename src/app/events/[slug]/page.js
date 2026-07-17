@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { getEventBySlug, getAllEventSlugs } from '@/services/events.service';
 import EventGallery from '@/components/events/EventGallery';
+import ZoomParallax from '@/components/events/ZoomParallax';
+import EventPreloader from '@/components/events/EventPreloader';
 
 export const revalidate    = 86400;
 export const dynamicParams = true;
@@ -207,6 +209,11 @@ export default async function EventDetailPage({ params }) {
 
   const links  = parseLinks(event.links);
   const images = Array.isArray(event.images) ? event.images.filter(Boolean) : [];
+  
+  const parallaxSources = [];
+  if (event.cover_image) parallaxSources.push(event.cover_image);
+  images.forEach(img => parallaxSources.push(img.url || img));
+
   const baseUrl = 'https://ayush-devfolio.vercel.app';
   const cfg     = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
 
@@ -237,127 +244,17 @@ export default async function EventDetailPage({ params }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      <main className="min-h-screen pt-20 pb-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto mb-8">
-          <Link href="/events" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft size={15} /><span>All Events</span>
-          </Link>
+      {parallaxSources.length > 0 && <EventPreloader images={parallaxSources} />}
+
+      {parallaxSources.length > 0 ? (
+        <ZoomParallax images={parallaxSources} title={event.title} tagline={event.tagline} />
+      ) : (
+        <div className="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto h-[100vh] flex flex-col justify-center">
+          <EventHero event={event} />
+          <h1 className="text-4xl md:text-6xl font-black mt-8 leading-tight tracking-tight uppercase">{event.title}</h1>
+          {event.tagline && <p className="text-xl text-muted-foreground mt-4 font-medium tracking-wide">{event.tagline}</p>}
         </div>
-
-        <div className="max-w-7xl mx-auto flex gap-10 items-start">
-          <article className="flex-1 min-w-0">
-
-            <div className="mb-8"><EventHero event={event} /></div>
-
-            <div className="mb-8">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>{cfg.label}</span>
-                {event.result && (
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-full border ${resultStyle(event.result)}`}>
-                    <Trophy size={9} />{event.result}
-                  </span>
-                )}
-                {event.category && (
-                  <span className="px-2.5 py-1 text-[10px] font-bold rounded-full border bg-muted text-muted-foreground border-border">{event.category}</span>
-                )}
-              </div>
-
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-3 leading-tight">{event.title}</h1>
-              {event.tagline && <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{event.tagline}</p>}
-
-              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-6">
-                {fmtDate(event.date) && (
-                  <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
-                    <Calendar size={12} className="text-primary" />{fmtDate(event.date)}
-                  </span>
-                )}
-                {event.location && (
-                  <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
-                    <MapPin size={12} className="text-primary" />{event.location}
-                  </span>
-                )}
-                {event.duration && (
-                  <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
-                    <Clock size={12} className="text-primary" />{event.duration}
-                  </span>
-                )}
-                {event.team_size > 1 && (
-                  <span className="flex items-center gap-1.5 bg-card border border-border px-3 py-1.5 rounded-lg text-xs">
-                    <Users size={12} className="text-primary" />Team of {event.team_size}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                {links.github && (
-                  <a href={links.github} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-card border border-border text-sm font-semibold text-foreground rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all">
-                    <Github size={16} /> GitHub
-                  </a>
-                )}
-                {links.devpost && (
-                  <a href={links.devpost} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-all">
-                    <ExternalLink size={16} /> Devpost
-                  </a>
-                )}
-                {links.live && (
-                  <a href={links.live} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-all">
-                    <ExternalLink size={16} /> Live Demo
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {event.description && (
-              <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                  <span className="w-1 h-5 bg-primary rounded-full inline-block" />
-                  About the Event
-                </h2>
-                <p className="text-muted-foreground leading-relaxed text-[15px]">{event.description}</p>
-              </section>
-            )}
-
-            <StorySection story={event.story} />
-
-            {images.length > 0 && (
-              <section className="mb-10">
-                <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
-                  <span className="w-1 h-5 bg-primary rounded-full inline-block" />
-                  Gallery
-                  <span className="text-sm font-normal text-muted-foreground ml-1">({images.length} photo{images.length !== 1 ? 's' : ''})</span>
-                </h2>
-                <EventGallery images={images} title={event.title} />
-              </section>
-            )}
-
-            {event.certificate_image && (
-              <section className="mb-10">
-                <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
-                  <span className="w-1 h-5 bg-primary rounded-full inline-block" />
-                  Certificate
-                </h2>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={event.certificate_image}
-                  alt={`${event.title} certificate`}
-                  className="w-full h-[480px] object-contain rounded-2xl border border-border shadow-lg bg-muted"
-                />
-              </section>
-            )}
-
-            <div className="mt-12 pt-8 border-t border-border">
-              <Link href="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
-                <ArrowLeft size={16} /> Back to all events
-              </Link>
-            </div>
-          </article>
-
-          <Sidebar event={event} links={links} />
-        </div>
-      </main>
+      )}
     </>
   );
 }

@@ -1,34 +1,53 @@
 export default function EventsLoading() {
   return (
-    <main className="min-h-screen px-4 sm:px-6 lg:px-8 py-24">
-      <div className="max-w-5xl mx-auto">
-        {/* Header skeleton */}
-        <div className="mb-12">
-          <div className="h-4 w-24 bg-muted rounded-full mb-4 animate-pulse" />
-          <div className="h-12 w-72 bg-muted rounded-xl mb-3 animate-pulse" />
-          <div className="h-5 w-96 bg-muted rounded animate-pulse" />
-        </div>
-        {/* Timeline skeleton */}
-        <div className="space-y-10">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex gap-6 animate-pulse">
-              <div className="flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full bg-muted mt-1 shrink-0" />
-                <div className="w-px flex-1 bg-muted/40 mt-2" />
+    <>
+      {/* Hero Stats Skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-28 bg-card border border-border rounded-2xl animate-pulse flex flex-col items-center justify-center space-y-2">
+            <div className="w-12 h-8 bg-muted/60 rounded" />
+            <div className="w-20 h-3 bg-muted/40 rounded" />
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline Skeleton */}
+      <div className="relative">
+        <div className="absolute left-[15px] md:left-1/2 md:-translate-x-1/2 top-0 bottom-0 w-px bg-border/50" />
+        
+        <div className="space-y-16">
+          {[1, 2].map((year) => (
+            <div key={year} className="relative z-10">
+              
+              {/* Year Badge Skeleton */}
+              <div className="flex items-center md:justify-center gap-4 mb-10 ml-0 md:ml-0">
+                <div className="hidden md:flex flex-1 h-px bg-border" />
+                <div className="w-20 h-8 bg-muted/50 rounded-full animate-pulse border border-border" />
+                <div className="flex-1 h-px bg-border" />
               </div>
-              <div className="flex-1 bg-card border border-border rounded-2xl overflow-hidden mb-4">
-                <div className="h-44 bg-muted" />
-                <div className="p-5 space-y-3">
-                  <div className="h-5 bg-muted rounded w-2/3" />
-                  <div className="h-4 bg-muted rounded w-1/3" />
-                  <div className="h-4 bg-muted rounded w-full" />
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                </div>
+
+              {/* Alternating Cards Skeleton */}
+              <div className="space-y-12">
+                {[0, 1].map((idx) => {
+                  const isEven = idx % 2 === 0;
+                  return (
+                    <div key={idx} className="relative flex flex-col md:flex-row items-center w-full">
+                      <div className="absolute left-[9px] md:left-1/2 md:-translate-x-1/2 w-3 h-3 rounded-full bg-muted/50 z-20 animate-pulse" />
+                      
+                      <div className={`w-full md:w-1/2 pl-12 md:pl-0 ${isEven ? 'md:pr-12' : 'hidden md:block'}`}>
+                        {isEven && <div className="h-72 bg-card border border-border rounded-2xl animate-pulse" />}
+                      </div>
+                      <div className={`w-full md:w-1/2 pl-12 ${!isEven ? 'md:pl-12' : 'hidden md:block'}`}>
+                        {!isEven && <div className="h-72 bg-card border border-border rounded-2xl animate-pulse" />}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
         </div>
       </div>
-    </main>
+    </>
   );
 }

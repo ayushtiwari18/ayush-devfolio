@@ -7,6 +7,7 @@ import PWAInit from '@/components/pwa/PWAInit';
 import CursorPet from '@/components/CursorPet';
 import { SEO_KEYWORDS } from '@/lib/constants';
 import { BASE_URL } from '@/lib/config';
+import Script from 'next/script';
 
 // ----------------------------------------------------------------------------
 // FONTS
@@ -215,7 +216,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en-IN"
-      className={`scroll-smooth dark ${inter.variable} ${clashDisplay.variable} ${jetbrainsMono.variable}`}
+      className={`dark ${inter.variable} ${clashDisplay.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -238,6 +239,20 @@ export default function RootLayout({ children }) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       </head>
       <body className={`${inter.className} relative`}>
+        {/* Google Analytics Tag */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-Y97613EEPP"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-Y97613EEPP');
+          `}
+        </Script>
+
         <AdminKeyTrigger />
         <BfCacheManager />
         <PWAInit />
