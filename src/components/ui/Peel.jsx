@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { toCanvas } from 'html-to-image';
 
 const DEFAULTS = {
   side: 'left',
@@ -126,7 +127,7 @@ const SEG = 96;
 
 export function createPeel(elements, options = {}, onPeelTrigger) {
   const config = { ...DEFAULTS, ...options };
-  const { source, content, output, under } = elements;
+  const { content, output, under } = elements;
 
   const gl = output.getContext('webgl2', {
     alpha: true,
@@ -213,35 +214,32 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
   let contentMaxX = 1;
-  let hasTexture = false;
+  let isCapturing = false;
 
-  // Cross-browser SVG ForeignObject Canvas Capture
-  capture = () => {
+  // Pixel-Perfect HTML-to-Image Texture Capture
+  capture = async () => {
+    if (!content || isCapturing) return;
+    isCapturing = true;
     try {
-      const w = Math.max(1, Math.round(content.clientWidth));
-      const h = Math.max(1, Math.round(content.clientHeight));
-      if (w === 0 || h === 0) return;
-
-      const html = content.outerHTML;
-      const dataUri = `data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${html.replace(/#/g, '%23')}</div></foreignObject></svg>`;
-      
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          gl.bindTexture(gl.TEXTURE_2D, contentTexture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-          hasTexture = true;
-          wake();
-        } catch {}
-      };
-      img.src = dataUri;
-    } catch {}
+      const canvas = await toCanvas(content, {
+        pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        cacheBust: true,
+      });
+      if (canvas && gl && !gl.isContextLost()) {
+        gl.bindTexture(gl.TEXTURE_2D, contentTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+        wake();
+      }
+    } catch (err) {
+      // Fallback
+    } finally {
+      isCapturing = false;
+    }
   };
 
-  // Initial capture
+  // Initial captures
   capture();
-  setTimeout(capture, 100);
+  setTimeout(capture, 150);
 
   function syncCanvasSize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -331,6 +329,7 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   let destroyed = false;
   let running = false;
   let visible = true;
+  let triggerFired = false;
 
   function updateTarget() {
     if (config.mode === 'hover') {
@@ -360,11 +359,13 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     peel.a += (peel.target - peel.a) * k;
     render();
 
-    if (peel.a > 0.92 && onPeelTrigger) {
+    if (peel.a > 0.88 && onPeelTrigger && !triggerFired) {
+      triggerFired = true;
       onPeelTrigger();
       peel.a = 0;
       peel.target = 0;
       pointer.u = FAR;
+      setTimeout(() => { triggerFired = false; }, 500);
     }
 
     const settle = 0.5 / Math.max(config.reveal + config.curl, 1);
@@ -463,7 +464,6 @@ export function Peel({
   onPeelComplete,
   ...options
 }) {
-  const sourceRef = useRef(null);
   const contentRef = useRef(null);
   const outputRef = useRef(null);
   const underRef = useRef(null);
@@ -475,7 +475,7 @@ export function Peel({
     if (!content || !output) return;
 
     instanceRef.current = createPeel(
-      { source: sourceRef.current, content, output, under: underRef.current ?? undefined },
+      { content, output, under: underRef.current ?? undefined },
       options,
       onPeelComplete
     );
@@ -501,7 +501,7 @@ export function Peel({
         {under}
       </div>
 
-      {/* HTML CONTENT LAYER */}
+      {/* LIVE HTML CONTENT LAYER */}
       <div
         ref={contentRef}
         style={{
@@ -510,7 +510,6 @@ export function Peel({
           height: '100%',
           overflow: 'hidden',
           zIndex: 1,
-          pointerEvents: 'none',
         }}
       >
         {children}
