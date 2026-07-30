@@ -8,7 +8,7 @@ const DEFAULTS = {
   mode: 'cursor',
   reveal: 350,
   zone: 220,
-  curl: 250,
+  curl: 280,
   bow: 75,
   shade: 0.35,
   shine: 1,
@@ -16,7 +16,7 @@ const DEFAULTS = {
   shineColor: 'auto',
   bulge: 50,
   perspective: 2000,
-  smoothing: 0.3,
+  smoothing: 0.75,
 };
 
 const SIDE_INDEX = {
@@ -362,13 +362,16 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     peel.a += (peel.target - peel.a) * k;
     render();
 
-    if (peel.a > 0.88 && onPeelTrigger && !triggerFired) {
+    if (peel.a > 0.94 && onPeelTrigger && !triggerFired) {
       triggerFired = true;
-      onPeelTrigger();
-      peel.a = 0;
-      peel.target = 0;
-      pointer.u = FAR;
-      setTimeout(() => { triggerFired = false; }, 500);
+      peel.a = 1.0;
+      setTimeout(() => {
+        onPeelTrigger();
+        peel.a = 0;
+        peel.target = 0;
+        pointer.u = FAR;
+        setTimeout(() => { triggerFired = false; }, 400);
+      }, 350);
     }
 
     const settle = 0.5 / Math.max(config.reveal + config.curl, 1);
