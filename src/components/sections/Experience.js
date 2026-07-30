@@ -5,46 +5,6 @@ import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2 } from 'luc
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import Peel from '@/components/ui/Peel';
 
-// Fallback work experiences sorted in reverse chronological order (newest -> oldest)
-const FALLBACK = [
-  {
-    id: 'exp-1',
-    company: 'Ayush Devfolio / Open Source',
-    role: 'Lead Full Stack Architect & Maintainer',
-    employment_type: 'Full-time',
-    start_date: 'Jan 2025',
-    end_date: 'Present',
-    location: 'Remote',
-    description:
-      'Architected high-performance Next.js 14 Web applications with SSR/ISR acceleration.\nImplemented WebGL interactive shaders, Canvas UI peel dynamics, and custom Framer Motion micro-interactions.\nOptimized Core Web Vitals to achieve 99+ Lighthouse performance & 100% SEO scores.',
-    technologies: 'Next.js,React,WebGL,Tailwind CSS,Supabase,TypeScript',
-  },
-  {
-    id: 'exp-2',
-    company: 'Tech Solutions Inc.',
-    role: 'Frontend Software Engineer',
-    employment_type: 'Part-time',
-    start_date: 'Jun 2024',
-    end_date: 'Dec 2024',
-    location: 'Hybrid',
-    description:
-      'Engineered real-time dashboard components using React and Supabase subscriptions.\nReduced bundle size by 35% through dynamic code splitting and tree-shaking optimizations.\nIntegrated OWASP hardened security policies and responsive glassmorphism UI systems.',
-    technologies: 'React,JavaScript,Tailwind CSS,REST API,Git',
-  },
-  {
-    id: 'exp-3',
-    company: 'Open Source Community',
-    role: 'UI/UX & Open Source Contributor',
-    employment_type: 'Open Source',
-    start_date: 'Jan 2024',
-    end_date: 'May 2024',
-    location: 'Remote',
-    description:
-      'Contributed to open source component libraries and fixed critical hydration bugs.\nAuthored comprehensive documentation and unit test suites with Jest and React Testing Library.',
-    technologies: 'React,JavaScript,CSS3,GitHub Actions',
-  },
-];
-
 const TYPE_COLORS = {
   'Full-time':   'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   'Part-time':   'bg-blue-500/10    text-blue-400    border border-blue-500/20',
@@ -58,6 +18,8 @@ const TYPE_COLORS = {
 // FULL-WIDTH STACKED EXPERIENCE CARD
 // ---------------------------------------------------------------------------
 function FullWidthExperienceCard({ entry, index, total }) {
+  if (!entry) return null;
+
   const bullets = (entry.description || '')
     .split('\n')
     .map(l => l.trim())
@@ -147,10 +109,11 @@ function FullWidthExperienceCard({ entry, index, total }) {
 }
 
 // ---------------------------------------------------------------------------
-// WORK EXPERIENCE SECTION WITH CANVAS UI PEEL DECK
+// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH CANVAS UI PEEL DECK
 // ---------------------------------------------------------------------------
 export default function Experience() {
-  const [entries, setEntries] = useState(null);
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const section = useReveal({ threshold: 0.1 });
 
@@ -159,23 +122,39 @@ export default function Experience() {
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          // Sort reverse chronological by date (newest first)
+          // Sort reverse chronological by date (newest role first)
           const sorted = [...data].sort((a, b) => new Date(b.start_date || 0) - new Date(a.start_date || 0));
           setEntries(sorted);
         } else {
-          setEntries(FALLBACK);
+          setEntries([]);
         }
       })
-      .catch(() => setEntries(FALLBACK));
+      .catch(() => setEntries([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const displayed = entries ?? FALLBACK;
-  const currentEntry = displayed[activeIdx] || displayed[0];
-  const nextIdx = (activeIdx + 1) % displayed.length;
-  const nextEntry = displayed[nextIdx];
+  if (loading) {
+    return (
+      <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="h-96 w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
+            <span className="text-muted-foreground text-sm flex items-center gap-2">
+              <Sparkles size={16} className="animate-spin text-primary" /> Loading Career Experience...
+            </span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!entries || entries.length === 0) return null;
+
+  const currentEntry = entries[activeIdx] || entries[0];
+  const nextIdx = (activeIdx + 1) % entries.length;
+  const nextEntry = entries[nextIdx];
 
   const handleNext = () => {
-    setActiveIdx((prev) => (prev + 1) % displayed.length);
+    setActiveIdx((prev) => (prev + 1) % entries.length);
   };
 
   return (
@@ -192,62 +171,72 @@ export default function Experience() {
             Work <span className="gradient-text">Experience</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Roles in reverse chronological order — hover or click the left edge to peel to the next role
+            Roles in reverse chronological order — hover or click left edge to peel to the next role
           </p>
         </div>
 
         {/* FULL-WIDTH STACKED EXPERIENCE DECK WITH CANVAS UI PEEL */}
         <div className="relative max-w-4xl mx-auto min-h-[420px] sm:min-h-[440px]">
-          <Peel
-            side="left"
-            mode="cursor"
-            reveal={1200}
-            zone={300}
-            curl={320}
-            bow={85}
-            shade={0.35}
-            shine={1}
-            under={
+          {entries.length > 1 ? (
+            <Peel
+              side="left"
+              mode="cursor"
+              reveal={1200}
+              zone={300}
+              curl={320}
+              bow={85}
+              shade={0.35}
+              shine={1}
+              under={
+                <FullWidthExperienceCard
+                  entry={nextEntry}
+                  index={nextIdx}
+                  total={entries.length}
+                />
+              }
+              onPeelComplete={handleNext}
+              className="w-full h-full rounded-3xl"
+            >
               <FullWidthExperienceCard
-                entry={nextEntry}
-                index={nextIdx}
-                total={displayed.length}
+                entry={currentEntry}
+                index={activeIdx}
+                total={entries.length}
               />
-            }
-            onPeelComplete={handleNext}
-            className="w-full h-full rounded-3xl"
-          >
+            </Peel>
+          ) : (
             <FullWidthExperienceCard
               entry={currentEntry}
-              index={activeIdx}
-              total={displayed.length}
+              index={0}
+              total={1}
             />
-          </Peel>
+          )}
         </div>
 
         {/* DECK HINT BADGE & ROLE PROGRESS INDICATOR */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto mt-8 px-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5 bg-card border border-border px-3.5 py-1.5 rounded-full">
-              <Sparkles size={14} className="text-primary animate-pulse" />
-              Hover left edge or click card to peel to next experience
-            </span>
-          </div>
+        {entries.length > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto mt-8 px-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5 bg-card border border-border px-3.5 py-1.5 rounded-full">
+                <Sparkles size={14} className="text-primary animate-pulse" />
+                Hover left edge or click card to peel to next experience
+              </span>
+            </div>
 
-          {/* Dots Indicator */}
-          <div className="flex items-center gap-2">
-            {displayed.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveIdx(i)}
-                aria-label={`Go to experience ${i + 1}`}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  i === activeIdx ? 'w-8 bg-primary' : 'w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground'
-                }`}
-              />
-            ))}
+            {/* Dots Indicator */}
+            <div className="flex items-center gap-2">
+              {entries.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveIdx(i)}
+                  aria-label={`Go to experience ${i + 1}`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    i === activeIdx ? 'w-8 bg-primary' : 'w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
