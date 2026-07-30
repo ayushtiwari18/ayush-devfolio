@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '@/lib/constants';
 import { BASE_URL } from '@/lib/config';
-import PeelCard from '@/components/ui/PeelCard';
 
 export const revalidate = 60;
 
@@ -158,52 +157,23 @@ export default async function AboutPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <p className="section-label text-center mb-10">By the Numbers</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {achievements.map((a) => {
               const Icon = ICON_MAP[a.icon] || Rocket;
-              const front = (
-                <div className="p-6 flex flex-col justify-between h-full gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Icon size={24} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-extrabold text-foreground leading-none mb-1.5">{a.value}</p>
-                    <p className="text-base font-bold text-foreground mb-1">{a.label}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{a.description}</p>
-                  </div>
-                </div>
-              );
-
-              const back = (
-                <div className="flex flex-col justify-between h-full text-xs space-y-2">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Verified Metric</span>
-                    <p className="font-bold text-foreground text-base mt-0.5">{a.label}</p>
-                    <p className="text-muted-foreground text-xs mt-1 leading-relaxed">{a.description}</p>
-                  </div>
-
-                  <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
-                    <p className="font-semibold text-primary text-xs">Proof Highlights</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {a.icon === 'github' && '5,600+ public commits across open source repositories.'}
-                      {a.icon === 'code' && 'LeetCode Rating 1657 · 885+ DSA problems solved.'}
-                      {a.icon === 'rocket' && '10+ production web applications built & deployed.'}
-                      {a.icon === 'book-open' && 'Springer-indexed paper on network security.'}
-                      {a.icon === 'cloud' && 'AWS Certified Cloud Practitioner & Solutions Architect.'}
-                      {a.icon === 'trophy' && 'Multiple hackathon prizes & technical event awards.'}
-                      {!['github','code','rocket','book-open','cloud','trophy'].includes(a.icon) && 'Verified production proof of work milestone.'}
-                    </p>
-                  </div>
-                </div>
-              );
-
               return (
-                <PeelCard
+                <div
                   key={a.id || a.label}
-                  front={front}
-                  back={back}
-                  className="min-h-[220px]"
-                />
+                  className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Icon size={20} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground leading-none mb-1">{a.value}</p>
+                    <p className="text-sm font-semibold text-foreground">{a.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{a.description}</p>
+                  </div>
+                </div>
               );
             })}
           </div>
