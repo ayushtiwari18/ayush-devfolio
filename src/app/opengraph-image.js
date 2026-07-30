@@ -37,7 +37,7 @@ export default function OgImage() {
         {/* Stack */}
         <div style={{ fontSize: 28, color: '#6366f1', marginBottom: 40, paddingLeft: 30 }}>MERN · Next.js · Three.js · AWS</div>
         {/* URL */}
-        <div style={{ fontSize: 24, color: '#4b5563', paddingLeft: 30 }}>ayush-devfolio.vercel.app</div>
+        <div style={{ fontSize: 24, color: '#4b5563', paddingLeft: 30 }}>ayushtiwari.dev</div>
       </div>
     ),
     { ...size }

@@ -20,7 +20,7 @@ export const SITE_CONFIG = {
     'Full Stack Developer specialising in MERN Stack, Next.js, and cloud-native systems. Springer-published researcher. AWS certified. 5,600+ GitHub commits. Based in Jabalpur, India.',
 
   // Production URL — used by sitemap, canonical, and OG tags
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://ayush-devfolio.vercel.app',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://ayushtiwari.dev',
 
   author: {
     name: 'Ayush Tiwari',

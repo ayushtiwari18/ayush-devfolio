@@ -1,3 +1,5 @@
+import { BASE_URL } from '@/lib/config';
+
 /**
  * robots.js — Next.js App Router metadata file
  *
@@ -18,7 +20,7 @@ export default function robots() {
         disallow: ['/admin', '/api/'],
       },
     ],
-    sitemap: 'https://ayush-devfolio-nine.vercel.app/sitemap.xml',
-    host: 'https://ayush-devfolio-nine.vercel.app',
+    sitemap: `${BASE_URL}/sitemap.xml`,
+    host: BASE_URL,
   };
 }

@@ -9,6 +9,7 @@ import {
   Github, Code2, Rocket, BookOpen, Cloud, Trophy,
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '@/lib/constants';
+import { BASE_URL } from '@/lib/config';
 
 export const revalidate = 60;
 
@@ -18,7 +19,7 @@ export const metadata = {
     'Ayush Tiwari — Full Stack Developer, Springer-published researcher, AWS certified. ' +
     'B.Tech CSE, Gyan Ganga Institute of Technology and Sciences. ' +
     '5,600+ GitHub commits, 885+ DSA problems, MERN · Next.js · AWS.',
-  alternates: { canonical: 'https://ayush-devfolio-nine.vercel.app/about' },
+  alternates: { canonical: `${BASE_URL}/about` },
 };
 
 const ICON_MAP = {

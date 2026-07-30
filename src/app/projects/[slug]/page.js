@@ -13,6 +13,7 @@ import ProjectSection         from '@/components/projects/ProjectSection';
 import StrategyGrid           from '@/components/projects/StrategyGrid';
 import ChallengeAccordion     from '@/components/projects/ChallengeAccordion';
 import RelatedContentSection  from '@/components/projects/RelatedContentSection';
+import { BASE_URL } from '@/lib/config';
 import ProjectCTASection      from '@/components/projects/ProjectCTASection';
 import PerformanceMetrics     from '@/components/projects/PerformanceMetrics';
 
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }) {
   try { project = await getProjectBySlug(slug); } catch { return { title: 'Project Not Found' }; }
   if (!project) return { title: 'Project Not Found' };
 
-  const baseUrl        = 'https://ayush-devfolio.vercel.app';
+  const baseUrl        = BASE_URL;
   const ogImage        = project.hero_image || project.cover_image;
   const metaDescription = project.problem_statement?.slice(0, 160) ?? project.description;
 
@@ -158,7 +159,7 @@ export default async function ProjectDetailPage({ params }) {
     getRelatedBlogs(project.related_blogs || []),
   ]).then(r => r.map(x => x.status === 'fulfilled' ? x.value : []));
 
-  const baseUrl = 'https://ayush-devfolio.vercel.app';
+  const baseUrl = BASE_URL;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
