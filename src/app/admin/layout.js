@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
@@ -125,9 +126,13 @@ export default function AdminLayout({ children }) {
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-border">
             <Link href="/admin/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
+              <Image
+                src="/brand-icon.png"
+                alt="Ayush Tiwari Admin"
+                width={40}
+                height={40}
+                className="rounded-lg shrink-0"
+              />
               <div>
                 <h1 className="text-lg font-bold text-foreground">Admin Panel</h1>
                 <p className="text-xs text-muted-foreground">Content Management</p>

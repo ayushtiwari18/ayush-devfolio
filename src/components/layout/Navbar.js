@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Menu, X, ShieldAlert } from 'lucide-react';
@@ -59,10 +60,15 @@ export default function Navbar() {
 
           {/* Logo & Admin Button */}
           <div className="flex items-center gap-4">
-            <Link href={ROUTES.HOME} className="flex items-center space-x-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center font-bold text-white group-hover:scale-110 transition-transform">
-                AT
-              </div>
+            <Link href={ROUTES.HOME} className="flex items-center space-x-3 group">
+              <Image
+                src="/brand-icon.png"
+                alt="Ayush Tiwari Logo"
+                width={38}
+                height={38}
+                className="rounded-lg group-hover:scale-105 transition-transform"
+                priority
+              />
               <span className="text-xl font-bold gradient-text hidden sm:block">Ayush Tiwari</span>
             </Link>
 

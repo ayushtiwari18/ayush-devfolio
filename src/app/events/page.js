@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { getPublishedEvents } from '@/services/events.service';
 import EventTimelineCard from '@/components/events/EventTimelineCard';
 import EventsLoading from './loading';
-import { BASE_URL } from '@/app/layout';
+import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase on every request
 export const revalidate = 60;
@@ -26,7 +26,7 @@ export const metadata = {
     description: 'Hackathons and tech events by Ayush Tiwari, Full Stack Developer, Jabalpur India.',
     url:          `${BASE_URL}/events`,
     type:        'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card:    'summary_large_image',

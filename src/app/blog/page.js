@@ -1,7 +1,7 @@
 import { PenLine } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import BlogFilterClient from '@/components/blog/BlogFilterClient';
-import { BASE_URL } from '@/app/layout';
+import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase on every request
 export const revalidate = 60;
@@ -23,7 +23,7 @@ export const metadata = {
     description: 'Technical deep-dives on Full Stack Development, Next.js and cloud engineering by Ayush Tiwari.',
     url:          `${BASE_URL}/blog`,
     type:        'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card:    'summary_large_image',
