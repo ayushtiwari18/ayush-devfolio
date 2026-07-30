@@ -1,14 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Briefcase, MapPin, Calendar, ChevronLeft, ChevronRight,
-  Sparkles, Layers, CheckCircle2, ArrowRight
-} from 'lucide-react';
+import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2 } from 'lucide-react';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import Peel from '@/components/ui/Peel';
 
-// Rich fallback items sorted in reverse chronological order
+// Fallback work experiences sorted in reverse chronological order (newest -> oldest)
 const FALLBACK = [
   {
     id: 'exp-1',
@@ -150,7 +147,7 @@ function FullWidthExperienceCard({ entry, index, total }) {
 }
 
 // ---------------------------------------------------------------------------
-// WORK EXPERIENCE SECTION WITH CANVAS UI WEBGLE PEEL STACK DECK
+// WORK EXPERIENCE SECTION WITH CANVAS UI PEEL DECK
 // ---------------------------------------------------------------------------
 export default function Experience() {
   const [entries, setEntries] = useState(null);
@@ -162,7 +159,7 @@ export default function Experience() {
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          // Sort reverse chronological by date
+          // Sort reverse chronological by date (newest first)
           const sorted = [...data].sort((a, b) => new Date(b.start_date || 0) - new Date(a.start_date || 0));
           setEntries(sorted);
         } else {
@@ -181,10 +178,6 @@ export default function Experience() {
     setActiveIdx((prev) => (prev + 1) % displayed.length);
   };
 
-  const handlePrev = () => {
-    setActiveIdx((prev) => (prev - 1 + displayed.length) % displayed.length);
-  };
-
   return (
     <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
       <div className="max-w-4xl mx-auto">
@@ -199,7 +192,7 @@ export default function Experience() {
             Work <span className="gradient-text">Experience</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Roles and impact in reverse chronological order — hover or click left edge to peel to the next role
+            Roles in reverse chronological order — hover or click the left edge to peel to the next role
           </p>
         </div>
 
@@ -209,10 +202,7 @@ export default function Experience() {
             side="left"
             mode="cursor"
             reveal={520}
-            zone={220}
-            curl={300}
-            shine={1}
-            shade={0.3}
+            zone={240}
             under={
               <FullWidthExperienceCard
                 entry={nextEntry}
@@ -220,6 +210,7 @@ export default function Experience() {
                 total={displayed.length}
               />
             }
+            onPeelComplete={handleNext}
             className="w-full h-full rounded-3xl"
           >
             <FullWidthExperienceCard
@@ -230,45 +221,27 @@ export default function Experience() {
           </Peel>
         </div>
 
-        {/* DECK CONTROLS & REVERSE CHRONOLOGICAL NAVIGATION */}
+        {/* DECK HINT BADGE & ROLE PROGRESS INDICATOR */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto mt-8 px-2">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground flex items-center gap-1.5 bg-card border border-border px-3.5 py-1.5 rounded-full">
               <Sparkles size={14} className="text-primary animate-pulse" />
-              Hover left edge or click to peel to next experience
+              Hover left edge or click card to peel to next experience
             </span>
           </div>
 
-          {/* Dots & Nav Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrev}
-              aria-label="Previous experience"
-              className="p-2.5 rounded-xl bg-card border border-border hover:bg-primary/10 hover:text-primary transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            <div className="flex items-center gap-1.5 px-3">
-              {displayed.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveIdx(i)}
-                  aria-label={`Go to experience ${i + 1}`}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    i === activeIdx ? 'w-8 bg-primary' : 'w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground'
-                  }`}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={handleNext}
-              aria-label="Next experience"
-              className="p-2.5 rounded-xl bg-card border border-border hover:bg-primary/10 hover:text-primary transition-colors"
-            >
-              <ChevronRight size={18} />
-            </button>
+          {/* Dots Indicator */}
+          <div className="flex items-center gap-2">
+            {displayed.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIdx(i)}
+                aria-label={`Go to experience ${i + 1}`}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  i === activeIdx ? 'w-8 bg-primary' : 'w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground'
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
