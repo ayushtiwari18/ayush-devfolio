@@ -8,8 +8,7 @@ import BlogContent from '@/components/blog/BlogContent';
 import BlogSidebar from '@/components/blog/BlogSidebar';
 import BlogTakeaways from '@/components/blog/BlogTakeaways';
 import SeriesBanner from '@/components/blog/SeriesBanner';
-
-const BASE_URL = 'https://ayush-devfolio.vercel.app';
+import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase on every request
 export const revalidate = 60;

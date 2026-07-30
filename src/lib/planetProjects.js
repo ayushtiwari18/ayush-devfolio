@@ -156,7 +156,7 @@ const EARTH = {
     },
     links: {
       github: 'https://github.com/ayushtiwari18/ayush-devfolio',
-      live: 'https://ayush-devfolio.vercel.app',
+      live: 'https://ayushtiwari.dev',
     },
   },
 };

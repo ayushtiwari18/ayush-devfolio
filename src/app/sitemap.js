@@ -12,7 +12,7 @@ export default async function sitemap() {
 
   // 1. Core static routes
   const routes = [
-    { url: `${BASE_URL}/`,               lastModified: TODAY, changeFrequency: 'weekly',  priority: 1.0 },
+    { url: BASE_URL,                     lastModified: TODAY, changeFrequency: 'weekly',  priority: 1.0 },
     { url: `${BASE_URL}/about`,          lastModified: TODAY, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE_URL}/projects`,       lastModified: TODAY, changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${BASE_URL}/blog`,           lastModified: TODAY, changeFrequency: 'weekly',  priority: 0.8 },

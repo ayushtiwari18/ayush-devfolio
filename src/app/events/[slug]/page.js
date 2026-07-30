@@ -9,6 +9,7 @@ import { getEventBySlug, getAllEventSlugs } from '@/services/events.service';
 import EventGallery from '@/components/events/EventGallery';
 import ZoomParallax from '@/components/events/ZoomParallax';
 import EventPreloader from '@/components/events/EventPreloader';
+import { BASE_URL } from '@/lib/config';
 
 export const revalidate    = 86400;
 export const dynamicParams = true;
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }) {
   try { event = await getEventBySlug(slug); } catch { return { title: 'Event Not Found' }; }
   if (!event) return { title: 'Event Not Found' };
 
-  const baseUrl = 'https://ayush-devfolio.vercel.app';
+  const baseUrl = BASE_URL;
   const desc    = event.description?.slice(0, 160) ?? `${event.title} — Ayush Tiwari`;
   const ogImg   = event.cover_image;
 
@@ -214,7 +215,7 @@ export default async function EventDetailPage({ params }) {
   if (event.cover_image) parallaxSources.push(event.cover_image);
   images.forEach(img => parallaxSources.push(img.url || img));
 
-  const baseUrl = 'https://ayush-devfolio.vercel.app';
+  const baseUrl = BASE_URL;
   const cfg     = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
 
   const jsonLd = {

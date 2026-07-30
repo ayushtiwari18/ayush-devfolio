@@ -7,6 +7,7 @@ import Contact from '@/components/sections/Contact';
 import LatestBlog from '@/components/sections/LatestBlog';
 import FeaturedProjects from '@/components/sections/FeaturedProjects';
 import { HERO_COPY, ACHIEVEMENTS } from '@/lib/constants';
+import { BASE_URL } from '@/lib/config';
 import { getProfileSettings } from '@/services/profile.service';
 import { getFeaturedProjects } from '@/services/projects.service';
 import { getRecentBlogPosts } from '@/services/blog.service';
@@ -34,8 +35,6 @@ function SectionSkeleton({ minH = '200px' }) {
     />
   );
 }
-
-const BASE_URL = 'https://ayush-devfolio-nine.vercel.app';
 
 export const metadata = {
   title: 'Ayush Tiwari - Full Stack Developer',

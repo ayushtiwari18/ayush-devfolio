@@ -3,11 +3,12 @@ import { Trophy, Calendar, Users, ArrowLeft, Medal, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getPublishedHackathons } from '@/services/hackathons.service';
 import FallbackImage from '@/components/ui/FallbackImage';
+import { BASE_URL } from '@/lib/config';
 
 export const metadata = {
   title: 'Hackathons - Ayush Tiwari',
   description: 'My hackathon participations, achievements, and competitive programming events',
-  alternates: { canonical: 'https://ayush-devfolio.vercel.app/hackathons' },
+  alternates: { canonical: `${BASE_URL}/hackathons` },
 };
 
 const formatDate = (dateString) => {
