@@ -201,8 +201,12 @@ export default function Experience() {
           <Peel
             side="left"
             mode="cursor"
-            reveal={520}
-            zone={240}
+            reveal={1200}
+            zone={300}
+            curl={320}
+            bow={85}
+            shade={0.35}
+            shine={1}
             under={
               <FullWidthExperienceCard
                 entry={nextEntry}

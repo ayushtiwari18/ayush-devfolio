@@ -279,6 +279,7 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     const w = Math.max(output.clientWidth, 1);
     const h = Math.max(output.clientHeight, 1);
     const side = SIDE_INDEX[config.side] ?? 0;
+    const fullReveal = Math.max(config.reveal, w * 1.4);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, output.width, output.height);
@@ -298,7 +299,7 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     gl.uniform2f(sheet.uniforms.uRes, w, h);
     gl.uniform1f(sheet.uniforms.uSide, side);
     gl.uniform1f(sheet.uniforms.uPeel, peel.a);
-    gl.uniform1f(sheet.uniforms.uReveal, Math.max(config.reveal, 0));
+    gl.uniform1f(sheet.uniforms.uReveal, fullReveal);
     gl.uniform1f(sheet.uniforms.uCurl, Math.max(config.curl, 1));
     gl.uniform1f(sheet.uniforms.uBow, config.bow);
     gl.uniform1f(sheet.uniforms.uFocal, Math.max(config.perspective, 200));
@@ -332,13 +333,15 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   let triggerFired = false;
 
   function updateTarget() {
+    const w = Math.max(output.clientWidth, 1);
+    const fullReveal = Math.max(config.reveal, w * 1.4);
     if (config.mode === 'hover') {
       const open = peel.target > 0.5;
-      const limit = open ? peel.a * config.reveal + config.zone : config.zone;
+      const limit = open ? peel.a * fullReveal + config.zone : config.zone;
       peel.target = pointer.u < limit ? 1 : 0;
       return;
     }
-    const span = Math.max(config.zone + peel.a * config.reveal, 1);
+    const span = Math.max(config.zone + peel.a * fullReveal, 1);
     peel.target = Math.min(1, Math.max(0, 1 - pointer.u / span));
   }
 
