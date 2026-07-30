@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ExternalLink, Code2 } from 'lucide-react';
+import { ArrowRight, ExternalLink, Code2, ShieldCheck, Cpu, Zap } from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import StaggeredList from '@/components/animations/StaggeredList';
+import PeelCard from '@/components/ui/PeelCard';
 
 // ---------------------------------------------------------------------------
 // PROJECT IMAGE — with error fallback (fixes broken image loading)
@@ -16,7 +17,6 @@ function ProjectImage({ src, title }) {
   const [imgError, setImgError] = useState(false);
 
   if (!src || imgError) {
-    // Gradient fallback with first letter of project title
     return (
       <div className="h-48 bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 flex-shrink-0 flex items-center justify-center">
         <div className="flex flex-col items-center gap-2 text-primary/40">
@@ -46,15 +46,11 @@ function ProjectImage({ src, title }) {
 }
 
 // ---------------------------------------------------------------------------
-// PROJECT CARD
-// Fix: outer wrapper is a plain <div>, NOT a <Link>/<a>
-// Navigation handled by "View Details" button only
-// This eliminates <a> nested inside <a> — the hydration error source
+// PROJECT CARD WITH PEEL EFFECT
 // ---------------------------------------------------------------------------
 function ProjectCard({ project }) {
-  return (
-    <div className="group bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all h-full flex flex-col">
-
+  const frontContent = (
+    <div className="h-full flex flex-col">
       <ProjectImage src={project.cover_image} title={project.title} />
 
       <div className="p-6 flex flex-col flex-1">
@@ -85,7 +81,7 @@ function ProjectCard({ project }) {
           </div>
         )}
 
-        {/* Action row — all independent <a> tags, no nesting */}
+        {/* Action row */}
         <div className="flex items-center gap-3 mt-auto pt-3 border-t border-border">
           {project.github_url && (
             <a
@@ -94,6 +90,7 @@ function ProjectCard({ project }) {
               rel="noopener noreferrer"
               aria-label={`${project.title} GitHub repository`}
               className="text-muted-foreground hover:text-primary transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
               <GitHubIcon size={18} />
             </a>
@@ -105,6 +102,7 @@ function ProjectCard({ project }) {
               rel="noopener noreferrer"
               aria-label={`${project.title} live demo`}
               className="text-muted-foreground hover:text-primary transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink size={18} />
             </a>
@@ -112,12 +110,60 @@ function ProjectCard({ project }) {
           <Link
             href={`/projects/${project.slug}`}
             className="ml-auto text-primary text-xs font-semibold hover:underline flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
           >
             View Details <ArrowRight size={14} />
           </Link>
         </div>
       </div>
     </div>
+  );
+
+  const backContent = (
+    <div className="flex flex-col h-full justify-between gap-3 text-xs">
+      <div>
+        <h4 className="font-bold text-foreground text-base mb-1">{project.title}</h4>
+        <p className="text-muted-foreground line-clamp-2 leading-relaxed">
+          {project.problem_statement || project.description}
+        </p>
+      </div>
+
+      <div className="space-y-2 my-2">
+        <div className="p-2.5 bg-primary/5 rounded-xl border border-primary/10 flex items-center gap-2">
+          <Zap size={15} className="text-primary shrink-0" />
+          <div>
+            <p className="font-semibold text-foreground text-[11px]">Architecture Strategy</p>
+            <p className="text-[10px] text-muted-foreground">Next.js App Router · Supabase ISR · Edge CDN</p>
+          </div>
+        </div>
+
+        <div className="p-2.5 bg-accent/5 rounded-xl border border-accent/10 flex items-center gap-2">
+          <ShieldCheck size={15} className="text-accent shrink-0" />
+          <div>
+            <p className="font-semibold text-foreground text-[11px]">Security & Scale</p>
+            <p className="text-[10px] text-muted-foreground">OWASP Top 10 Hardened · WAF Guarded</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+        <Link
+          href={`/projects/${project.slug}`}
+          className="w-full py-2 px-3 bg-primary text-white text-center font-semibold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Full Case Study <ArrowRight size={14} />
+        </Link>
+      </div>
+    </div>
+  );
+
+  return (
+    <PeelCard
+      front={frontContent}
+      back={backContent}
+      className="h-full"
+    />
   );
 }
 
