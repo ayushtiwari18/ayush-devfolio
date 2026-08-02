@@ -323,7 +323,7 @@ export default function Experience() {
                 maxWidth={600}
                 minHeight={450}
                 maxHeight={600}
-                maxShadowOpacity={0.5}
+                maxShadowOpacity={0.25}
                 showCover={false}
                 mobileScrollSupport={true}
                 useMouseEvents={true}
@@ -350,7 +350,7 @@ export default function Experience() {
               </HTMLFlipBook>
             </div>
 
-            {/* DECK HINT BADGE, NAVIGATION BUTTONS & PROGRESS INDICATOR */}
+            {/* DECK HINT BADGE, NAVIGATION BUTTONS & UNIFORM DOTS INDICATOR */}
             {entries.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto mt-8 px-2">
                 <div className="flex items-center gap-3">
@@ -380,8 +380,8 @@ export default function Experience() {
                   </button>
                 </div>
 
-                {/* Spread Dots Indicator */}
-                <div className="flex items-center gap-2.5">
+                {/* Uniform Circular Spread Dots Indicator (NO stretching loading line) */}
+                <div className="flex items-center gap-3">
                   {entries.map((_, i) => (
                     <button
                       key={i}
@@ -391,8 +391,10 @@ export default function Experience() {
                         }
                       }}
                       aria-label={`Go to experience spread ${i + 1}`}
-                      className={`h-3 rounded-full transition-all duration-300 ${
-                        Math.floor(activePage / 2) === i ? 'w-9 bg-primary' : 'w-3 bg-muted-foreground/30 hover:bg-muted-foreground'
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        Math.floor(activePage / 2) === i
+                          ? 'bg-primary scale-125 ring-4 ring-primary/20 shadow-sm'
+                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/60 scale-100'
                       }`}
                     />
                   ))}
