@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2, Award, Zap, ArrowRight } from 'lucide-react';
+import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2, Award, Zap, ArrowRight, BookOpen } from 'lucide-react';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import Peel from '@/components/ui/Peel';
 
@@ -15,10 +15,13 @@ const TYPE_COLORS = {
 };
 
 // ---------------------------------------------------------------------------
-// EXPANSIVE 85% SECTION COVERAGE LANDSCAPE BOOK PAGE SPREAD (ZERO SCROLLBARS)
+// EXECUTIVE STUDIO LANDSCAPE BOOK SPREAD (TACTILE SPINE & ZERO SCROLLBARS)
 // ---------------------------------------------------------------------------
-function LandscapeBookPage({ entry, index, total }) {
+function LandscapeBookPage({ entry, index, total, isClosing }) {
   if (!entry) return null;
+
+  // Strict page index clamping so counter NEVER displays "6 of 5"
+  const safePageNum = Math.min(index + 1, total);
 
   const bullets = (entry.description || '')
     .split('\n')
@@ -34,17 +37,24 @@ function LandscapeBookPage({ entry, index, total }) {
   const topMetric = bullets[0] ? bullets[0].replace(/^[✓•-]\s*/, '') : null;
 
   return (
-    <div className="w-full h-[520px] sm:h-[480px] bg-gradient-to-br from-card via-card/95 to-muted/40 border border-primary/30 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative backdrop-blur-md">
+    <div className="w-full h-[520px] sm:h-[480px] bg-gradient-to-br from-card via-card/95 to-muted/40 border border-primary/30 border-l-4 border-l-primary/70 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative backdrop-blur-md">
+      {/* Book Spine Stitching Dots (Tactile Journal Seam) */}
+      <div className="absolute top-0 left-1 bottom-0 w-1 flex flex-col justify-around items-center opacity-40 pointer-events-none">
+        {[...Array(8)].map((_, i) => (
+          <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary" />
+        ))}
+      </div>
+
       {/* Background Accent Sheen & Glow */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/15 via-accent/10 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-accent/10 via-primary/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-      {/* TOP METADATA BAR */}
-      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-4">
+      {/* TOP METADATA BAR WITH STRICT CLAMPED PAGE NUMBER */}
+      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-4 pl-3">
         <div className="flex items-center gap-3">
           <span className="px-3.5 py-1.5 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
-            <Layers size={14} className="animate-pulse" />
-            Page {index + 1} of {total}
+            <BookOpen size={14} className="animate-pulse" />
+            Page {safePageNum} of {total}{isClosing ? ' (Resetting...)' : ''}
           </span>
           {entry.employment_type && (
             <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
@@ -64,8 +74,8 @@ function LandscapeBookPage({ entry, index, total }) {
       </div>
 
       {/* DUAL-COLUMN EXPANSIVE BODY */}
-      <div className="relative z-10 flex-1 grid grid-cols-1 md:grid-cols-12 gap-8 my-5 items-center">
-        {/* LEFT COLUMN: ROLE TITLE, COMPANY & IMPACT HIGHLIGHT BOX */}
+      <div className="relative z-10 flex-1 grid grid-cols-1 md:grid-cols-12 gap-8 my-5 items-center pl-3">
+        {/* LEFT COLUMN: ROLE TITLE, COMPANY & EXECUTIVE HIGHLIGHT */}
         <div className="md:col-span-5 flex flex-col justify-between h-full space-y-4">
           <div>
             <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-2 leading-tight tracking-tight text-pretty">
@@ -85,12 +95,12 @@ function LandscapeBookPage({ entry, index, total }) {
             </div>
           </div>
 
-          {/* KEY IMPACT HIGHLIGHT BOX */}
+          {/* EXECUTIVE IMPACT HIGHLIGHT BOX WITH FOIL ACCENT */}
           {topMetric && (
-            <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-start gap-3 shadow-sm">
+            <div className="p-4 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent border border-primary/30 rounded-2xl flex items-start gap-3 shadow-md">
               <Zap size={18} className="text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1">Core Impact Highlight</p>
+                <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1">Executive Impact Highlight</p>
                 <p className="text-xs sm:text-sm text-foreground/90 font-medium line-clamp-2 leading-relaxed">
                   {topMetric}
                 </p>
@@ -99,10 +109,10 @@ function LandscapeBookPage({ entry, index, total }) {
           )}
         </div>
 
-        {/* RIGHT COLUMN: KEY DELIVERABLES BULLETS */}
+        {/* RIGHT COLUMN: KEY ARCHITECTURE DELIVERABLES */}
         <div className="md:col-span-7 flex flex-col justify-center h-full border-t md:border-t-0 md:border-l border-border/60 pt-4 md:pt-0 md:pl-8 space-y-3">
           <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5">
-            <Award size={14} className="text-primary" /> Key Architecture Deliverables
+            <Award size={14} className="text-primary" /> Core Technical Deliverables
           </p>
           <ul className="space-y-3">
             {bullets.map((bullet, i) => (
@@ -116,7 +126,7 @@ function LandscapeBookPage({ entry, index, total }) {
       </div>
 
       {/* FOOTER TECH STACK PILLS & CLICK-TURN PROMPT */}
-      <div className="relative z-10 pt-3 border-t border-border/60 shrink-0 flex items-center justify-between gap-4">
+      <div className="relative z-10 pt-3 border-t border-border/60 shrink-0 flex items-center justify-between gap-4 pl-3">
         {techs.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 overflow-hidden">
             <span className="text-xs font-bold text-muted-foreground mr-1">Stack:</span>
@@ -142,7 +152,7 @@ function LandscapeBookPage({ entry, index, total }) {
 }
 
 // ---------------------------------------------------------------------------
-// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH ZERO-FLICKER CLICK DECK
+// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH UNCLIPPED 3D BOOK DECK
 // ---------------------------------------------------------------------------
 export default function Experience() {
   const [entries, setEntries] = useState([]);
@@ -237,8 +247,8 @@ export default function Experience() {
           </div>
         ) : entries.length > 0 ? (
           <>
-            {/* EXPANSIVE LANDSCAPE BOOK CONTAINER (85% SECTION COVERAGE) */}
-            <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full">
+            {/* UNCLIPPED 3D LANDSCAPE BOOK CONTAINER */}
+            <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full overflow-visible">
               {entries.length > 1 ? (
                 <Peel
                   side="left"
@@ -256,6 +266,7 @@ export default function Experience() {
                       entry={nextEntry}
                       index={nextIdx}
                       total={entries.length}
+                      isClosing={isBookClosing}
                     />
                   }
                   onPeelComplete={handlePageTurn}
@@ -265,6 +276,7 @@ export default function Experience() {
                     entry={currentEntry}
                     index={activeIdx}
                     total={entries.length}
+                    isClosing={isBookClosing}
                   />
                 </Peel>
               ) : (
@@ -272,6 +284,7 @@ export default function Experience() {
                   entry={currentEntry}
                   index={0}
                   total={1}
+                  isClosing={false}
                 />
               )}
             </div>

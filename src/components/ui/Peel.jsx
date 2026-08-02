@@ -597,7 +597,15 @@ export function Peel({
   }, [isBookClosing, onBookCloseComplete]);
 
   return (
-    <div className={`relative ${className}`} style={{ position: 'relative', overflow: 'hidden', ...style }}>
+    <div
+      className={`relative ${className}`}
+      style={{
+        position: 'relative',
+        overflow: 'visible',
+        perspective: '1200px',
+        ...style,
+      }}
+    >
       {/* UNDER LAYER */}
       <div
         ref={underRef}
@@ -637,6 +645,7 @@ export function Peel({
           zIndex: 2,
           pointerEvents: 'auto',
           cursor: 'pointer',
+          filter: 'drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))',
         }}
       />
     </div>
