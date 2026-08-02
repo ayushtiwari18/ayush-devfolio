@@ -26,7 +26,6 @@
     "framer-motion": "^11.0.3",
     "gsap": "^3.15.0",
     "highlight.js": "^11.11.1",
-    "html-to-image": "^1.11.13",
     "lucide-react": "^0.263.1",
     "mermaid": "^11.16.0",
     "next": "^14.1.0",
