@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2, Award, Zap, ArrowRight, BookOpen } from 'lucide-react';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
+import Peel from '@/components/ui/Peel';
 
 const TYPE_COLORS = {
   'Full-time':   'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
@@ -14,7 +15,7 @@ const TYPE_COLORS = {
 };
 
 // ---------------------------------------------------------------------------
-// EXECUTIVE STUDIO LANDSCAPE BOOK SPREAD (FRONT OF PAGE)
+// EXECUTIVE STUDIO LANDSCAPE BOOK SPREAD (100% SOLID OPAQUE, ZERO BLEED)
 // ---------------------------------------------------------------------------
 function LandscapeBookPage({ entry, index, total, isClosing }) {
   if (!entry) return null;
@@ -36,7 +37,10 @@ function LandscapeBookPage({ entry, index, total, isClosing }) {
   const topMetric = bullets[0] ? bullets[0].replace(/^[✓•-]\s*/, '') : null;
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-card via-card/95 to-muted/40 border border-primary/30 border-l-4 border-l-primary/70 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative backdrop-blur-md">
+    <div
+      className="w-full h-full bg-[#0d131f] border border-primary/30 border-l-4 border-l-primary/70 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative"
+      style={{ backgroundColor: '#0d131f', opacity: 1 }}
+    >
       {/* Book Spine Stitching Dots (Tactile Journal Seam) */}
       <div className="absolute top-0 left-1 bottom-0 w-1 flex flex-col justify-around items-center opacity-40 pointer-events-none">
         {[...Array(8)].map((_, i) => (
@@ -151,7 +155,7 @@ function LandscapeBookPage({ entry, index, total, isClosing }) {
 }
 
 // ---------------------------------------------------------------------------
-// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH PURE CSS 3D MECHANICAL DECK
+// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH SILKY SMOOTH WEBGL PEEL ENGINE
 // ---------------------------------------------------------------------------
 export default function Experience() {
   const [entries, setEntries] = useState([]);
@@ -193,16 +197,21 @@ export default function Experience() {
       console.log(`[Experience:PageTurn] Turning Page ${activeIdx + 1} to unveil Page ${activeIdx + 2}`);
       setActiveIdx((prev) => prev + 1);
     } else {
-      console.log(`[Experience:BookCloseTrigger] Final Page ${activeIdx + 1} turned! Triggering book close animation.`);
+      console.log(`[Experience:BookCloseTrigger] Final Page ${activeIdx + 1} turned! Executing book close reset.`);
       setIsBookClosing(true);
-      setTimeout(() => {
-        setActiveIdx(0);
-        setIsBookClosing(false);
-      }, 850);
     }
   };
 
+  const handleBookCloseComplete = () => {
+    console.log('[Experience:BookCloseComplete] Book close reset finished. Resetting to Page 1.');
+    setActiveIdx(0);
+    setIsBookClosing(false);
+  };
+
   const isFinalCard = entries.length > 1 && activeIdx === entries.length - 1;
+  const currentEntry = entries[activeIdx] || entries[0];
+  const nextIdx = (activeIdx + 1) % entries.length;
+  const nextEntry = entries[nextIdx];
 
   return (
     <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
@@ -241,67 +250,46 @@ export default function Experience() {
           </div>
         ) : entries.length > 0 ? (
           <>
-            {/* PURE CSS 3D MECHANICAL BOOK CONTAINER (UNCLIPPED 3D PERSPECTIVE) */}
-            <div
-              className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full"
-              style={{ perspective: '1600px', transformStyle: 'preserve-3d' }}
-            >
-              {entries.map((entry, i) => {
-                const isTurned = !isBookClosing && i < activeIdx;
-                const isCurrent = i === activeIdx;
-
-                return (
-                  <div
-                    key={entry.id || i}
-                    onClick={handlePageTurn}
-                    className="absolute inset-0 w-full h-full cursor-pointer select-none"
-                    style={{
-                      transformStyle: 'preserve-3d',
-                      transformOrigin: 'left center',
-                      transform: isTurned ? 'rotateY(-180deg)' : 'rotateY(0deg)',
-                      transition: 'transform 0.85s cubic-bezier(0.645, 0.045, 0.355, 1.000)',
-                      zIndex: isTurned ? i + 1 : entries.length - i,
-                      filter: isCurrent ? 'drop-shadow(0 20px 30px rgba(0, 0, 0, 0.35))' : 'none',
-                    }}
-                  >
-                    {/* FRONT OF 3D PAGE */}
-                    <div
-                      className="absolute inset-0 w-full h-full"
-                      style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                    >
-                      <LandscapeBookPage
-                        entry={entry}
-                        index={i}
-                        total={entries.length}
-                        isClosing={isBookClosing}
-                      />
-                    </div>
-
-                    {/* BACK OF 3D PAGE (RESTING TURNED PAGE ON LEFT STACK) */}
-                    <div
-                      className="absolute inset-0 w-full h-full bg-gradient-to-br from-card via-card/95 to-muted border border-primary/30 border-r-4 border-r-primary/70 rounded-3xl p-8 flex flex-col justify-between shadow-2xl overflow-hidden backdrop-blur-md"
-                      style={{
-                        transform: 'rotateY(180deg)',
-                        backfaceVisibility: 'hidden',
-                        WebkitBackfaceVisibility: 'hidden',
-                      }}
-                    >
-                      <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                        <span className="text-xs font-bold text-primary font-mono-code">Page {i + 1} Turned</span>
-                        <span className="text-xs font-semibold text-muted-foreground">{entry.company}</span>
-                      </div>
-                      <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2">
-                        <BookOpen size={36} className="text-primary/60 mb-2 animate-pulse" />
-                        <h4 className="text-xl font-extrabold text-foreground">{entry.role}</h4>
-                        <p className="text-xs text-muted-foreground font-mono-code">{entry.start_date} – {entry.end_date || 'Present'}</p>
-                      </div>
-                      <div className="text-xs text-muted-foreground text-center font-mono-code border-t border-border/60 pt-3">
-                        Ayush Tiwari • Engineering Journal
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* UNCLIPPED 3D LANDSCAPE BOOK CONTAINER */}
+            <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full overflow-visible">
+              {entries.length > 1 ? (
+                <Peel
+                  side="left"
+                  mode="click"
+                  reveal={1400}
+                  zone={300}
+                  curl={320}
+                  bow={85}
+                  shade={0.35}
+                  shine={1}
+                  isBookClosing={isBookClosing}
+                  onBookCloseComplete={handleBookCloseComplete}
+                  under={
+                    <LandscapeBookPage
+                      entry={nextEntry}
+                      index={nextIdx}
+                      total={entries.length}
+                      isClosing={isBookClosing}
+                    />
+                  }
+                  onPeelComplete={handlePageTurn}
+                  className="w-full h-full rounded-3xl"
+                >
+                  <LandscapeBookPage
+                    entry={currentEntry}
+                    index={activeIdx}
+                    total={entries.length}
+                    isClosing={isBookClosing}
+                  />
+                </Peel>
+              ) : (
+                <LandscapeBookPage
+                  entry={currentEntry}
+                  index={0}
+                  total={1}
+                  isClosing={false}
+                />
+              )}
             </div>
 
             {/* DECK HINT BADGE & ROLE PROGRESS INDICATOR */}
