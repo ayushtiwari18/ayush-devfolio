@@ -235,7 +235,6 @@ export default function Experience() {
         <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full">
           {entries.length > 1 ? (
             <Peel
-              key={activeIdx}
               side="left"
               mode="click"
               reveal={1400}

@@ -293,9 +293,21 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   syncShineColor();
 
   function render() {
-    if (under && under.style.visibility === 'hidden') {
-      under.style.visibility = '';
+    const isPeeling = peel.a > 0.005;
+
+    // Zero-Bleed Rule: When idle, hide WebGL canvas and under-layer so top card is 100% solid & opaque
+    if (!isPeeling) {
+      output.style.visibility = 'hidden';
+      if (content) content.style.opacity = '1';
+      if (under) under.style.visibility = 'hidden';
+      return;
     }
+
+    // Active Peeling State: Show WebGL canvas & under-layer, hide static content
+    output.style.visibility = 'visible';
+    if (content) content.style.opacity = '0';
+    if (under) under.style.visibility = 'visible';
+
     const w = Math.max(output.clientWidth, 1);
     const h = Math.max(output.clientHeight, 1);
     const side = SIDE_INDEX[config.side] ?? 0;
