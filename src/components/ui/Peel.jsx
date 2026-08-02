@@ -5,7 +5,7 @@ import { toCanvas } from 'html-to-image';
 
 const DEFAULTS = {
   side: 'left',
-  mode: 'cursor',
+  mode: 'click',
   reveal: 350,
   zone: 220,
   curl: 280,
@@ -468,6 +468,7 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   }
 
   function onPointerMove(event) {
+    if (config.mode === 'click') return; // Disable hover wobble on PC for zero-flicker click-only turns
     const pos = getEventPos(event);
     const rect = output.getBoundingClientRect();
     const x = pos.clientX - rect.left;
@@ -479,13 +480,10 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   }
 
   function onPointerLeave() {
-    if (config.isBookClosing) return;
-    // Physical Book Rule: If page turn is in progress (peel.a > 0.35) or user clicked to turn (peel.target === 1), hold turn to left!
+    if (config.isBookClosing || config.mode === 'click') return;
     if (peel.a > 0.35 || peel.target === 1) {
-      console.log('[Peel:PointerLeave] Pointer left area during page turn. Holding turn to left stack.', { peelA: peel.a.toFixed(2) });
       peel.target = 1;
     } else {
-      console.log('[Peel:PointerLeave] Pointer left area before peek threshold. Sliding back to right.', { peelA: peel.a.toFixed(2) });
       pointer.u = FAR;
       peel.target = 0;
     }
@@ -493,8 +491,7 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   }
 
   function onClick() {
-    console.log('[Peel:Click] User clicked card. Setting peel.target = 1 to turn page.');
-    lockedUntilEdge = false;
+    console.log('[Peel:Click] User clicked card. Executing deterministic page turn.');
     peel.target = 1;
     start();
   }
