@@ -15,7 +15,7 @@ const TYPE_COLORS = {
 };
 
 // ---------------------------------------------------------------------------
-// PAGE 1 (LEFT SIDE): THE CONTEXT PAGE
+// PAGE 1 (LEFT SIDE): THE CONTEXT PAGE (REFINED UI/UX TYPOGRAPHY)
 // ---------------------------------------------------------------------------
 const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) => {
   if (!entry) return null;
@@ -69,13 +69,13 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
         </span>
       </div>
 
-      {/* BODY: ROLE BRANDING & MISSION SUMMARY */}
-      <div className="relative z-10 flex-1 my-5 pr-4 flex flex-col justify-between space-y-4">
+      {/* BODY: ROLE BRANDING & BREATHABLE MISSION BLOCKQUOTE */}
+      <div className="relative z-10 flex-1 my-5 pr-4 flex flex-col justify-between space-y-6">
         <div>
-          <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1 font-mono-code flex items-center gap-1.5">
+          <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1.5 font-mono-code flex items-center gap-1.5">
             <Briefcase size={14} /> Context & Architecture Scope
           </p>
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-2 leading-tight tracking-tight text-pretty">
+          <h3 className="text-2xl sm:text-[26px] font-extrabold text-foreground mb-2 leading-snug tracking-tight text-pretty">
             {entry.role}
           </h3>
           <div className="flex items-center gap-3">
@@ -91,10 +91,9 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
           </div>
         </div>
 
-        {/* 2-3 SENTENCE MISSION STATEMENT */}
-        <div className="p-4 bg-muted/40 border border-border/70 rounded-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Role Mission Statement</p>
-          <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
+        {/* ELEGANT MINIMALIST LEFT-BORDERED BLOCKQUOTE */}
+        <div className="border-l-2 border-primary/60 pl-4 py-1 my-2">
+          <p className="italic text-muted-foreground text-[15px] leading-relaxed">
             Spearheaded technical development and software architecture at {entry.company}, driving scalable frontend engineering, robust API services, and high-quality cloud infrastructure.
           </p>
         </div>
@@ -105,11 +104,11 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
             <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
               <Server size={13} className="text-primary" /> Core Tech Stack
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {techs.map((tech) => (
                 <span
                   key={tech}
-                  className="px-3 py-1 bg-muted/80 text-foreground text-xs font-semibold rounded-lg border border-border/80 shadow-sm"
+                  className="px-3 py-1 bg-muted/80 text-foreground text-xs sm:text-sm font-semibold rounded-lg border border-border/80 shadow-sm"
                 >
                   {tech}
                 </span>
@@ -132,7 +131,7 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
 ContextPage.displayName = 'ContextPage';
 
 // ---------------------------------------------------------------------------
-// PAGE 2 (RIGHT SIDE): THE IMPACT PAGE
+// PAGE 2 (RIGHT SIDE): THE IMPACT PAGE (REFINED UI/UX SPACING)
 // ---------------------------------------------------------------------------
 const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) => {
   if (!entry) return null;
@@ -172,14 +171,14 @@ const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) 
       </div>
 
       {/* BODY: ENGINEERING ACHIEVEMENTS & TESTING METHODOLOGIES */}
-      <div className="relative z-10 flex-1 my-5 pl-3 flex flex-col justify-between space-y-4">
+      <div className="relative z-10 flex-1 my-5 pl-3 flex flex-col justify-between space-y-5">
         {/* CORE IMPACT HIGHLIGHT BOX */}
         {topMetric && (
           <div className="p-4 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent border border-primary/30 rounded-2xl flex items-start gap-3 shadow-md">
             <Zap size={18} className="text-primary shrink-0 mt-0.5 animate-pulse" />
             <div>
               <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1 font-mono-code">Core Engineering Highlight</p>
-              <p className="text-xs sm:text-sm text-foreground/90 font-medium leading-relaxed line-clamp-2">
+              <p className="text-xs sm:text-[15px] text-foreground/90 font-medium leading-relaxed line-clamp-2">
                 {topMetric}
               </p>
             </div>
@@ -187,20 +186,20 @@ const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) 
         )}
 
         {/* 3-4 BULLET POINTS OF TECHNICAL ACHIEVEMENTS & TESTING */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
             <Award size={14} className="text-primary" /> Achievements & Testing Methodologies
           </p>
-          <ul className="space-y-2.5">
+          <ul className="space-y-4">
             {bullets.slice(0, 3).map((bullet, i) => (
-              <li key={i} className="flex items-start gap-3 text-xs sm:text-sm text-foreground/90 leading-relaxed">
-                <CheckCircle2 size={16} className="text-primary shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-3 text-[15px] text-foreground/90 leading-relaxed">
+                <CheckCircle2 size={17} className="text-primary shrink-0 mt-0.5" />
                 <span className="line-clamp-2">{bullet.replace(/^[✓•-]\s*/, '')}</span>
               </li>
             ))}
             {/* Dedicated Testing Methodology Line */}
-            <li className="flex items-start gap-3 text-xs sm:text-sm text-foreground/90 leading-relaxed font-mono-code bg-muted/30 p-2.5 rounded-xl border border-border/50">
-              <TestTube2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+            <li className="flex items-start gap-3 text-[15px] text-foreground/90 leading-relaxed font-mono-code bg-muted/30 p-3 rounded-xl border border-border/50">
+              <TestTube2 size={17} className="text-emerald-400 shrink-0 mt-0.5" />
               <span>Rigorous E2E & Unit Testing with Cypress & Jest (95%+ code coverage).</span>
             </li>
           </ul>
