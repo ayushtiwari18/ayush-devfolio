@@ -15,7 +15,7 @@ const TYPE_COLORS = {
 };
 
 // ---------------------------------------------------------------------------
-// PAGE 1 (LEFT SIDE): THE CONTEXT PAGE (REFINED UI/UX TYPOGRAPHY)
+// PAGE 1 (LEFT SIDE): THE CONTEXT PAGE (560px x 540px NO CUT-OFF)
 // ---------------------------------------------------------------------------
 const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) => {
   if (!entry) return null;
@@ -31,15 +31,15 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
   return (
     <div
       ref={ref}
-      className="page w-[560px] h-[500px] bg-[#0d131f] border border-primary/30 border-r-0 rounded-l-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
-      style={{ backgroundColor: '#0d131f' }}
+      className="page w-[560px] h-[540px] bg-[#0c1017] border border-amber-500/25 border-r-0 border-l-4 border-l-primary/70 rounded-l-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
+      style={{ backgroundColor: '#0c1017' }}
     >
       {/* Inner Spine Seam Shadow (Right Edge Gradient for Page Depth) */}
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/50 via-black/15 to-transparent pointer-events-none z-20" />
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/60 via-black/20 to-transparent pointer-events-none z-20" />
 
       {/* Book Spine Stitching Dots */}
       <div className="absolute top-0 right-1 bottom-0 w-1 flex flex-col justify-around items-center opacity-40 pointer-events-none z-20">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(9)].map((_, i) => (
           <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary" />
         ))}
       </div>
@@ -48,14 +48,14 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
       <div className="absolute top-0 left-0 w-80 h-80 bg-gradient-to-br from-primary/15 via-accent/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* TOP METADATA BAR */}
-      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-4 pr-3">
-        <div className="flex items-center gap-3">
-          <span className="px-3.5 py-1.5 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
-            <BookOpen size={14} className="animate-pulse" />
+      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-3 pr-3">
+        <div className="flex items-center gap-2.5">
+          <span className="px-3 py-1 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
+            <BookOpen size={13} className="animate-pulse" />
             Page {pageNum} of {totalPages}
           </span>
           {entry.employment_type && (
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
               TYPE_COLORS[entry.employment_type] || 'bg-muted text-muted-foreground'
             }`}>
               {entry.employment_type}
@@ -63,28 +63,28 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
           )}
         </div>
 
-        <span className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/80 px-3.5 py-1.5 rounded-full font-mono-code border border-border shadow-sm">
-          <Calendar size={14} className="text-primary" />
+        <span className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/80 px-3.5 py-1 rounded-full font-mono-code border border-border shadow-sm">
+          <Calendar size={13} className="text-primary" />
           {entry.start_date}{entry.end_date ? ` – ${entry.end_date}` : ' – Present'}
         </span>
       </div>
 
       {/* BODY: ROLE BRANDING & BREATHABLE MISSION BLOCKQUOTE */}
-      <div className="relative z-10 flex-1 my-5 pr-4 flex flex-col justify-between space-y-6">
+      <div className="relative z-10 flex-1 my-4 pr-3 flex flex-col justify-between space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1.5 font-mono-code flex items-center gap-1.5">
-            <Briefcase size={14} /> Context & Architecture Scope
+          <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1 font-mono-code flex items-center gap-1.5">
+            <Briefcase size={13} /> Context & Architecture Scope
           </p>
-          <h3 className="text-2xl sm:text-[26px] font-extrabold text-foreground mb-2 leading-snug tracking-tight text-pretty">
+          <h3 className="text-2xl sm:text-[26px] font-extrabold text-foreground mb-1.5 leading-snug tracking-tight text-pretty">
             {entry.role}
           </h3>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <p className="text-primary font-bold text-base sm:text-lg">
               {entry.company}
             </p>
             {entry.location && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium bg-muted/50 px-2.5 py-0.5 rounded-full border border-border/60">
-                <MapPin size={13} />
+                <MapPin size={12} />
                 {entry.location}
               </span>
             )}
@@ -92,23 +92,23 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
         </div>
 
         {/* ELEGANT MINIMALIST LEFT-BORDERED BLOCKQUOTE */}
-        <div className="border-l-2 border-primary/60 pl-4 py-1 my-2">
-          <p className="italic text-muted-foreground text-[15px] leading-relaxed">
+        <div className="border-l-2 border-primary/60 pl-4 py-1.5 my-1">
+          <p className="italic text-muted-foreground text-[14px] sm:text-[15px] leading-relaxed">
             Spearheaded technical development and software architecture at {entry.company}, driving scalable frontend engineering, robust API services, and high-quality cloud infrastructure.
           </p>
         </div>
 
         {/* PRIMARY APPLICATION TECH STACK */}
         {techs.length > 0 && (
-          <div className="space-y-2 pt-2 border-t border-border/50">
-            <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
-              <Server size={13} className="text-primary" /> Core Tech Stack
+          <div className="space-y-1.5 pt-2 border-t border-border/50">
+            <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
+              <Server size={12} className="text-primary" /> Core Application Stack
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {techs.map((tech) => (
                 <span
                   key={tech}
-                  className="px-3 py-1 bg-muted/80 text-foreground text-xs sm:text-sm font-semibold rounded-lg border border-border/80 shadow-sm"
+                  className="px-2.5 py-1 bg-muted/80 text-foreground text-xs font-semibold rounded-lg border border-border/80 shadow-sm"
                 >
                   {tech}
                 </span>
@@ -118,7 +118,7 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
         )}
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER (100% VISIBLE, NO CUT-OFF) */}
       <div className="relative z-10 pt-3 border-t border-border/60 shrink-0 flex items-center justify-between pr-3">
         <span className="text-xs text-muted-foreground font-mono-code">Context • Left Page</span>
         <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full border border-primary/30">
@@ -131,7 +131,7 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
 ContextPage.displayName = 'ContextPage';
 
 // ---------------------------------------------------------------------------
-// PAGE 2 (RIGHT SIDE): THE IMPACT PAGE (REFINED UI/UX SPACING)
+// PAGE 2 (RIGHT SIDE): THE IMPACT PAGE (560px x 540px NO CUT-OFF)
 // ---------------------------------------------------------------------------
 const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) => {
   if (!entry) return null;
@@ -149,36 +149,39 @@ const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) 
   return (
     <div
       ref={ref}
-      className="page w-[560px] h-[500px] bg-[#0d131f] border border-primary/30 border-l-0 rounded-r-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
-      style={{ backgroundColor: '#0d131f' }}
+      className="page w-[560px] h-[540px] bg-[#0c1017] border border-amber-500/25 border-l-0 rounded-r-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
+      style={{ backgroundColor: '#0c1017' }}
     >
       {/* Inner Spine Seam Shadow (Left Edge Gradient for Page Depth) */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/50 via-black/15 to-transparent pointer-events-none z-20" />
+      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/60 via-black/20 to-transparent pointer-events-none z-20" />
 
       {/* Background Accent Sheen */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-accent/15 via-primary/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
+      {/* Dog-Eared Paper Corner Fold Prompt */}
+      <div className="absolute bottom-0 right-0 w-7 h-7 bg-gradient-to-tl from-primary/30 via-primary/10 to-transparent rounded-tl-lg border-t border-l border-primary/40 pointer-events-none z-20" />
+
       {/* TOP METADATA BAR */}
-      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-4 pl-3">
-        <span className="px-3.5 py-1.5 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
-          <BookOpen size={14} className="animate-pulse" />
+      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-3 pl-3">
+        <span className="px-3 py-1 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
+          <BookOpen size={13} className="animate-pulse" />
           Page {pageNum} of {totalPages}
         </span>
 
-        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-mono-code">
-          <Zap size={13} /> Technical Impact
+        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-mono-code">
+          <Zap size={12} /> Technical Impact
         </span>
       </div>
 
       {/* BODY: ENGINEERING ACHIEVEMENTS & TESTING METHODOLOGIES */}
-      <div className="relative z-10 flex-1 my-5 pl-3 flex flex-col justify-between space-y-5">
+      <div className="relative z-10 flex-1 my-4 pl-3 flex flex-col justify-between space-y-4">
         {/* CORE IMPACT HIGHLIGHT BOX */}
         {topMetric && (
-          <div className="p-4 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent border border-primary/30 rounded-2xl flex items-start gap-3 shadow-md">
-            <Zap size={18} className="text-primary shrink-0 mt-0.5 animate-pulse" />
+          <div className="p-3.5 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent border border-primary/30 rounded-2xl flex items-start gap-3 shadow-md">
+            <Zap size={17} className="text-primary shrink-0 mt-0.5 animate-pulse" />
             <div>
-              <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1 font-mono-code">Core Engineering Highlight</p>
-              <p className="text-xs sm:text-[15px] text-foreground/90 font-medium leading-relaxed line-clamp-2">
+              <p className="text-[11px] uppercase tracking-wider font-bold text-primary mb-0.5 font-mono-code">Core Engineering Highlight</p>
+              <p className="text-xs sm:text-[14px] text-foreground/90 font-medium leading-relaxed line-clamp-2">
                 {topMetric}
               </p>
             </div>
@@ -186,30 +189,30 @@ const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) 
         )}
 
         {/* 3-4 BULLET POINTS OF TECHNICAL ACHIEVEMENTS & TESTING */}
-        <div className="space-y-4">
-          <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
-            <Award size={14} className="text-primary" /> Achievements & Testing Methodologies
+        <div className="space-y-3">
+          <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
+            <Award size={13} className="text-primary" /> Achievements & Testing Methodologies
           </p>
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {bullets.slice(0, 3).map((bullet, i) => (
-              <li key={i} className="flex items-start gap-3 text-[15px] text-foreground/90 leading-relaxed">
-                <CheckCircle2 size={17} className="text-primary shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2.5 text-xs sm:text-[14px] text-foreground/90 leading-relaxed">
+                <CheckCircle2 size={16} className="text-primary shrink-0 mt-0.5" />
                 <span className="line-clamp-2">{bullet.replace(/^[✓•-]\s*/, '')}</span>
               </li>
             ))}
             {/* Dedicated Testing Methodology Line */}
-            <li className="flex items-start gap-3 text-[15px] text-foreground/90 leading-relaxed font-mono-code bg-muted/30 p-3 rounded-xl border border-border/50">
-              <TestTube2 size={17} className="text-emerald-400 shrink-0 mt-0.5" />
+            <li className="flex items-start gap-2.5 text-xs sm:text-[14px] text-foreground/90 leading-relaxed font-mono-code bg-muted/30 p-2.5 rounded-xl border border-border/50">
+              <TestTube2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
               <span>Rigorous E2E & Unit Testing with Cypress & Jest (95%+ code coverage).</span>
             </li>
           </ul>
         </div>
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER (100% VISIBLE, NO CUT-OFF) */}
       <div className="relative z-10 pt-3 border-t border-border/60 shrink-0 flex items-center justify-between pl-3">
         <span className="text-xs text-muted-foreground font-mono-code">Impact • Right Page</span>
-        <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/30 cursor-pointer">
+        <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3.5 py-1 rounded-full border border-primary/30 cursor-pointer">
           <span>Turn Page</span>
           <ArrowRight size={13} />
         </div>
@@ -301,25 +304,25 @@ export default function Experience() {
 
         {/* LOADING SKELETON STATE */}
         {loading || !isMounted ? (
-          <div className="h-[520px] sm:h-[500px] w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
+          <div className="h-[560px] w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
             <span className="text-muted-foreground text-sm flex items-center gap-2">
               <Sparkles size={16} className="animate-spin text-primary" /> Loading Executive Experience Journal...
             </span>
           </div>
         ) : entries.length > 0 ? (
           <>
-            {/* REACT-PAGEFLIP EXECUTIVE SPREAD (560px x 500px per page) */}
+            {/* REACT-PAGEFLIP EXECUTIVE SPREAD (560px x 540px per page, 1120px open spread) */}
             <div className="flex justify-center items-center overflow-visible my-4">
               {/* @ts-ignore */}
               <HTMLFlipBook
                 ref={bookRef}
                 width={560}
-                height={500}
+                height={540}
                 size="fixed"
                 minWidth={320}
                 maxWidth={600}
-                minHeight={400}
-                maxHeight={550}
+                minHeight={450}
+                maxHeight={600}
                 maxShadowOpacity={0.5}
                 showCover={false}
                 mobileScrollSupport={true}
