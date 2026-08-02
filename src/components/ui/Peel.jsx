@@ -129,6 +129,15 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   const config = { ...DEFAULTS, ...options };
   const { content, output, under } = elements;
 
+  // State Variables (Declared at top of scope to prevent TDZ ReferenceError)
+  let destroyed = false;
+  let running = false;
+  let visible = true;
+  let triggerFired = false;
+  let lockedUntilEdge = true;
+  let raf = 0;
+  let lastTime = performance.now();
+
   const gl = output.getContext('webgl2', {
     alpha: true,
     depth: true,
@@ -218,20 +227,31 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
 
   // Pixel-Perfect HTML-to-Image Texture Capture
   capture = async () => {
-    if (!content || isCapturing) return;
+    if (!content || isCapturing || destroyed) return;
     isCapturing = true;
     try {
+      console.log('[Peel:Capture] Starting texture rasterization via html-to-image...');
       const canvas = await toCanvas(content, {
         pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
         cacheBust: true,
       });
-      if (canvas && gl && !gl.isContextLost()) {
+      if (destroyed || !contentTexture || !gl || gl.isContextLost()) {
+        console.warn('[Peel:Capture] Component destroyed or WebGL context lost during capture. Skipping texture bind.');
+        return;
+      }
+      if (canvas) {
         gl.bindTexture(gl.TEXTURE_2D, contentTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+        // Hide middle live HTML layer so WebGL canvas peel directly reveals the under-layer card!
+        content.style.opacity = '0';
+        console.log('[Peel:Capture] WebGL texture updated. Live HTML hidden to reveal under-layer on peel.', {
+          width: canvas.width,
+          height: canvas.height,
+        });
         wake();
       }
     } catch (err) {
-      // Fallback
+      console.error('[Peel:CaptureError]', err);
     } finally {
       isCapturing = false;
     }
@@ -325,16 +345,25 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     gl.disable(gl.DEPTH_TEST);
   }
 
-  let raf = 0;
-  let lastTime = performance.now();
-  let destroyed = false;
-  let running = false;
-  let visible = true;
-  let triggerFired = false;
-
   function updateTarget() {
     const w = Math.max(output.clientWidth, 1);
     const fullReveal = Math.max(config.reveal, w * 1.4);
+
+    // Physical Book Page Turn Rule: If a page turn target is already locked to 1, preserve it!
+    if (peel.target === 1) {
+      return;
+    }
+
+    if (lockedUntilEdge) {
+      if (pointer.u < Math.max(config.zone, 150)) {
+        lockedUntilEdge = false;
+        console.log('[Peel:Gesture] Cursor re-entered trigger edge. Lock released.');
+      } else {
+        peel.target = 0;
+        return;
+      }
+    }
+
     if (config.mode === 'hover') {
       const open = peel.target > 0.5;
       const limit = open ? peel.a * fullReveal + config.zone : config.zone;
@@ -353,6 +382,27 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     }
     const delta = Math.min((now - lastTime) / 1000, 1 / 30);
     lastTime = now;
+
+    if (config.isBookClosing) {
+      peel.target = 0;
+      peel.a += (0 - peel.a) * Math.min(delta / 0.75, 1);
+      render();
+      console.log(`[Peel:BookCloseFrame] Reversing fold: peel.a = ${peel.a.toFixed(2)}`);
+      if (peel.a <= 0.02) {
+        peel.a = 0;
+        peel.target = 0;
+        pointer.u = FAR;
+        console.log('[Peel:BookCloseComplete] Reverse fold complete. Invoking onBookCloseComplete callback.');
+        if (config.onBookCloseComplete) {
+          config.onBookCloseComplete();
+        }
+        running = false;
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+
     const tau = Math.max(config.smoothing, 1e-4);
     const k = 1 - Math.exp(-delta / tau);
     const kp = 1 - Math.exp(-delta / (tau * 0.45));
@@ -365,11 +415,13 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     if (peel.a > 0.94 && onPeelTrigger && !triggerFired) {
       triggerFired = true;
       peel.a = 1.0;
+      console.log(`[Peel:Trigger] Page turn threshold reached! (peel.a=${peel.a.toFixed(2)}). Firing page turn trigger...`);
       setTimeout(() => {
         onPeelTrigger();
         peel.a = 0;
         peel.target = 0;
         pointer.u = FAR;
+        lockedUntilEdge = true;
         setTimeout(() => { triggerFired = false; }, 400);
       }, 350);
     }
@@ -408,10 +460,18 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
     return x;
   }
 
+  function getEventPos(event) {
+    if (event.touches && event.touches.length > 0) {
+      return { clientX: event.touches[0].clientX, clientY: event.touches[0].clientY };
+    }
+    return { clientX: event.clientX, clientY: event.clientY };
+  }
+
   function onPointerMove(event) {
+    const pos = getEventPos(event);
     const rect = output.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const x = pos.clientX - rect.left;
+    const y = pos.clientY - rect.top;
     pointer.u = sideDistance(x, y, rect);
     pointer.v = config.side === 'top' || config.side === 'bottom' ? x : y;
     updateTarget();
@@ -419,12 +479,32 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   }
 
   function onPointerLeave() {
-    pointer.u = FAR;
-    peel.target = 0;
+    if (config.isBookClosing) return;
+    // Physical Book Rule: If page turn is in progress (peel.a > 0.35) or user clicked to turn (peel.target === 1), hold turn to left!
+    if (peel.a > 0.35 || peel.target === 1) {
+      console.log('[Peel:PointerLeave] Pointer left area during page turn. Holding turn to left stack.', { peelA: peel.a.toFixed(2) });
+      peel.target = 1;
+    } else {
+      console.log('[Peel:PointerLeave] Pointer left area before peek threshold. Sliding back to right.', { peelA: peel.a.toFixed(2) });
+      pointer.u = FAR;
+      peel.target = 0;
+    }
     start();
   }
 
   function onClick() {
+    console.log('[Peel:Click] User clicked card. Setting peel.target = 1 to turn page.');
+    lockedUntilEdge = false;
+    peel.target = 1;
+    start();
+  }
+
+  function onTouchStart(event) {
+    onPointerMove(event);
+  }
+
+  function onTouchEnd() {
+    lockedUntilEdge = false;
     peel.target = 1;
     start();
   }
@@ -432,6 +512,9 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
   listenTarget.addEventListener('pointermove', onPointerMove);
   listenTarget.addEventListener('pointerleave', onPointerLeave);
   listenTarget.addEventListener('click', onClick);
+  listenTarget.addEventListener('touchstart', onTouchStart, { passive: true });
+  listenTarget.addEventListener('touchmove', onPointerMove, { passive: true });
+  listenTarget.addEventListener('touchend', onTouchEnd);
 
   return {
     setOptions(next) {
@@ -450,6 +533,10 @@ export function createPeel(elements, options = {}, onPeelTrigger) {
       listenTarget.removeEventListener('pointermove', onPointerMove);
       listenTarget.removeEventListener('pointerleave', onPointerLeave);
       listenTarget.removeEventListener('click', onClick);
+      listenTarget.removeEventListener('touchstart', onTouchStart);
+      listenTarget.removeEventListener('touchmove', onPointerMove);
+      listenTarget.removeEventListener('touchend', onTouchEnd);
+      if (content) content.style.opacity = '';
       if (under) under.style.visibility = '';
       gl.deleteTexture(contentTexture);
       gl.deleteProgram(sheet.program);
@@ -468,6 +555,8 @@ export function Peel({
   className = '',
   style = {},
   onPeelComplete,
+  isBookClosing = false,
+  onBookCloseComplete,
   ...options
 }) {
   const contentRef = useRef(null);
@@ -482,7 +571,7 @@ export function Peel({
 
     instanceRef.current = createPeel(
       { content, output, under: underRef.current ?? undefined },
-      options,
+      { ...options, isBookClosing, onBookCloseComplete },
       onPeelComplete
     );
 
@@ -491,6 +580,12 @@ export function Peel({
       instanceRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (instanceRef.current) {
+      instanceRef.current.setOptions({ isBookClosing, onBookCloseComplete });
+    }
+  }, [isBookClosing, onBookCloseComplete]);
 
   return (
     <div className={`relative ${className}`} style={{ position: 'relative', overflow: 'hidden', ...style }}>
