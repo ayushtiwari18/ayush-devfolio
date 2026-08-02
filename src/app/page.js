@@ -26,6 +26,12 @@ const Skills = dynamic(
   { ssr: false, loading: () => <SectionSkeleton minH="300px" /> }
 );
 
+// PageTurnSandbox: Native react-pageflip Paper Bending Engine Test Sandbox
+const PageTurnSandbox = dynamic(
+  () => import('@/components/test/PageTurnSandbox'),
+  { ssr: false, loading: () => <SectionSkeleton minH="480px" /> }
+);
+
 function SectionSkeleton({ minH = '200px' }) {
   return (
     <div
@@ -86,6 +92,7 @@ export default async function Home() {
       <Hero profile={profile} />
       <About profile={profile} achievements={achievements} />
       <Experience />
+      <PageTurnSandbox />
       <Education />
       <Skills />
       <CodingStats />
