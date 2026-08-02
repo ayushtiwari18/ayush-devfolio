@@ -149,9 +149,12 @@ export default function Experience() {
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isBookClosing, setIsBookClosing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
   const section = useReveal({ threshold: 0.1 });
 
   useEffect(() => {
+    setIsMounted(true);
     fetch('/api/public/experience')
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
@@ -192,22 +195,6 @@ export default function Experience() {
     setIsBookClosing(false);
   };
 
-  if (loading) {
-    return (
-      <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="h-[520px] w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
-            <span className="text-muted-foreground text-sm flex items-center gap-2">
-              <Sparkles size={16} className="animate-spin text-primary" /> Loading Career Experience Book...
-            </span>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (!entries || entries.length === 0) return null;
-
   const isFinalCard = entries.length > 1 && activeIdx === entries.length - 1;
   const currentEntry = entries[activeIdx] || entries[0];
   const nextIdx = (activeIdx + 1) % entries.length;
@@ -216,11 +203,11 @@ export default function Experience() {
   return (
     <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
       <div className="max-w-6xl mx-auto">
-        {/* Section Header (Matching About Section Styling) */}
+        {/* Section Header (Always rendered from Frame 1, matching About section) */}
         <div
           ref={section.ref}
           className="mb-14"
-          style={fadeUp(section.visible)}
+          style={fadeUp(section.visible || !isMounted)}
         >
           <div className="flex items-center gap-2 mb-4">
             <span className="relative flex h-2.5 w-2.5">
@@ -241,74 +228,85 @@ export default function Experience() {
           </p>
         </div>
 
-        {/* EXPANSIVE LANDSCAPE BOOK CONTAINER (85% SECTION COVERAGE) */}
-        <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full">
-          {entries.length > 1 ? (
-            <Peel
-              side="left"
-              mode="click"
-              reveal={1400}
-              zone={300}
-              curl={320}
-              bow={85}
-              shade={0.35}
-              shine={1}
-              isBookClosing={isBookClosing}
-              onBookCloseComplete={handleBookCloseComplete}
-              under={
-                <LandscapeBookPage
-                  entry={nextEntry}
-                  index={nextIdx}
-                  total={entries.length}
-                />
-              }
-              onPeelComplete={handlePageTurn}
-              className="w-full h-full rounded-3xl"
-            >
-              <LandscapeBookPage
-                entry={currentEntry}
-                index={activeIdx}
-                total={entries.length}
-              />
-            </Peel>
-          ) : (
-            <LandscapeBookPage
-              entry={currentEntry}
-              index={0}
-              total={1}
-            />
-          )}
-        </div>
-
-        {/* DECK HINT BADGE & ROLE PROGRESS INDICATOR */}
-        {entries.length > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto mt-8 px-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2 bg-card border border-border px-4 py-2 rounded-full shadow-sm font-medium">
-                <Sparkles size={15} className="text-primary animate-pulse" />
-                {isBookClosing
-                  ? 'Closing Book & Resetting to Page 1...'
-                  : isFinalCard
-                  ? 'Final Page Reached — Click card to fold book back to Page 1'
-                  : 'Click anywhere on the card to turn the page'}
-              </span>
-            </div>
-
-            {/* Dots Indicator */}
-            <div className="flex items-center gap-2.5">
-              {entries.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveIdx(i)}
-                  aria-label={`Go to experience page ${i + 1}`}
-                  className={`h-3 rounded-full transition-all duration-300 ${
-                    i === activeIdx ? 'w-9 bg-primary' : 'w-3 bg-muted-foreground/30 hover:bg-muted-foreground'
-                  }`}
-                />
-              ))}
-            </div>
+        {/* LOADING SKELETON STATE */}
+        {loading ? (
+          <div className="h-[520px] sm:h-[480px] w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
+            <span className="text-muted-foreground text-sm flex items-center gap-2">
+              <Sparkles size={16} className="animate-spin text-primary" /> Loading Career Experience Book...
+            </span>
           </div>
-        )}
+        ) : entries.length > 0 ? (
+          <>
+            {/* EXPANSIVE LANDSCAPE BOOK CONTAINER (85% SECTION COVERAGE) */}
+            <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full">
+              {entries.length > 1 ? (
+                <Peel
+                  side="left"
+                  mode="click"
+                  reveal={1400}
+                  zone={300}
+                  curl={320}
+                  bow={85}
+                  shade={0.35}
+                  shine={1}
+                  isBookClosing={isBookClosing}
+                  onBookCloseComplete={handleBookCloseComplete}
+                  under={
+                    <LandscapeBookPage
+                      entry={nextEntry}
+                      index={nextIdx}
+                      total={entries.length}
+                    />
+                  }
+                  onPeelComplete={handlePageTurn}
+                  className="w-full h-full rounded-3xl"
+                >
+                  <LandscapeBookPage
+                    entry={currentEntry}
+                    index={activeIdx}
+                    total={entries.length}
+                  />
+                </Peel>
+              ) : (
+                <LandscapeBookPage
+                  entry={currentEntry}
+                  index={0}
+                  total={1}
+                />
+              )}
+            </div>
+
+            {/* DECK HINT BADGE & ROLE PROGRESS INDICATOR */}
+            {entries.length > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto mt-8 px-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2 bg-card border border-border px-4 py-2 rounded-full shadow-sm font-medium">
+                    <Sparkles size={15} className="text-primary animate-pulse" />
+                    {isBookClosing
+                      ? 'Closing Book & Resetting to Page 1...'
+                      : isFinalCard
+                      ? 'Final Page Reached — Click card to fold book back to Page 1'
+                      : 'Click anywhere on the card to turn the page'}
+                  </span>
+                </div>
+
+                {/* Dots Indicator */}
+                <div className="flex items-center gap-2.5">
+                  {entries.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveIdx(i)}
+                      aria-label={`Go to experience page ${i + 1}`}
+                      className={`h-3 rounded-full transition-all duration-300 ${
+                        i === activeIdx ? 'w-9 bg-primary' : 'w-3 bg-muted-foreground/30 hover:bg-muted-foreground'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </section>
   );
