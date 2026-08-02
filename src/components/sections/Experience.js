@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2, Award, Zap, ArrowRight, BookOpen } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import HTMLFlipBook from 'react-pageflip';
+import { Briefcase, MapPin, Calendar, Sparkles, Layers, CheckCircle2, Award, Zap, ArrowRight, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
-import Peel from '@/components/ui/Peel';
 
 const TYPE_COLORS = {
   'Full-time':   'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
@@ -15,13 +15,10 @@ const TYPE_COLORS = {
 };
 
 // ---------------------------------------------------------------------------
-// EXECUTIVE STUDIO LANDSCAPE BOOK SPREAD (100% SOLID OPAQUE, ZERO BLEED)
+// EXECUTIVE STUDIO LANDSCAPE BOOK SPREAD (REACT-PAGEFLIP FORWARDREF PAGE)
 // ---------------------------------------------------------------------------
-function LandscapeBookPage({ entry, index, total, isClosing }) {
+const ExperienceBookPage = React.forwardRef(({ entry, index, total }, ref) => {
   if (!entry) return null;
-
-  // Strict page index clamping so counter NEVER displays "6 of 5"
-  const safePageNum = Math.min(index + 1, total);
 
   const bullets = (entry.description || '')
     .split('\n')
@@ -38,8 +35,9 @@ function LandscapeBookPage({ entry, index, total, isClosing }) {
 
   return (
     <div
-      className="w-full h-full bg-[#0d131f] border border-primary/30 border-l-4 border-l-primary/70 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative"
-      style={{ backgroundColor: '#0d131f', opacity: 1 }}
+      ref={ref}
+      className="page w-full h-full bg-[#0d131f] border border-primary/40 border-l-4 border-l-primary/70 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
+      style={{ backgroundColor: '#0d131f' }}
     >
       {/* Book Spine Stitching Dots (Tactile Journal Seam) */}
       <div className="absolute top-0 left-1 bottom-0 w-1 flex flex-col justify-around items-center opacity-40 pointer-events-none">
@@ -57,7 +55,7 @@ function LandscapeBookPage({ entry, index, total, isClosing }) {
         <div className="flex items-center gap-3">
           <span className="px-3.5 py-1.5 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
             <BookOpen size={14} className="animate-pulse" />
-            Page {safePageNum} of {total}{isClosing ? ' (Resetting...)' : ''}
+            Page {index + 1} of {total}
           </span>
           {entry.employment_type && (
             <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
@@ -152,18 +150,19 @@ function LandscapeBookPage({ entry, index, total, isClosing }) {
       </div>
     </div>
   );
-}
+});
+ExperienceBookPage.displayName = 'ExperienceBookPage';
 
 // ---------------------------------------------------------------------------
-// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH SILKY SMOOTH WEBGL PEEL ENGINE
+// PURE DB-DRIVEN WORK EXPERIENCE SECTION WITH NATIVE REACT-PAGEFLIP ENGINE
 // ---------------------------------------------------------------------------
 export default function Experience() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isBookClosing, setIsBookClosing] = useState(false);
+  const [activePage, setActivePage] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
 
+  const bookRef = useRef(null);
   const section = useReveal({ threshold: 0.1 });
 
   useEffect(() => {
@@ -172,12 +171,7 @@ export default function Experience() {
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          // Sort reverse chronological by date (newest role first)
           const sorted = [...data].sort((a, b) => new Date(b.start_date || 0) - new Date(a.start_date || 0));
-          console.log('[Experience:Init] Loaded DB experience entries.', {
-            count: sorted.length,
-            roles: sorted.map((s, idx) => `Page ${idx + 1}: ${s.role} at ${s.company}`),
-          });
           setEntries(sorted);
         } else {
           setEntries([]);
@@ -190,33 +184,30 @@ export default function Experience() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handlePageTurn = () => {
-    if (isBookClosing) return;
-
-    if (activeIdx < entries.length - 1) {
-      console.log(`[Experience:PageTurn] Turning Page ${activeIdx + 1} to unveil Page ${activeIdx + 2}`);
-      setActiveIdx((prev) => prev + 1);
-    } else {
-      console.log(`[Experience:BookCloseTrigger] Final Page ${activeIdx + 1} turned! Executing book close reset.`);
-      setIsBookClosing(true);
+  const handleFlip = (e) => {
+    if (e && typeof e.data === 'number') {
+      setActivePage(e.data);
     }
   };
 
-  const handleBookCloseComplete = () => {
-    console.log('[Experience:BookCloseComplete] Book close reset finished. Resetting to Page 1.');
-    setActiveIdx(0);
-    setIsBookClosing(false);
+  const handleNextPage = () => {
+    if (bookRef.current?.pageFlip()) {
+      bookRef.current.pageFlip().flipNext();
+    }
   };
 
-  const isFinalCard = entries.length > 1 && activeIdx === entries.length - 1;
-  const currentEntry = entries[activeIdx] || entries[0];
-  const nextIdx = (activeIdx + 1) % entries.length;
-  const nextEntry = entries[nextIdx];
+  const handlePrevPage = () => {
+    if (bookRef.current?.pageFlip()) {
+      bookRef.current.pageFlip().flipPrev();
+    }
+  };
+
+  const isFinalPage = entries.length > 1 && activePage === entries.length - 1;
 
   return (
     <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
       <div className="max-w-6xl mx-auto">
-        {/* Section Header (Always rendered from Frame 1, matching About section) */}
+        {/* Section Header */}
         <div
           ref={section.ref}
           className="mb-14"
@@ -237,12 +228,12 @@ export default function Experience() {
             Engineering & <span className="gradient-text">Leadership Roles</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-3xl leading-relaxed">
-            Roles in reverse chronological order — click anywhere on the card to turn the page and explore full technical contributions.
+            Roles in reverse chronological order — click anywhere or drag the card corner to turn the page and explore full technical contributions.
           </p>
         </div>
 
         {/* LOADING SKELETON STATE */}
-        {loading ? (
+        {loading || !isMounted ? (
           <div className="h-[520px] sm:h-[480px] w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
             <span className="text-muted-foreground text-sm flex items-center gap-2">
               <Sparkles size={16} className="animate-spin text-primary" /> Loading Career Experience Book...
@@ -250,60 +241,67 @@ export default function Experience() {
           </div>
         ) : entries.length > 0 ? (
           <>
-            {/* UNCLIPPED 3D LANDSCAPE BOOK CONTAINER */}
-            <div className="relative max-w-6xl mx-auto h-[520px] sm:h-[480px] w-full overflow-visible">
-              {entries.length > 1 ? (
-                <Peel
-                  side="left"
-                  mode="click"
-                  reveal={1400}
-                  zone={300}
-                  curl={320}
-                  bow={85}
-                  shade={0.35}
-                  shine={1}
-                  isBookClosing={isBookClosing}
-                  onBookCloseComplete={handleBookCloseComplete}
-                  under={
-                    <LandscapeBookPage
-                      entry={nextEntry}
-                      index={nextIdx}
-                      total={entries.length}
-                      isClosing={isBookClosing}
-                    />
-                  }
-                  onPeelComplete={handlePageTurn}
-                  className="w-full h-full rounded-3xl"
-                >
-                  <LandscapeBookPage
-                    entry={currentEntry}
-                    index={activeIdx}
+            {/* REACT-PAGEFLIP NATIVE PHYSICAL PAPER-BENDING DECK */}
+            <div className="flex justify-center items-center overflow-visible my-4">
+              {/* @ts-ignore */}
+              <HTMLFlipBook
+                ref={bookRef}
+                width={560}
+                height={480}
+                size="fixed"
+                minWidth={320}
+                maxWidth={620}
+                minHeight={400}
+                maxHeight={550}
+                maxShadowOpacity={0.5}
+                showCover={false}
+                mobileScrollSupport={true}
+                useMouseEvents={true}
+                swipeDistance={30}
+                clickEventForward={true}
+                usePortrait={false}
+                onFlip={handleFlip}
+                className="shadow-2xl rounded-3xl overflow-visible"
+              >
+                {entries.map((entry, idx) => (
+                  <ExperienceBookPage
+                    key={entry.id || idx}
+                    entry={entry}
+                    index={idx}
                     total={entries.length}
-                    isClosing={isBookClosing}
                   />
-                </Peel>
-              ) : (
-                <LandscapeBookPage
-                  entry={currentEntry}
-                  index={0}
-                  total={1}
-                  isClosing={false}
-                />
-              )}
+                ))}
+              </HTMLFlipBook>
             </div>
 
-            {/* DECK HINT BADGE & ROLE PROGRESS INDICATOR */}
+            {/* DECK HINT BADGE, NAVIGATION BUTTONS & PROGRESS INDICATOR */}
             {entries.length > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto mt-8 px-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={activePage === 0}
+                    aria-label="Previous Page"
+                    className="p-2 rounded-full bg-card border border-border text-foreground hover:bg-primary/10 hover:border-primary/40 disabled:opacity-30 disabled:hover:bg-card transition-all"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
                   <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2 bg-card border border-border px-4 py-2 rounded-full shadow-sm font-medium">
                     <Sparkles size={15} className="text-primary animate-pulse" />
-                    {isBookClosing
-                      ? 'Closing Book & Resetting to Page 1...'
-                      : isFinalCard
-                      ? 'Final Page Reached — Click card to fold book back to Page 1'
-                      : 'Click anywhere on the card to turn the page'}
+                    {isFinalPage
+                      ? 'Final Page Reached — Click to review career summary'
+                      : 'Click card or drag corner to turn the page'}
                   </span>
+
+                  <button
+                    onClick={handleNextPage}
+                    disabled={isFinalPage}
+                    aria-label="Next Page"
+                    className="p-2 rounded-full bg-card border border-border text-foreground hover:bg-primary/10 hover:border-primary/40 disabled:opacity-30 disabled:hover:bg-card transition-all"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
 
                 {/* Dots Indicator */}
@@ -311,13 +309,14 @@ export default function Experience() {
                   {entries.map((_, i) => (
                     <button
                       key={i}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveIdx(i);
+                      onClick={() => {
+                        if (bookRef.current?.pageFlip()) {
+                          bookRef.current.pageFlip().flip(i);
+                        }
                       }}
                       aria-label={`Go to experience page ${i + 1}`}
                       className={`h-3 rounded-full transition-all duration-300 ${
-                        i === activeIdx ? 'w-9 bg-primary' : 'w-3 bg-muted-foreground/30 hover:bg-muted-foreground'
+                        i === activePage ? 'w-9 bg-primary' : 'w-3 bg-muted-foreground/30 hover:bg-muted-foreground'
                       }`}
                     />
                   ))}
