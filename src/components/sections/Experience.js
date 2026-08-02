@@ -216,18 +216,28 @@ export default function Experience() {
   return (
     <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10">
       <div className="max-w-6xl mx-auto">
-        {/* Section Header */}
+        {/* Section Header (Matching About Section Styling) */}
         <div
           ref={section.ref}
-          className="text-center mb-12"
+          className="mb-14"
           style={fadeUp(section.visible)}
         >
+          <div className="flex items-center gap-2 mb-4">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <span className="text-xs font-medium text-green-500 tracking-wide uppercase font-mono-code">
+              Career Track Record
+            </span>
+          </div>
+
           <p className="section-label mb-3">Career History</p>
           <h2 className="section-heading mb-4">
-            Work <span className="gradient-text">Experience</span>
+            Engineering & <span className="gradient-text">Leadership Roles</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Roles in reverse chronological order — click card to turn the page
+          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl leading-relaxed">
+            Roles in reverse chronological order — click anywhere on the card to turn the page and explore full technical contributions.
           </p>
         </div>
 
