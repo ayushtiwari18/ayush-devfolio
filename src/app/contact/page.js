@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Mail, MapPin, Github, Linkedin } from 'lucide-react';
 import ContactForm from '@/components/contact/ContactForm';
-import { BASE_URL } from '@/app/layout';
+import { BASE_URL } from '@/lib/config';
 
 export const metadata = {
   title: 'Contact — Ayush Tiwari | Hire Full Stack Developer India',
@@ -20,7 +20,7 @@ export const metadata = {
     description: 'Hire Ayush Tiwari — Full Stack Developer, Jabalpur India. Available for projects and roles.',
     url:          `${BASE_URL}/contact`,
     type:        'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card:    'summary_large_image',

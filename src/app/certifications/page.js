@@ -3,7 +3,7 @@ import { ArrowLeft, Award, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getPublishedCertifications } from '@/services/certifications.service';
 import CertificationsClient from '@/components/certifications/CertificationsClient';
-import { BASE_URL } from '@/app/layout';
+import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase on every request
 export const revalidate = 60;
@@ -25,7 +25,7 @@ export const metadata = {
     description: 'AWS, Oracle, Cisco and 25+ certifications by Ayush Tiwari.',
     url:          `${BASE_URL}/certifications`,
     type:        'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card:    'summary_large_image',

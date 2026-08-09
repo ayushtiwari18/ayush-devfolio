@@ -1,0 +1,655 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { toCanvas } from 'html-to-image';
+
+const DEFAULTS = {
+  side: 'left',
+  mode: 'click',
+  reveal: 350,
+  zone: 220,
+  curl: 280,
+  bow: 75,
+  shade: 0.35,
+  shine: 1,
+  shineDistance: 1200,
+  shineColor: 'auto',
+  bulge: 50,
+  perspective: 2000,
+  smoothing: 0.75,
+};
+
+const SIDE_INDEX = {
+  left: 0,
+  right: 1,
+  top: 2,
+  bottom: 3,
+};
+
+const SHEET_VERT = `#version 300 es
+precision highp float;
+layout(location = 0) in vec2 aGrid;
+uniform vec2 uRes;
+uniform float uSide;
+uniform float uPeel;
+uniform float uReveal;
+uniform float uCurl;
+uniform float uBow;
+uniform float uFocal;
+uniform float uZone;
+uniform float uBulge;
+uniform vec2 uPointer;
+out vec2 vUv;
+out float vShade;
+out vec2 vSide;
+
+const float PI = 3.1415926;
+
+void main () {
+  vUv = aGrid;
+  vec2 p = aGrid * uRes;
+  float crossLen = (uSide < 1.5) ? uRes.y : uRes.x;
+  float u; float v;
+  if (uSide < 0.5) { u = p.x; v = p.y; }
+  else if (uSide < 1.5) { u = uRes.x - p.x; v = p.y; }
+  else if (uSide < 2.5) { u = p.y; v = p.x; }
+  else { u = uRes.y - p.y; v = p.x; }
+
+  float A = clamp(uPeel, 0.0, 1.0);
+  float f = A * uReveal;
+  float R = max(uCurl * A, 0.001);
+  float c0 = f + R;
+
+  float dvB = (uPointer.y - v) / max(crossLen * 0.28, 1.0);
+  float prox = clamp(1.0 - uPointer.x / max(c0 + uZone, 1.0), 0.0, 1.0);
+  float c = c0 + uBulge * A * prox * prox * exp(-dvB * dvB);
+
+  float x = u;
+  float z = 0.0;
+  float sh = 0.0;
+  if (A > 0.001 && u < c) {
+    float theta = (c - u) / R;
+    if (theta <= PI) {
+      x = c - R * sin(theta);
+      z = R * (1.0 - cos(theta));
+    } else {
+      x = c + (theta - PI) * R;
+      z = 2.0 * R;
+    }
+    sh = sin(clamp(theta, 0.0, PI));
+  }
+  z += uBow * A * sin(PI * v / max(crossLen, 1.0)) * clamp(z / max(R, 1.0), 0.0, 1.5);
+  z = clamp(z, -uFocal * 0.2, uFocal * 0.45);
+  vShade = sh * smoothstep(0.0, 0.08, A);
+  vSide = vec2(u, v);
+
+  vec2 q;
+  if (uSide < 0.5) q = vec2(x, v);
+  else if (uSide < 1.5) q = vec2(uRes.x - x, v);
+  else if (uSide < 2.5) q = vec2(v, x);
+  else q = vec2(v, uRes.y - x);
+
+  vec2 ndc = (q / uRes) * 2.0 - 1.0;
+  ndc.y = -ndc.y;
+  float w = (uFocal - z) / uFocal;
+  gl_Position = vec4(ndc, -z / uFocal, w);
+}`;
+
+const SHEET_FRAG = `#version 300 es
+precision highp float;
+in vec2 vUv;
+in float vShade;
+in vec2 vSide;
+out vec4 outColor;
+uniform sampler2D uContent;
+uniform float uShade;
+uniform float uMaxX;
+uniform float uShine;
+uniform vec3 uShineColor;
+uniform float uCross;
+uniform float uSpan;
+uniform vec2 uPointer;
+
+void main () {
+  vec2 uv = clamp(vUv, vec2(0.001), vec2(uMaxX - 0.001, 0.999));
+  vec4 tex = texture(uContent, uv);
+  float sh = 1.0 - clamp(uShade, 0.0, 1.0) * 0.7 * pow(max(vShade, 0.0), 1.3);
+  float du = max(vSide.x, 0.0);
+  float line = exp(-du / 2.5) + exp(-du / 18.0) * 0.25;
+  float dv = (vSide.y - uPointer.y) / max(uCross * 0.45, 1.0);
+  float prox = clamp(1.0 - uPointer.x / max(uSpan, 1.0), 0.0, 1.0);
+  float shine = uShine * line * exp(-dv * dv) * prox * prox;
+  vec3 rgb = mix(tex.rgb * sh, uShineColor, clamp(shine, 0.0, 1.0));
+  outColor = vec4(rgb * tex.a, tex.a);
+}`;
+
+const SEG = 96;
+
+export function createPeel(elements, options = {}, onPeelTrigger) {
+  const config = { ...DEFAULTS, ...options };
+  const { content, output, under } = elements;
+
+  // State Variables (Declared at top of scope to prevent TDZ ReferenceError)
+  let destroyed = false;
+  let running = false;
+  let visible = true;
+  let triggerFired = false;
+  let lockedUntilEdge = true;
+  let raf = 0;
+  let lastTime = performance.now();
+
+  const gl = output.getContext('webgl2', {
+    alpha: true,
+    depth: true,
+    stencil: false,
+    antialias: true,
+    premultipliedAlpha: true,
+  });
+  if (!gl || gl.isContextLost()) return null;
+
+  let wake = () => {};
+  let capture = () => {};
+
+  function compile(type, text) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, text);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error('Peel shader error:', gl.getShaderInfoLog(shader));
+    }
+    return shader;
+  }
+
+  function link(vertText, fragText) {
+    const vert = compile(gl.VERTEX_SHADER, vertText);
+    const frag = compile(gl.FRAGMENT_SHADER, fragText);
+    const program = gl.createProgram();
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
+    gl.linkProgram(program);
+    const uniforms = {};
+    const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < count; i++) {
+      const info = gl.getActiveUniform(program, i);
+      uniforms[info.name] = gl.getUniformLocation(program, info.name);
+    }
+    return { program, vert, frag, uniforms };
+  }
+
+  const sheet = link(SHEET_VERT, SHEET_FRAG);
+
+  const gridVerts = new Float32Array((SEG + 1) * (SEG + 1) * 2);
+  for (let y = 0; y <= SEG; y++) {
+    for (let x = 0; x <= SEG; x++) {
+      const i = (y * (SEG + 1) + x) * 2;
+      gridVerts[i] = x / SEG;
+      gridVerts[i + 1] = y / SEG;
+    }
+  }
+  const gridIndices = new Uint32Array(SEG * SEG * 6);
+  let offset = 0;
+  for (let y = 0; y < SEG; y++) {
+    for (let x = 0; x < SEG; x++) {
+      const a = y * (SEG + 1) + x;
+      const b = a + 1;
+      const c = a + SEG + 1;
+      const d = c + 1;
+      gridIndices[offset++] = a;
+      gridIndices[offset++] = c;
+      gridIndices[offset++] = b;
+      gridIndices[offset++] = b;
+      gridIndices[offset++] = c;
+      gridIndices[offset++] = d;
+    }
+  }
+
+  const sheetVao = gl.createVertexArray();
+  gl.bindVertexArray(sheetVao);
+  const gridBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, gridBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, gridVerts, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const indexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, gridIndices, gl.STATIC_DRAW);
+  gl.bindVertexArray(null);
+
+  const contentTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, contentTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  let contentMaxX = 1;
+  let isCapturing = false;
+
+  // Pixel-Perfect HTML-to-Image Texture Capture
+  capture = async () => {
+    if (!content || isCapturing || destroyed) return;
+    isCapturing = true;
+    try {
+      console.log('[Peel:Capture] Starting texture rasterization via html-to-image...');
+      const canvas = await toCanvas(content, {
+        pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        cacheBust: true,
+      });
+      if (destroyed || !contentTexture || !gl || gl.isContextLost()) {
+        console.warn('[Peel:Capture] Component destroyed or WebGL context lost during capture. Skipping texture bind.');
+        return;
+      }
+      if (canvas) {
+        gl.bindTexture(gl.TEXTURE_2D, contentTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+        // Hide middle live HTML layer so WebGL canvas peel directly reveals the under-layer card!
+        content.style.opacity = '0';
+        console.log('[Peel:Capture] WebGL texture updated. Live HTML hidden to reveal under-layer on peel.', {
+          width: canvas.width,
+          height: canvas.height,
+        });
+        wake();
+      }
+    } catch (err) {
+      console.error('[Peel:CaptureError]', err);
+    } finally {
+      isCapturing = false;
+    }
+  };
+
+  // Initial captures
+  capture();
+  setTimeout(capture, 150);
+
+  function syncCanvasSize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.max(1, Math.round(output.clientWidth * dpr));
+    const height = Math.max(1, Math.round(output.clientHeight * dpr));
+    if (output.width !== width || output.height !== height) {
+      output.width = width;
+      output.height = height;
+    }
+    contentMaxX = Math.min(
+      1,
+      Math.max(0.05, content.clientWidth / Math.max(output.clientWidth, 1))
+    );
+  }
+
+  const peel = { a: 0, target: 0 };
+  const FAR = 1e4;
+  const pointer = { u: FAR, v: 0, su: FAR, sv: 0 };
+
+  let shineRgb = [1, 1, 1];
+
+  function syncShineColor() {
+    if (config.shineColor !== 'auto') {
+      shineRgb = config.shineColor;
+      return;
+    }
+    shineRgb = [1, 1, 1];
+  }
+
+  syncCanvasSize();
+  syncShineColor();
+
+  function render() {
+    const isPeeling = peel.a > 0.005;
+
+    // Zero-Bleed Rule: When idle, hide WebGL canvas and under-layer so top card is 100% solid & opaque
+    if (!isPeeling) {
+      output.style.visibility = 'hidden';
+      if (content) content.style.opacity = '1';
+      if (under) under.style.visibility = 'hidden';
+      return;
+    }
+
+    // Active Peeling State: Show WebGL canvas & under-layer, hide static content
+    output.style.visibility = 'visible';
+    if (content) content.style.opacity = '0';
+    if (under) under.style.visibility = 'visible';
+
+    const w = Math.max(output.clientWidth, 1);
+    const h = Math.max(output.clientHeight, 1);
+    const side = SIDE_INDEX[config.side] ?? 0;
+    const fullReveal = Math.max(config.reveal, w * 1.4);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, output.width, output.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clearDepth(1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.useProgram(sheet.program);
+    gl.bindVertexArray(sheetVao);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, contentTexture);
+    gl.uniform1i(sheet.uniforms.uContent, 0);
+    gl.uniform2f(sheet.uniforms.uRes, w, h);
+    gl.uniform1f(sheet.uniforms.uSide, side);
+    gl.uniform1f(sheet.uniforms.uPeel, peel.a);
+    gl.uniform1f(sheet.uniforms.uReveal, fullReveal);
+    gl.uniform1f(sheet.uniforms.uCurl, Math.max(config.curl, 1));
+    gl.uniform1f(sheet.uniforms.uBow, config.bow);
+    gl.uniform1f(sheet.uniforms.uFocal, Math.max(config.perspective, 200));
+    gl.uniform1f(sheet.uniforms.uShade, config.shade);
+    gl.uniform1f(sheet.uniforms.uZone, Math.max(config.zone, 1));
+    gl.uniform1f(sheet.uniforms.uBulge, Math.max(config.bulge, 0));
+    gl.uniform1f(sheet.uniforms.uShine, Math.max(config.shine, 0));
+    gl.uniform3f(
+      sheet.uniforms.uShineColor,
+      shineRgb[0],
+      shineRgb[1],
+      shineRgb[2]
+    );
+    gl.uniform1f(sheet.uniforms.uCross, side < 1.5 ? h : w);
+    gl.uniform1f(
+      sheet.uniforms.uSpan,
+      config.shineDistance > 0 ? config.shineDistance : side < 1.5 ? w : h
+    );
+    gl.uniform2f(sheet.uniforms.uPointer, pointer.su, pointer.sv);
+    gl.uniform1f(sheet.uniforms.uMaxX, contentMaxX);
+    gl.drawElements(gl.TRIANGLES, gridIndices.length, gl.UNSIGNED_INT, 0);
+    gl.bindVertexArray(null);
+    gl.disable(gl.DEPTH_TEST);
+  }
+
+  function updateTarget() {
+    const w = Math.max(output.clientWidth, 1);
+    const fullReveal = Math.max(config.reveal, w * 1.4);
+
+    // Physical Book Page Turn Rule: If a page turn target is already locked to 1, preserve it!
+    if (peel.target === 1) {
+      return;
+    }
+
+    if (lockedUntilEdge) {
+      if (pointer.u < Math.max(config.zone, 150)) {
+        lockedUntilEdge = false;
+        console.log('[Peel:Gesture] Cursor re-entered trigger edge. Lock released.');
+      } else {
+        peel.target = 0;
+        return;
+      }
+    }
+
+    if (config.mode === 'hover') {
+      const open = peel.target > 0.5;
+      const limit = open ? peel.a * fullReveal + config.zone : config.zone;
+      peel.target = pointer.u < limit ? 1 : 0;
+      return;
+    }
+    const span = Math.max(config.zone + peel.a * fullReveal, 1);
+    peel.target = Math.min(1, Math.max(0, 1 - pointer.u / span));
+  }
+
+  function frame(now) {
+    if (destroyed) return;
+    if (!visible) {
+      running = false;
+      return;
+    }
+    const delta = Math.min((now - lastTime) / 1000, 1 / 30);
+    lastTime = now;
+
+    if (config.isBookClosing) {
+      peel.target = 0;
+      peel.a += (0 - peel.a) * Math.min(delta / 0.75, 1);
+      render();
+      console.log(`[Peel:BookCloseFrame] Reversing fold: peel.a = ${peel.a.toFixed(2)}`);
+      if (peel.a <= 0.02) {
+        peel.a = 0;
+        peel.target = 0;
+        pointer.u = FAR;
+        console.log('[Peel:BookCloseComplete] Reverse fold complete. Invoking onBookCloseComplete callback.');
+        if (config.onBookCloseComplete) {
+          config.onBookCloseComplete();
+        }
+        running = false;
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+
+    const tau = Math.max(config.smoothing, 1e-4);
+    const k = 1 - Math.exp(-delta / tau);
+    const kp = 1 - Math.exp(-delta / (tau * 0.45));
+    pointer.su += (pointer.u - pointer.su) * kp;
+    pointer.sv += (pointer.v - pointer.sv) * kp;
+    updateTarget();
+    peel.a += (peel.target - peel.a) * k;
+    render();
+
+    if (peel.a > 0.94 && onPeelTrigger && !triggerFired) {
+      triggerFired = true;
+      peel.a = 1.0;
+      console.log(`[Peel:Trigger] Page turn threshold reached! (peel.a=${peel.a.toFixed(2)}). Firing page turn trigger...`);
+      setTimeout(() => {
+        onPeelTrigger();
+        peel.a = 0;
+        peel.target = 0;
+        pointer.u = FAR;
+        lockedUntilEdge = true;
+        setTimeout(() => { triggerFired = false; }, 400);
+      }, 350);
+    }
+
+    const settle = 0.5 / Math.max(config.reveal + config.curl, 1);
+    if (
+      Math.abs(peel.target - peel.a) < settle &&
+      Math.abs(pointer.u - pointer.su) < 0.5 &&
+      Math.abs(pointer.v - pointer.sv) < 0.5
+    ) {
+      peel.a = peel.target;
+      pointer.su = pointer.u;
+      pointer.sv = pointer.v;
+      running = false;
+      return;
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  function start() {
+    if (destroyed || running || !visible) return;
+    running = true;
+    lastTime = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+
+  wake = start;
+  start();
+
+  const listenTarget = output.parentElement ?? output;
+
+  function sideDistance(x, y, rect) {
+    if (config.side === 'right') return rect.width - x;
+    if (config.side === 'top') return y;
+    if (config.side === 'bottom') return rect.height - y;
+    return x;
+  }
+
+  function getEventPos(event) {
+    if (event.touches && event.touches.length > 0) {
+      return { clientX: event.touches[0].clientX, clientY: event.touches[0].clientY };
+    }
+    return { clientX: event.clientX, clientY: event.clientY };
+  }
+
+  function onPointerMove(event) {
+    if (config.mode === 'click') return; // Disable hover wobble on PC for zero-flicker click-only turns
+    const pos = getEventPos(event);
+    const rect = output.getBoundingClientRect();
+    const x = pos.clientX - rect.left;
+    const y = pos.clientY - rect.top;
+    pointer.u = sideDistance(x, y, rect);
+    pointer.v = config.side === 'top' || config.side === 'bottom' ? x : y;
+    updateTarget();
+    start();
+  }
+
+  function onPointerLeave() {
+    if (config.isBookClosing || config.mode === 'click') return;
+    if (peel.a > 0.35 || peel.target === 1) {
+      peel.target = 1;
+    } else {
+      pointer.u = FAR;
+      peel.target = 0;
+    }
+    start();
+  }
+
+  function onClick() {
+    console.log('[Peel:Click] User clicked card. Executing deterministic page turn.');
+    peel.target = 1;
+    start();
+  }
+
+  function onTouchStart(event) {
+    onPointerMove(event);
+  }
+
+  function onTouchEnd() {
+    lockedUntilEdge = false;
+    peel.target = 1;
+    start();
+  }
+
+  listenTarget.addEventListener('pointermove', onPointerMove);
+  listenTarget.addEventListener('pointerleave', onPointerLeave);
+  listenTarget.addEventListener('click', onClick);
+  listenTarget.addEventListener('touchstart', onTouchStart, { passive: true });
+  listenTarget.addEventListener('touchmove', onPointerMove, { passive: true });
+  listenTarget.addEventListener('touchend', onTouchEnd);
+
+  return {
+    setOptions(next) {
+      Object.assign(config, next);
+      syncShineColor();
+      start();
+    },
+    resize() {
+      syncCanvasSize();
+      capture();
+      start();
+    },
+    destroy() {
+      destroyed = true;
+      cancelAnimationFrame(raf);
+      listenTarget.removeEventListener('pointermove', onPointerMove);
+      listenTarget.removeEventListener('pointerleave', onPointerLeave);
+      listenTarget.removeEventListener('click', onClick);
+      listenTarget.removeEventListener('touchstart', onTouchStart);
+      listenTarget.removeEventListener('touchmove', onPointerMove);
+      listenTarget.removeEventListener('touchend', onTouchEnd);
+      if (content) content.style.opacity = '';
+      if (under) under.style.visibility = '';
+      gl.deleteTexture(contentTexture);
+      gl.deleteProgram(sheet.program);
+      gl.deleteShader(sheet.vert);
+      gl.deleteShader(sheet.frag);
+      gl.deleteBuffer(gridBuffer);
+      gl.deleteBuffer(indexBuffer);
+      gl.deleteVertexArray(sheetVao);
+    },
+  };
+}
+
+export function Peel({
+  children,
+  under,
+  className = '',
+  style = {},
+  onPeelComplete,
+  isBookClosing = false,
+  onBookCloseComplete,
+  ...options
+}) {
+  const contentRef = useRef(null);
+  const outputRef = useRef(null);
+  const underRef = useRef(null);
+  const instanceRef = useRef(null);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    const output = outputRef.current;
+    if (!content || !output) return;
+
+    instanceRef.current = createPeel(
+      { content, output, under: underRef.current ?? undefined },
+      { ...options, isBookClosing, onBookCloseComplete },
+      onPeelComplete
+    );
+
+    return () => {
+      instanceRef.current?.destroy();
+      instanceRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (instanceRef.current) {
+      instanceRef.current.setOptions({ isBookClosing, onBookCloseComplete });
+    }
+  }, [isBookClosing, onBookCloseComplete]);
+
+  return (
+    <div
+      className={`relative ${className}`}
+      style={{
+        position: 'relative',
+        overflow: 'visible',
+        perspective: '1200px',
+        ...style,
+      }}
+    >
+      {/* UNDER LAYER */}
+      <div
+        ref={underRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'hidden',
+          zIndex: 0,
+        }}
+      >
+        {under}
+      </div>
+
+      {/* LIVE HTML CONTENT LAYER */}
+      <div
+        ref={contentRef}
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          zIndex: 1,
+        }}
+      >
+        {children}
+      </div>
+
+      {/* WEBGL OUTPUT CANVAS */}
+      <canvas
+        ref={outputRef}
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 2,
+          pointerEvents: 'auto',
+          cursor: 'pointer',
+          filter: 'drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))',
+        }}
+      />
+    </div>
+  );
+}
+
+export default Peel;

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -59,8 +60,15 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl mb-4 shadow-lg shadow-primary/20">
-            <Lock className="text-white" size={32} />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-primary/20 bg-card border border-border p-2">
+            <Image
+              src="/brand-icon.png"
+              alt="Ayush Tiwari Brand Logo"
+              width={48}
+              height={48}
+              className="rounded-xl"
+              priority
+            />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Admin <span className="gradient-text">Portal</span>

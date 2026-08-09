@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, Code2, Star } from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 import { getPublishedProjects } from '@/services/projects.service';
-import { BASE_URL } from '@/app/layout';
+import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase on every request
 export const revalidate = 60;
@@ -25,7 +25,7 @@ export const metadata = {
     description: 'Production-grade MERN, Next.js and AWS projects by Ayush Tiwari.',
     url:          `${BASE_URL}/projects`,
     type:        'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card:    'summary_large_image',
