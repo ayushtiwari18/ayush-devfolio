@@ -124,7 +124,7 @@ flowchart TD
     * Subtle corner lift animation when hovering over the dog-eared corner.
   * **Mobile Ledger Refinement:**
     * Smooth sliding segmented tab pill (`[ 📋 Context & Stack ]` ⟷ `[ ⚡ Technical Impact ]`) with haptic transition.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -138,7 +138,7 @@ flowchart TD
     * **Telemetry Status Chip:** Top-left badge: `● PRODUCTION DEPLOYMENT`, `● OPEN SOURCE`, or `● RESEARCH BACKED`.
     * **Interactive Architecture Peek:** Hovering on a project card displays a mini architecture flow snippet or animated canvas preview.
     * **Measurable Deliverables Bar:** Explicit metrics bar at bottom: e.g. `Latency: <15ms · Coverage: 95% · Commits: 450+`.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -151,7 +151,7 @@ flowchart TD
   * **High-Contrast Dark Mermaid Theme:** Upgrade diagram lines, nodes, and fonts to match the Obsidian theme (electric indigo lines, emerald terminal states, JetBrains Mono labels).
   * **Sticky Reading Progress & Mini Map:** Floating table-of-contents sidebar with active highlight following the reader's scroll position.
   * **Architecture Decision Trade-off Matrix:** Visual comparison tables contrasting chosen architecture vs rejected alternatives.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -165,7 +165,7 @@ flowchart TD
     * Generous line height (`leading-[1.8]`) and optimal line-length (max 68 characters per line) for fatigue-free reading.
     * Custom code block styling with Mac-style terminal dots, copy button, and language tag.
     * Floating reading progress indicator bar docked at the very top of the screen.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -179,7 +179,7 @@ flowchart TD
     `[ 🚀 Full-Stack Web App ]` `[ ☁️ AWS Cloud System ]` `[ 💼 Full-Time Hire ]` `[ ☕ Quick Consultation ]`.
   * **Tactile Input Focus States:** Subtle electric indigo border glow with keyboard sound effect (optional toggle).
   * **Footer Polish:** Minimalist closing line with local time indicator (`🕒 Jabalpur, India · IST UTC+5:30`) and verified social pills.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -192,11 +192,11 @@ flowchart TD
 | **3** | **About Bento Grid** | `/#about` | Disconnected text paragraphs | 4-cell architectural bento with Springer research spotlight | ✅ Done |
 | **4** | **Capabilities Matrix** | `/#skills` | Passive infinite scrolling marquee | Curated 3-domain tech radar with view switcher (Matrix / Stream) | ✅ Done |
 | **5** | **Terminal Command Center**| `/#stats` | Standard cards & plain numbers | Developer command deck with LeetCode 1657 rating gauges | ✅ Done |
-| **6** | **Experience Journal** | `/#experience` | Flat digital slate | Debossed gold/emerald foil badges, paper texture & spine depth | ⏳ Next |
-| **7** | **Featured Projects** | `/#projects` | Generic image cards | Engineering artifacts with live status chips & architecture peek | ⏳ Queued |
-| **8** | **Deep Project Case Study** | `/projects/[slug]` | Standard long-scroll article | High-contrast Mermaid dark diagrams & trade-off matrix | ⏳ Queued |
-| **9** | **Editorial Blog** | `/blog/[slug]` | Dense prose | Substack-grade typography, progress bar & custom code blocks | ⏳ Queued |
-| **10** | **Contact & Footer** | `/#contact` | Generic blank inputs | Topic intent pills (`[Web App]`, `[AWS]`, `[Hire]`) + local IST time | ⏳ Queued |
+| **6** | **Experience Journal** | `/#experience` | Flat digital slate | Debossed gold/emerald foil badges, paper texture & spine depth | ✅ Done |
+| **7** | **Featured Projects** | `/#projects` | Generic image cards | Engineering artifacts with live status chips & architecture peek | ✅ Done |
+| **8** | **Deep Project Case Study** | `/projects/[slug]` | Standard long-scroll article | High-contrast Mermaid dark diagrams & trade-off matrix | ✅ Done |
+| **9** | **Editorial Blog** | `/blog/[slug]` | Dense prose | Substack-grade typography, progress bar & custom code blocks | ✅ Done |
+| **10** | **Contact & Footer** | `/#contact` | Generic blank inputs | Topic intent pills (`[Web App]`, `[AWS]`, `[Hire]`) + local IST time | ✅ Done |
 
 ---
 
