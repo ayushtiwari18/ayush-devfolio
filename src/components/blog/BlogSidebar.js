@@ -35,6 +35,7 @@ export default function BlogSidebar({
   content, postUrl, postTitle,
   readingTime, tags,
   showToc = true, showShare = true,
+  authorImage, authorName = 'Ayush Tiwari',
 }) {
   const headings = showToc ? extractHeadings(content) : [];
   const [activeId, setActiveId] = useState('');
@@ -144,17 +145,18 @@ export default function BlogSidebar({
       {/* ── Author Engineering Credibility Card ── */}
       <div className="bg-[#090D16] border border-white/10 rounded-2xl p-5 shadow-xl shadow-black/30">
         <div className="flex items-center gap-3.5 pb-4 border-b border-white/[0.08]">
-          <div className="relative w-11 h-11 rounded-full overflow-hidden border border-primary/40 shrink-0 shadow-md shadow-primary/10">
+          <div className="relative w-11 h-11 rounded-full overflow-hidden border border-primary/40 shrink-0 shadow-md shadow-primary/10 bg-[#0A0D14]">
             <Image
-              src="/images/profile/photo.jpg"
-              alt="Ayush Tiwari"
+              src={authorImage || '/profile.png'}
+              alt={authorName}
               fill
-              className="object-cover"
+              className="object-cover object-top"
+              unoptimized={(authorImage || '').includes('supabase.co')}
             />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold text-white truncate">Ayush Tiwari</span>
+              <span className="text-sm font-semibold text-white truncate">{authorName}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Active Author" />
             </div>
             <p className="text-xs text-gray-400 truncate">Systems & Full-Stack</p>

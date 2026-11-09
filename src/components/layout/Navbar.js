@@ -22,12 +22,17 @@ const navLinks = [
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled,       setScrolled]       = useState(false);
+  const [scrollY,        setScrollY]        = useState(0);
   const pathname = usePathname();
   const [isAdmin,        setIsAdmin]        = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 30);
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 
     // Check admin session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -64,8 +69,16 @@ export default function Navbar() {
   const isActive = (href) =>
     href === ROUTES.HOME ? pathname === href : pathname.startsWith(href);
 
+  // If on a blog article deep-dive and scrolled into reading mode, yield top space to BlogReadingNav
+  const isArticlePage = pathname?.startsWith('/blog/') && pathname !== '/blog';
+  const hideForArticleReading = isArticlePage && scrollY > 180;
+
   return (
-    <header className="fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-3 sm:px-6 pointer-events-none">
+    <header
+      className={`fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-3 sm:px-6 pointer-events-none transition-all duration-300 ${
+        hideForArticleReading ? '-translate-y-28 opacity-0' : 'translate-y-0 opacity-100'
+      }`}
+    >
       <nav
         className={`pointer-events-auto w-full max-w-5xl rounded-full border transition-all duration-300 ${
           scrolled

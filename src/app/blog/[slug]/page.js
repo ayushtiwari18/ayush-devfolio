@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Calendar, Clock, ArrowLeft, BookOpen, Star, Sparkles, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { getProfileSettings } from '@/services/profile.service';
 import BlogContent from '@/components/blog/BlogContent';
 import BlogSidebar from '@/components/blog/BlogSidebar';
 import BlogTakeaways from '@/components/blog/BlogTakeaways';
@@ -88,27 +89,34 @@ const formatDate = (d) =>
 
 export default async function BlogPostPage({ params }) {
   const { slug } = await params;
-  const { data: post } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .single();
 
-  if (!post) notFound();
-
-  let relatedPosts = [];
-  try {
-    const { data } = await supabase
+  const [postResult, profileResult, relatedResult] = await Promise.all([
+    supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('published', true)
+      .single(),
+    getProfileSettings().catch(() => null),
+    supabase
       .from('blog_posts')
       .select('slug, title, excerpt, cover_image, reading_time, created_at, tags')
       .eq('published', true)
       .neq('slug', slug)
-      .limit(2);
-    relatedPosts = data || [];
-  } catch {
-    relatedPosts = [];
-  }
+      .limit(2),
+  ]);
+
+  const post = postResult?.data;
+  if (!post) notFound();
+
+  const dbProfile = profileResult;
+  const relatedPosts = relatedResult?.data || [];
+
+  const isAyush = !post.author || post.author.toLowerCase().includes('ayush');
+  const authorHeroImage = isAyush
+    ? (dbProfile?.image_url || '/profile.png')
+    : (post.author_image || '/placeholder-avatar.png');
+  const authorName = isAyush ? 'Ayush Tiwari' : post.author;
 
   const description = safeDescription(post);
   const postUrl = `${BASE_URL}/blog/${slug}`;
@@ -122,7 +130,7 @@ export default async function BlogPostPage({ params }) {
     url: postUrl,
     datePublished: post.created_at,
     dateModified: post.updated_at || post.created_at,
-    author: { '@type': 'Person', name: 'Ayush Tiwari', url: BASE_URL },
+    author: { '@type': 'Person', name: authorName, url: BASE_URL },
     publisher: { '@type': 'Person', name: 'Ayush Tiwari', url: BASE_URL },
     ...(post.cover_image && { image: post.cover_image }),
     ...(post.tags?.length > 0 && { keywords: post.tags.join(', ') }),
@@ -151,7 +159,7 @@ export default async function BlogPostPage({ params }) {
         category={primaryCategory}
       />
 
-      <main className="min-h-screen py-16 sm:py-20 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-white">
+      <main className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-white">
         <div className="max-w-7xl mx-auto">
 
           {/* Breadcrumb & Navigation Controls */}
@@ -240,22 +248,25 @@ export default async function BlogPostPage({ params }) {
               {/* Author Engineering Credibility Byline Card */}
               <div className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 mb-10 rounded-2xl bg-[#090D16] border border-white/10 shadow-lg shadow-black/30">
                 <div className="flex items-center gap-3.5">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-primary/40 shrink-0 shadow-md shadow-primary/20">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-primary/40 shrink-0 shadow-md shadow-primary/20 bg-[#0A0D14]">
                     <Image
-                      src="/images/profile/photo.jpg"
-                      alt="Ayush Tiwari"
+                      src={authorHeroImage}
+                      alt={authorName}
                       fill
-                      className="object-cover"
+                      className="object-cover object-top"
+                      unoptimized={authorHeroImage.includes('supabase.co')}
                     />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-white text-sm sm:text-base">
-                        Ayush Tiwari
+                        {authorName}
                       </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        Verified Author
-                      </span>
+                      {isAyush && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                          Verified Author
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-400 font-mono mt-0.5">
                       Systems & Full-Stack · 885+ DSA · LeetCode 1657
@@ -299,18 +310,21 @@ export default async function BlogPostPage({ params }) {
               <div className="mt-14 p-6 sm:p-8 rounded-2xl bg-[#090D16] border border-white/10 relative overflow-hidden shadow-xl shadow-black/30">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
-                    <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-primary/40 shrink-0 shadow-md">
+                    <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-primary/40 shrink-0 shadow-md bg-[#0A0D14]">
                       <Image
-                        src="/images/profile/photo.jpg"
-                        alt="Ayush Tiwari"
+                        src={authorHeroImage}
+                        alt={authorName}
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
+                        unoptimized={authorHeroImage.includes('supabase.co')}
                       />
                     </div>
                     <div>
                       <h4 className="text-base font-bold text-white flex items-center gap-2">
-                        <span>Ayush Tiwari</span>
-                        <span className="text-xs font-mono font-normal text-primary">@ayushtiwari18</span>
+                        <span>{authorName}</span>
+                        {isAyush && (
+                          <span className="text-xs font-mono font-normal text-primary">@ayushtiwari18</span>
+                        )}
                       </h4>
                       <p className="text-xs text-gray-400 mt-1 max-w-md leading-relaxed font-sans">
                         Full-Stack & Systems Engineer building high-throughput web apps, compilers, and algorithmic platforms.
@@ -403,6 +417,8 @@ export default async function BlogPostPage({ params }) {
                 tags={post.tags || []}
                 showToc={post.show_toc !== false}
                 showShare={post.show_share !== false}
+                authorImage={authorHeroImage}
+                authorName={authorName}
               />
             </aside>
 

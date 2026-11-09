@@ -10,6 +10,34 @@ const SyntaxHighlighter = dynamic(
 
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
+// IDE Editor Theme: removes any artificial line/token background colors & text-shadow
+// so code renders uniformly clean and authentic — exactly like VS Code / JetBrains IDE
+const ideTheme = {
+  ...oneDark,
+  'pre[class*="language-"]': {
+    ...oneDark['pre[class*="language-"]'],
+    background: 'transparent',
+    textShadow: 'none',
+  },
+  'code[class*="language-"]': {
+    ...oneDark['code[class*="language-"]'],
+    background: 'transparent',
+    textShadow: 'none',
+  },
+  'code[class*="language-"]::-moz-selection': {
+    background: 'rgba(99, 102, 241, 0.25)',
+  },
+  'code[class*="language-"]::selection': {
+    background: 'rgba(99, 102, 241, 0.25)',
+  },
+  'code[class*="language-"] *::-moz-selection': {
+    background: 'rgba(99, 102, 241, 0.25)',
+  },
+  'code[class*="language-"] *::selection': {
+    background: 'rgba(99, 102, 241, 0.25)',
+  },
+};
+
 // ── Inline content renderer ───────────────────────────────────
 function InlineContent({ content }) {
   if (!content?.length) return null;
@@ -151,8 +179,8 @@ function Block({ block }) {
       const lang = props.language || 'text';
       const code = content?.filter(i => i.type === 'text').map(i => i.text).join('') || '';
       return (
-        <div className="relative my-8 rounded-2xl overflow-hidden border border-white/10 bg-[#07090E] shadow-2xl shadow-black/50 group">
-          <div className="flex items-center justify-between px-4 py-3 bg-[#0B0F19] border-b border-white/[0.08]">
+        <div className="relative my-8 rounded-2xl overflow-hidden border border-white/10 bg-[#080B11] shadow-2xl shadow-black/50 group">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-[#0D111A] border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
               <div className="flex gap-1.5 items-center">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]/90 border border-[#E0443E]/50 shadow-sm shadow-[#FF5F56]/20" />
@@ -167,18 +195,31 @@ function Block({ block }) {
           </div>
           <SyntaxHighlighter
             language={lang}
-            style={oneDark}
+            style={ideTheme}
+            codeTagProps={{
+              style: {
+                background: 'transparent',
+                textShadow: 'none',
+              },
+            }}
             customStyle={{
               margin: 0,
               padding: '1.25rem 1.5rem',
               borderRadius: 0,
-              background: '#07090E',
+              background: '#080B11',
               fontSize: '0.875rem',
               lineHeight: '1.75',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
             }}
             showLineNumbers
-            lineNumberStyle={{ color: '#4B5563', fontSize: '0.75rem', minWidth: '2.5em', paddingRight: '1rem', userSelect: 'none' }}
+            lineNumberStyle={{
+              color: '#4B5563',
+              fontSize: '0.75rem',
+              minWidth: '2.5em',
+              paddingRight: '1rem',
+              userSelect: 'none',
+              background: 'transparent',
+            }}
           >
             {code}
           </SyntaxHighlighter>

@@ -16,7 +16,7 @@ export default function BlogReadingNav({ postTitle, postUrl, category }) {
       const total = el.scrollHeight - el.clientHeight;
       const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((scrolled / total) * 100))) : 0;
       setProgress(pct);
-      setScrolledPast(scrolled > 260);
+      setScrolledPast(scrolled > 200);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
