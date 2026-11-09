@@ -81,7 +81,7 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
         )}
       </div>
 
-      {/* Phase 5 — CTA Buttons */}
+      {/* Phase 5 — CTA Buttons & Social Links */}
       <div style={reveal(5)} className="w-full">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-6 w-full sm:w-auto">
           <Link href={ROUTES.PROJECTS} className="w-full sm:w-auto">
@@ -97,12 +97,11 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
               <Mail className="mr-2" size={18} />Get In Touch
             </Button>
           </Link>
-        </div>
 
           {resumeUrl && (
-            <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
+            <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
               <Button size="lg" variant="ghost"
-                className="h-12 px-6 sm:px-8 border border-white/15 bg-transparent text-gray-400 hover:text-white hover:bg-black/30 hover:border-white/30 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap">
+                className="w-full sm:w-auto h-12 px-6 sm:px-8 border border-white/15 bg-transparent text-gray-400 hover:text-white hover:bg-black/30 hover:border-white/30 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap">
                 <FileDown className="mr-2" size={18} />Resume
               </Button>
             </a>

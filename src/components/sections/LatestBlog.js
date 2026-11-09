@@ -130,18 +130,6 @@ export default function LatestBlog({ posts }) {
               </article>
             </Link>
           ))}
-                          key={i}
-                          className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </article>
-            </Link>
-          ))}
         </StaggeredList>
 
         <div className="text-center">
