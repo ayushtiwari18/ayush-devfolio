@@ -3,65 +3,41 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
-import { ChevronDown } from 'lucide-react';
+import { ArrowDown } from 'lucide-react';
 
 export default function ScrollIndicator() {
   return (
-    <Link href={ROUTES.ABOUT}>
+    <Link href={ROUTES.ABOUT} aria-label="Scroll to about section">
       <motion.div
-        className="relative flex flex-col items-center gap-2 sm:gap-3 cursor-pointer group"
-        initial={{ opacity: 0, y: -20 }}
+        className="relative flex flex-col items-center gap-2 cursor-pointer group select-none"
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5, duration: 0.8 }}
+        transition={{ delay: 1.6, duration: 0.8 }}
       >
-        <span className="text-xs sm:text-sm font-medium text-gray-400 group-hover:text-primary transition-colors">
-          Explore More
+        <span className="text-[10px] sm:text-xs font-mono-code font-semibold tracking-[0.2em] uppercase text-gray-400 group-hover:text-primary transition-colors">
+          EXPLORE ARCHITECTURE
         </span>
 
-        {/* Modern animated indicator */}
-        <motion.div
-          className="relative flex flex-col items-center"
-          animate={{
-            y: [0, 8, 0],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        >
-          {/* Glowing circle */}
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-primary/50 group-hover:border-primary flex items-center justify-center transition-colors">
-            <ChevronDown className="text-primary" size={20} />
-            
-            {/* Pulsing glow */}
-            <motion.div
-              className="absolute inset-0 rounded-full bg-primary/20 blur-md"
-              animate={{
-                scale: [1, 1.3, 1],
-                opacity: [0.3, 0.6, 0.3],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-          </div>
-        </motion.div>
+        {/* Sleek Minimalist Mouse Capsule with sliding dot */}
+        <div className="relative w-5 h-8 sm:w-6 sm:h-9 rounded-full border border-white/20 bg-white/[0.03] backdrop-blur-sm group-hover:border-primary/60 transition-colors flex justify-center p-1">
+          <motion.div
+            className="w-1 h-2 rounded-full bg-primary"
+            animate={{
+              y: [0, 10, 0],
+              opacity: [0.8, 0.2, 0.8],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </div>
 
-        {/* Bottom glow effect */}
-        <motion.div
-          className="absolute inset-0 bg-primary/10 blur-2xl rounded-full -z-10"
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.5, 0.2],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+        {/* Subtle downward arrow */}
+        <ArrowDown
+          size={12}
+          className="text-gray-500 group-hover:text-primary transition-all duration-300 group-hover:translate-y-0.5"
         />
       </motion.div>
     </Link>

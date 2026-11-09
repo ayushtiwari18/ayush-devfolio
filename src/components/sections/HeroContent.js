@@ -42,7 +42,7 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
       {/* Phase 2 — Name with Clash Display */}
       <div style={reveal(2)}>
         <h1
-          className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white mb-3 sm:mb-4 leading-[1.08] tracking-tighter"
+          className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white mb-3 sm:mb-4 leading-[1.05] tracking-[-0.035em]"
           style={{ textShadow }}
         >
           Hi, I&apos;m{' '}
@@ -89,16 +89,16 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
       {/* Phase 5 — CTA Buttons & Social Links */}
       <div style={reveal(5)} className="w-full">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-6 w-full sm:w-auto">
-          <Link href={ROUTES.PROJECTS} className="w-full sm:w-auto">
+          <Link href={ROUTES.PROJECTS} className="w-full sm:w-auto group">
             <Button size="lg"
-              className="w-full sm:w-auto h-12 px-6 sm:px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white text-sm sm:text-base font-semibold rounded-xl shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all hover:scale-105 active:scale-95 border-0 whitespace-nowrap">
-              View Featured Work <ArrowRight className="ml-2" size={18} />
+              className="w-full sm:w-auto h-12 px-6 sm:px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white text-sm sm:text-base font-semibold rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_10px_25px_-5px_rgba(99,102,241,0.4)] transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 border-0 whitespace-nowrap">
+              View Featured Work <ArrowRight className="ml-2 transition-transform duration-200 group-hover:translate-x-1" size={18} />
             </Button>
           </Link>
 
           <Link href={ROUTES.CONTACT} className="w-full sm:w-auto">
             <Button size="lg" variant="outline"
-              className="w-full sm:w-auto h-12 px-6 sm:px-8 border border-white/20 bg-white/[0.04] backdrop-blur-md text-white hover:bg-white/10 hover:border-white/40 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+              className="w-full sm:w-auto h-12 px-6 sm:px-8 border border-white/20 bg-white/[0.04] backdrop-blur-md text-white hover:bg-white/10 hover:border-white/40 text-sm sm:text-base font-semibold rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 whitespace-nowrap">
               <Mail className="mr-2" size={18} />Get In Touch
             </Button>
           </Link>
@@ -106,7 +106,7 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
           {resumeUrl && (
             <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
               <Button size="lg" variant="ghost"
-                className="w-full sm:w-auto h-12 px-6 sm:px-8 border border-white/15 bg-transparent text-gray-400 hover:text-white hover:bg-black/30 hover:border-white/30 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap">
+                className="w-full sm:w-auto h-12 px-6 sm:px-8 border border-white/15 bg-white/[0.02] backdrop-blur-sm text-gray-300 hover:text-white hover:bg-white/10 hover:border-white/30 text-sm sm:text-base font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap">
                 <FileDown className="mr-2" size={18} />Resume
               </Button>
             </a>
@@ -114,22 +114,22 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
         </div>
 
         {/* Social icons */}
-        <div className="flex items-center justify-center lg:justify-start gap-4">
+        <div className="flex items-center justify-center lg:justify-start gap-3">
           {githubUrl && (
-            <a href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
-              className="p-2 rounded-full border border-white/20 bg-black/30 text-gray-400 hover:text-white hover:border-white/50 backdrop-blur-sm transition-all hover:scale-110">
+            <a href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile" title="GitHub"
+              className="p-2.5 rounded-xl border border-white/15 bg-[#0D111A]/80 text-gray-400 hover:text-white hover:border-white/40 hover:bg-white/5 backdrop-blur-sm shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95">
               <Github size={18} />
             </a>
           )}
           {linkedinUrl && (
-            <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-              className="p-2 rounded-full border border-white/20 bg-black/30 text-gray-400 hover:text-white hover:border-white/50 backdrop-blur-sm transition-all hover:scale-110">
+            <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile" title="LinkedIn"
+              className="p-2.5 rounded-xl border border-white/15 bg-[#0D111A]/80 text-gray-400 hover:text-white hover:border-white/40 hover:bg-white/5 backdrop-blur-sm shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95">
               <Linkedin size={18} />
             </a>
           )}
           {twitterUrl && (
-            <a href={twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter / X"
-              className="p-2 rounded-full border border-white/20 bg-black/30 text-gray-400 hover:text-white hover:border-white/50 backdrop-blur-sm transition-all hover:scale-110">
+            <a href={twitterUrl} target="_blank" rel="noopener noreferrer" aria-label="Twitter / X Profile" title="Twitter / X"
+              className="p-2.5 rounded-xl border border-white/15 bg-[#0D111A]/80 text-gray-400 hover:text-white hover:border-white/40 hover:bg-white/5 backdrop-blur-sm shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95">
               <Twitter size={18} />
             </a>
           )}

@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Code2, Trophy, Star, Award, TrendingUp } from 'lucide-react';
+import { Code2, Trophy, Star, Award, TrendingUp, ExternalLink, Zap, Terminal } from 'lucide-react';
 import { SiLeetcode, SiCodechef, SiCodeforces, SiHackerrank, SiGeeksforgeeks } from 'react-icons/si';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import CountUp from '@/components/animations/CountUp';
 
 // Fallback values used if DB returns null for a field
 const FALLBACK = {
-  total_problems:       '885+',  // fixed: was 655+, now matches HERO_COPY
+  total_problems:       '885+',
   total_contests:       '35+',
   total_badges:         '11+',
   max_streak:           '200 Days',
@@ -40,10 +40,8 @@ function val(db, key) {
   return v;
 }
 
-// Render a stat value: if it's a pure number (or ends in +), use CountUp
-// Otherwise render as plain text (e.g. "200 Days", "4 Star")
 function StatValue({ value, className }) {
-  const raw    = String(value);
+  const raw       = String(value);
   const hasSuffix = raw.endsWith('+');
   const numeric   = parseInt(raw.replace(/[^0-9]/g, ''), 10);
 
@@ -52,12 +50,12 @@ function StatValue({ value, className }) {
       <CountUp
         end={numeric}
         suffix={hasSuffix ? '+' : ''}
-        duration={1600}
-        className={className}
+        duration={1500}
+        className={`${className} tabular-nums font-mono-code`}
       />
     );
   }
-  return <span className={className}>{value}</span>;
+  return <span className={`${className} tabular-nums font-mono-code`}>{value}</span>;
 }
 
 export default function CodingStats() {
@@ -74,100 +72,131 @@ export default function CodingStats() {
   }, []);
 
   const overallStats = [
-    { label: 'Total Problems',  value: val(db, 'total_problems'),  description: 'Across all platforms',    icon: Code2,      color: 'text-primary'    },
-    { label: 'Total Contests',  value: val(db, 'total_contests'),  description: 'Competitive programming', icon: Trophy,     color: 'text-yellow-500' },
-    { label: 'Badges & Awards', value: val(db, 'total_badges'),    description: 'Achievements earned',     icon: Award,      color: 'text-purple-500' },
-    { label: 'Max Streak',      value: val(db, 'max_streak'),      description: 'Consistent practice',     icon: TrendingUp, color: 'text-green-500'  },
+    { label: 'Total Problems',  value: val(db, 'total_problems'),  description: 'Verified algorithmic solutions', icon: Code2,      color: 'text-primary'    },
+    { label: 'Contests Fought', value: val(db, 'total_contests'),  description: 'Timed competitive rounds',       icon: Trophy,     color: 'text-amber-400'  },
+    { label: 'Badges Earned',   value: val(db, 'total_badges'),    description: 'Specialized topic proficiencies', icon: Award,      color: 'text-purple-400' },
+    { label: 'Longest Streak',  value: val(db, 'max_streak'),      description: 'Continuous daily consistency',   icon: TrendingUp, color: 'text-emerald-400'}
   ];
 
   const codingPlatforms = [
     {
-      name: 'LeetCode', icon: SiLeetcode,
+      name: 'LeetCode',
+      icon: SiLeetcode,
+      tier: 'Knight Path · 1657 Rating',
+      ratingPct: 78,
       username: val(db, 'leetcode_username'),
       display: db?.leetcode_display ?? true,
       stats: [
-        { label: 'Problems Solved', value: val(db, 'leetcode_solved'),   icon: Code2  },
-        { label: 'Contest Rating',  value: val(db, 'leetcode_rating'),   icon: Trophy },
-        { label: 'Contests',        value: val(db, 'leetcode_contests'), icon: Award  },
+        { label: 'Solved', value: val(db, 'leetcode_solved') },
+        { label: 'Rating', value: val(db, 'leetcode_rating') },
+        { label: 'Rounds', value: val(db, 'leetcode_contests') },
       ],
-      color: 'from-orange-500 to-yellow-500', bgColor: 'bg-orange-500/10',
-      borderColor: 'border-orange-500/20',
+      brandColor: 'text-[#FFA116]',
+      badgeBg: 'bg-[#FFA116]/10 text-[#FFA116] border-[#FFA116]/25',
+      barColor: 'from-[#FFA116] to-amber-500',
       link: `https://leetcode.com/u/${val(db, 'leetcode_username')}`,
     },
     {
-      name: 'CodeChef', icon: SiCodechef,
+      name: 'CodeChef',
+      icon: SiCodechef,
+      tier: 'Division 2 · 1443 Rating',
+      ratingPct: 62,
       username: val(db, 'codechef_username'),
       display: db?.codechef_display ?? true,
       stats: [
-        { label: 'Rating',   value: val(db, 'codechef_rating'),   icon: Star   },
-        { label: 'Contests', value: val(db, 'codechef_contests'), icon: Trophy },
-        { label: 'Problems', value: val(db, 'codechef_problems'), icon: Code2  },
+        { label: 'Rating',   value: val(db, 'codechef_rating') },
+        { label: 'Solved',   value: val(db, 'codechef_problems') },
+        { label: 'Contests', value: val(db, 'codechef_contests') },
       ],
-      color: 'from-amber-600 to-amber-400', bgColor: 'bg-amber-500/10',
-      borderColor: 'border-amber-500/20',
+      brandColor: 'text-[#D09B61]',
+      badgeBg: 'bg-[#D09B61]/10 text-[#D09B61] border-[#D09B61]/25',
+      barColor: 'from-[#D09B61] to-yellow-600',
       link: `https://www.codechef.com/users/${val(db, 'codechef_username')}`,
     },
     {
-      name: 'Codeforces', icon: SiCodeforces,
+      name: 'Codeforces',
+      icon: SiCodeforces,
+      tier: 'Specialist Path · 1002 Rating',
+      ratingPct: 50,
       username: val(db, 'codeforces_username'),
       display: db?.codeforces_display ?? true,
       stats: [
-        { label: 'Max Rating', value: val(db, 'codeforces_rating'),   icon: TrendingUp },
-        { label: 'Contests',   value: val(db, 'codeforces_contests'), icon: Trophy     },
-        { label: 'Problems',   value: val(db, 'codeforces_problems'), icon: Code2      },
+        { label: 'Peak',     value: val(db, 'codeforces_rating') },
+        { label: 'Solved',   value: val(db, 'codeforces_problems') },
+        { label: 'Contests', value: val(db, 'codeforces_contests') },
       ],
-      color: 'from-blue-500 to-cyan-500', bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/20',
+      brandColor: 'text-[#1F8ACB]',
+      badgeBg: 'bg-[#1F8ACB]/10 text-[#1F8ACB] border-[#1F8ACB]/25',
+      barColor: 'from-[#1F8ACB] to-cyan-500',
       link: `https://codeforces.com/profile/${val(db, 'codeforces_username')}`,
     },
     {
-      name: 'HackerRank', icon: SiHackerrank,
+      name: 'HackerRank',
+      icon: SiHackerrank,
+      tier: '5-Star Problem Solving',
+      ratingPct: 85,
       username: val(db, 'hackerrank_username'),
       display: db?.hackerrank_display ?? true,
       stats: [
-        { label: 'Java Badge',     value: val(db, 'hackerrank_stars'),    icon: Star  },
-        { label: 'Certifications', value: val(db, 'hackerrank_certs'),    icon: Award },
-        { label: 'Problems',       value: val(db, 'hackerrank_problems'), icon: Code2 },
+        { label: 'Badges', value: val(db, 'hackerrank_stars') },
+        { label: 'Certs',  value: val(db, 'hackerrank_certs') },
+        { label: 'Solved', value: val(db, 'hackerrank_problems') },
       ],
-      color: 'from-green-500 to-emerald-500', bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20',
+      brandColor: 'text-[#00EA64]',
+      badgeBg: 'bg-[#00EA64]/10 text-[#00EA64] border-[#00EA64]/25',
+      barColor: 'from-[#00EA64] to-emerald-500',
       link: `https://www.hackerrank.com/profile/${val(db, 'hackerrank_username')}`,
     },
     {
-      name: 'GeeksforGeeks', icon: SiGeeksforgeeks,
+      name: 'GeeksforGeeks',
+      icon: SiGeeksforgeeks,
+      tier: '500+ Campus Score',
+      ratingPct: 70,
       username: val(db, 'gfg_username'),
       display: db?.gfg_display ?? true,
       stats: [
-        { label: 'Problems', value: val(db, 'gfg_problems'), icon: Code2      },
-        { label: 'Score',    value: val(db, 'gfg_score'),    icon: Trophy     },
-        { label: 'Streak',   value: val(db, 'gfg_streak'),   icon: TrendingUp },
+        { label: 'Solved', value: val(db, 'gfg_problems') },
+        { label: 'Score',  value: val(db, 'gfg_score') },
+        { label: 'Streak', value: val(db, 'gfg_streak') },
       ],
-      color: 'from-emerald-600 to-green-500', bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/20',
+      brandColor: 'text-[#2F8D46]',
+      badgeBg: 'bg-[#2F8D46]/10 text-[#2F8D46] border-[#2F8D46]/25',
+      barColor: 'from-[#2F8D46] to-green-600',
       link: `https://auth.geeksforgeeks.org/user/${val(db, 'gfg_username')}`,
     },
   ].filter(p => p.display);
 
   return (
-    <section className="py-section px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-primary/5 to-background">
-      <div className="max-w-7xl mx-auto">
+    <section id="stats" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-[#05070B] overflow-hidden">
+      
+      {/* Background ambient radial glow */}
+      <div
+        aria-hidden="true"
+        className="absolute top-1/3 right-1/4 w-[600px] h-[500px] bg-primary/[0.03] rounded-full blur-[140px] pointer-events-none"
+      />
 
-        {/* Header */}
-        <div ref={header.ref} className="text-center mb-16" style={fadeUp(header.visible)}>
-          <p className="section-label mb-3">Proof of Work</p>
-          <h2 className="section-heading mb-4">
-            Competitive{' '}
-            <span className="gradient-text">Programming</span>
+      <div className="max-w-6xl mx-auto relative z-10">
+
+        {/* Section Header */}
+        <div ref={header.ref} className="text-center max-w-3xl mx-auto mb-16" style={fadeUp(header.visible)}>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-xs font-mono-code text-gray-400 mb-4 backdrop-blur-md">
+            <Terminal size={12} className="text-primary" />
+            <span>AYUSH-CLI // PROOF_OF_WORK.sh</span>
+          </div>
+
+          <h2 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-[-0.03em] leading-tight mb-4">
+            Competitive Programming &amp;{' '}
+            <span className="text-primary inline-block">Problem Solving</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            My journey across coding platforms, problem-solving stats, and competitive achievements
+          <p className="text-base sm:text-lg text-gray-400 leading-relaxed">
+            Over 885+ algorithmic challenges solved across international coding platforms with consistent contest participation.
           </p>
         </div>
 
-        {/* Overall stats — CountUp on all numeric values */}
+        {/* Top 4 Overall Telemetry Cards */}
         <div
           ref={stats.ref}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-12"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-14"
           style={fadeUp(stats.visible, 0.1)}
         >
           {overallStats.map((stat, index) => {
@@ -175,26 +204,26 @@ export default function CodingStats() {
             return (
               <div
                 key={index}
-                className="relative p-4 sm:p-6 bg-[#0D111A] border border-white/10 rounded-2xl hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group"
+                className="bg-[#090D16] border border-white/10 hover:border-indigo-500/40 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group"
               >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon size={22} className={stat.color} />
-                  </div>
+                <div className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-white/[0.08] transition-all">
+                  <Icon size={18} className={stat.color} />
+                </div>
+                <div>
                   <StatValue
                     value={stat.value}
-                    className="text-2xl sm:text-3xl font-bold font-mono-code text-foreground mb-1 block"
+                    className="text-2xl sm:text-3xl font-bold text-white block tracking-tight"
                   />
-                  <p className="text-xs sm:text-sm font-semibold text-foreground mb-0.5">{stat.label}</p>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground">{stat.description}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-200 mt-1">{stat.label}</p>
+                  <p className="text-[11px] font-mono-code text-gray-400 mt-0.5 line-clamp-1">{stat.description}</p>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Platform cards */}
-        <div ref={cards.ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        {/* Command Center Platform Cards */}
+        <div ref={cards.ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {codingPlatforms.map((platform, index) => {
             const PlatformIcon = platform.icon;
             return (
@@ -203,53 +232,62 @@ export default function CodingStats() {
                 href={platform.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`Visit ${platform.name} profile of ${platform.username}`}
-                className="group cursor-pointer"
+                aria-label={`Visit ${platform.name} profile`}
+                className="group select-none"
                 style={fadeUp(cards.visible, index * 0.08)}
               >
-                <div className={`relative h-full p-5 sm:p-6 bg-[#0D111A] border border-white/10 rounded-2xl hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden`}>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${platform.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-
-                  <div className="relative mb-5 sm:mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${platform.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform border border-white/10`}>
-                        <PlatformIcon size={26} className="text-foreground" />
+                <div className="h-full bg-[#090D16] border border-white/10 hover:border-indigo-500/40 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-2xl shadow-black/80 transition-all duration-300 group-hover:-translate-y-1">
+                  
+                  {/* Card Header */}
+                  <div>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <PlatformIcon size={24} className={platform.brandColor} />
                       </div>
-                      <div className="text-right">
-                        <p className="text-[11px] text-muted-foreground">Profile</p>
-                        <p className="text-xs sm:text-sm font-medium text-foreground font-mono-code">@{platform.username}</p>
-                      </div>
+                      <span className={`text-[10px] font-mono-code font-semibold px-2.5 py-1 rounded-full border ${platform.badgeBg}`}>
+                        {platform.tier}
+                      </span>
                     </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors">{platform.name}</h3>
-                  </div>
 
-                  <div className="relative space-y-3">
-                    {platform.stats.map((stat, statIndex) => {
-                      const StatIcon = stat.icon;
-                      return (
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-primary transition-colors flex items-center justify-between">
+                      <span>{platform.name}</span>
+                      <ExternalLink size={14} className="text-gray-500 group-hover:text-primary transition-colors" />
+                    </h3>
+                    <p className="text-xs font-mono-code text-gray-400 mt-0.5 mb-5">
+                      @{platform.username}
+                    </p>
+
+                    {/* Mini Rating Meter */}
+                    <div className="mb-5 space-y-1.5">
+                      <div className="flex justify-between text-[11px] font-mono-code text-gray-400">
+                        <span>Progress Benchmark</span>
+                        <span className="text-white font-semibold">{platform.ratingPct}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
                         <div
-                          key={statIndex}
-                          className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-border group-hover:border-primary/30 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <StatIcon size={16} className="text-primary" />
-                            <span className="text-sm text-muted-foreground">{stat.label}</span>
-                          </div>
-                          <StatValue
-                            value={stat.value}
-                            className="text-sm font-bold font-mono-code text-foreground"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                          className={`h-full rounded-full bg-gradient-to-r ${platform.barColor}`}
+                          style={{ width: `${platform.ratingPct}%` }}
+                        />
+                      </div>
+                    </div>
 
-                  <div className="relative mt-4 pt-4 border-t border-border">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">View Profile</span>
-                      <span className="text-primary group-hover:underline">→</span>
+                    {/* Stats 3-Col Bar */}
+                    <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-white/[0.02] border border-white/5 text-center font-mono-code">
+                      {platform.stats.map((s, idx) => (
+                        <div key={idx} className="space-y-0.5">
+                          <span className="text-[10px] text-gray-400 uppercase block">{s.label}</span>
+                          <StatValue value={s.value} className="text-xs sm:text-sm font-bold text-white" />
+                        </div>
+                      ))}
                     </div>
                   </div>
+
+                  {/* Footer link line */}
+                  <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono-code text-gray-400">
+                    <span className="group-hover:text-white transition-colors">Verified Profile</span>
+                    <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
+                  </div>
+
                 </div>
               </a>
             );
