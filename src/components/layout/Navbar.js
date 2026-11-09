@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, X, ShieldAlert } from 'lucide-react';
+import { Menu, X, ShieldAlert, ArrowUpRight } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
@@ -22,11 +22,10 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled,       setScrolled]       = useState(false);
   const pathname = usePathname();
-
   const [isAdmin,        setIsAdmin]        = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener('scroll', handleScroll);
 
     // Check admin session
@@ -44,103 +43,167 @@ export default function Navbar() {
     };
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const isActive = (href) =>
     href === ROUTES.HOME ? pathname === href : pathname.startsWith(href);
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-background/80 backdrop-blur-lg border-b border-border'
-          : 'bg-transparent'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-3 sm:px-6 pointer-events-none">
+      <nav
+        className={`pointer-events-auto w-full max-w-5xl rounded-full border transition-all duration-300 ${
+          scrolled
+            ? 'bg-[#07090E]/90 border-white/15 backdrop-blur-2xl shadow-2xl shadow-black/80 py-2 sm:py-2.5 px-4 sm:px-6'
+            : 'bg-[#07090E]/75 border-white/10 backdrop-blur-xl shadow-xl shadow-black/50 py-2.5 sm:py-3 px-4 sm:px-6'
+        }`}
+      >
+        <div className="flex items-center justify-between">
 
-          {/* Logo & Admin Button */}
-          <div className="flex items-center gap-4">
-            <Link href={ROUTES.HOME} className="flex items-center space-x-3 group">
+          {/* Brand Logo & Name */}
+          <Link href={ROUTES.HOME} className="flex items-center space-x-2.5 group">
+            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/20 group-hover:ring-primary/60 transition-all duration-300">
               <Image
                 src="/brand-icon.png"
                 alt="Ayush Tiwari Logo"
-                width={38}
-                height={38}
-                className="rounded-lg group-hover:scale-105 transition-transform"
+                fill
+                sizes="32px"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
                 priority
               />
-              <span className="text-xl font-bold gradient-text hidden sm:block">Ayush Tiwari</span>
+            </div>
+            <span className="text-base sm:text-lg font-bold font-display tracking-tight text-white group-hover:text-primary transition-colors">
+              Ayush Tiwari
+            </span>
+          </Link>
+
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-full border border-white/5">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 select-none ${
+                    active
+                      ? 'text-white bg-primary/20 border border-primary/40 shadow-sm'
+                      : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Right Action / Mobile Trigger */}
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link
+                href="/admin/dashboard"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-red-500/10 text-red-400 text-xs font-semibold rounded-full hover:bg-red-500/20 transition-colors border border-red-500/20"
+              >
+                <ShieldAlert size={12} />
+                <span>Admin</span>
+              </Link>
+            )}
+
+            <Link
+              href={ROUTES.CONTACT}
+              className="hidden lg:inline-flex items-center gap-1 text-xs font-semibold font-mono-code text-white bg-gradient-to-r from-primary to-accent px-4 py-1.5 rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+            >
+              <span>Let&apos;s Talk</span>
+              <ArrowUpRight size={13} />
             </Link>
 
-            {isAdmin && (
-              <Link
-                href="/admin/dashboard"
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/20"
-              >
-                <ShieldAlert size={14} /> Admin
-              </Link>
-            )}
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-full text-foreground hover:bg-white/10 active:scale-95 transition-all"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
+            </button>
           </div>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  isActive(link.href)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-foreground hover:bg-primary/10 transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile Drawer Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-background/95 backdrop-blur-lg border-t border-border">
-          <div className="px-4 py-4 space-y-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg font-medium transition-all ${
-                  isActive(link.href)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            
-            {isAdmin && (
-              <Link
-                href="/admin/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 px-4 py-3 rounded-lg font-medium text-red-400 hover:bg-red-500/10 transition-all mt-2 border border-red-500/20 bg-red-500/5"
-              >
-                <ShieldAlert size={18} /> Admin Portal
-              </Link>
-            )}
+        <div
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-xl md:hidden pointer-events-auto transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            className="w-full max-w-md mx-auto mt-20 px-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-[#0D111A] border border-white/15 rounded-3xl p-5 shadow-2xl shadow-black/90 space-y-2">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10 px-2">
+                <span className="text-xs font-mono-code uppercase tracking-wider text-muted-foreground font-semibold">
+                  Navigation
+                </span>
+                <span className="text-xs font-mono-code text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+                  Ayush Tiwari
+                </span>
+              </div>
+
+              <div className="space-y-1 pt-2">
+                {navLinks.map((link) => {
+                  const active = isActive(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                        active
+                          ? 'bg-primary/20 text-white border border-primary/40'
+                          : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span>{link.label}</span>
+                      {active && <span className="w-2 h-2 rounded-full bg-primary" />}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {isAdmin && (
+                <Link
+                  href="/admin/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 mt-3"
+                >
+                  <ShieldAlert size={16} />
+                  <span>Admin Dashboard</span>
+                </Link>
+              )}
+
+              <div className="pt-4 border-t border-white/10 mt-3 flex items-center justify-between px-2 text-xs text-muted-foreground font-mono-code">
+                <span>Jabalpur, IN</span>
+                <span className="text-emerald-400">Available Q1/Q2</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

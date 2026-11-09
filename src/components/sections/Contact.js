@@ -55,20 +55,20 @@ export default function Contact() {
         </div>
 
         {/* Contact Form */}
-        <div className="bg-card border border-border rounded-xl p-8 card-glow">
+        <div className="bg-[#0D111A] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-black/80 hover:border-primary/40 transition-all duration-300">
           {success ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="text-green-500" size={32} />
+              <div className="w-16 h-16 bg-emerald-500/15 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="text-emerald-400" size={32} />
               </div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Message Sent!</h3>
-              <p className="text-muted-foreground">Thank you for reaching out. I'll get back to you soon.</p>
+              <h3 className="text-2xl font-bold font-display text-foreground mb-2">Message Delivered!</h3>
+              <p className="text-muted-foreground text-sm">Thank you for reaching out. I&apos;ll get back to you shortly.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="name" className="block text-xs font-mono-code uppercase tracking-wider font-semibold text-muted-foreground mb-2">
                   Your Name *
                 </label>
                 <input
@@ -78,14 +78,14 @@ export default function Contact() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 bg-[#07090E] border border-white/10 rounded-xl text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
                   placeholder="John Doe"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="email" className="block text-xs font-mono-code uppercase tracking-wider font-semibold text-muted-foreground mb-2">
                   Your Email *
                 </label>
                 <input
@@ -95,14 +95,14 @@ export default function Contact() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 bg-[#07090E] border border-white/10 rounded-xl text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
                   placeholder="john@example.com"
                 />
               </div>
 
               {/* Message */}
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="message" className="block text-xs font-mono-code uppercase tracking-wider font-semibold text-muted-foreground mb-2">
                   Your Message *
                 </label>
                 <textarea
@@ -111,9 +111,9 @@ export default function Contact() {
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  rows={6}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  placeholder="Tell me about your project..."
+                  rows={5}
+                  className="w-full px-4 py-3 bg-[#07090E] border border-white/10 rounded-xl text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all text-sm"
+                  placeholder="Tell me about your project, architecture needs, or role details..."
                 />
               </div>
 
@@ -121,7 +121,7 @@ export default function Contact() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary hover:bg-primary/90 text-white"
+                className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all text-sm"
                 size="lg"
               >
                 {loading ? (

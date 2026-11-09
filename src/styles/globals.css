@@ -29,29 +29,29 @@
   }
 
   .dark {
-    --background:         222.2 47.4% 11.2%;
+    --background:         225 25% 4.5%;
     --foreground:         210 40% 98%;
-    --card:               222.2 47.4% 11.2%;
+    --card:               224 22% 7.5%;
     --card-foreground:    210 40% 98%;
-    --popover:            222.2 47.4% 11.2%;
+    --popover:            224 22% 7.5%;
     --popover-foreground: 210 40% 98%;
 
-    --primary:            217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary:            239 84% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary:          217.2 32.6% 17.5%;
+    --secondary:          224 20% 14%;
     --secondary-foreground: 210 40% 98%;
-    --muted:              217.2 32.6% 17.5%;
-    --muted-foreground:   215 20.2% 65.1%;
+    --muted:              224 20% 12%;
+    --muted-foreground:   215 16% 65%;
 
     --accent:             199 89% 55%;
-    --accent-foreground:  222.2 47.4% 11.2%;
+    --accent-foreground:  210 40% 98%;
 
     --destructive:        0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border:             217.2 32.6% 17.5%;
-    --input:              217.2 32.6% 17.5%;
-    --ring:               217.2 91.2% 59.8%;
+    --border:             224 20% 15%;
+    --input:              224 20% 15%;
+    --ring:               239 84% 67%;
   }
 }
 
@@ -205,23 +205,34 @@
   }
 
   .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(16px) saturate(150%);
+    background: rgba(13, 17, 26, 0.75);
+    backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .glass-card {
+    background: rgba(13, 17, 26, 0.65);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .obsidian-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .obsidian-card:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.6), 0 0 24px -2px rgba(99, 102, 241, 0.15);
+  }
+
   .card-glow {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
-    transition: box-shadow 0.3s ease;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.08);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .card-glow:hover {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 35px rgba(99, 102, 241, 0.22);
   }
 
   .card-glow-accent:hover {

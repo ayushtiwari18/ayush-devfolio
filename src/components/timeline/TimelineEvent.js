@@ -29,6 +29,7 @@ export default function TimelineEvent({ event, index, featuredRank }) {
   const observerRef = useRef(null);
   const [isVisible,      setIsVisible]      = useState(false);
   const [prefersReduced, setPrefersReduced] = useState(false);
+  const [isMobile,       setIsMobile]       = useState(false);
 
   const isEven = index % 2 === 0;
   const config = TYPE_CONFIG[event.type] || TYPE_CONFIG.project;
@@ -42,6 +43,10 @@ export default function TimelineEvent({ event, index, featuredRank }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -67,7 +72,7 @@ export default function TimelineEvent({ event, index, featuredRank }) {
   const variants = prefersReduced
     ? { hidden: { opacity: 1, x: 0, y: 0 }, visible: { opacity: 1, x: 0, y: 0 } }
     : {
-        hidden:  { opacity: 0, x: isEven ? -36 : 36, y: 16 },
+        hidden:  { opacity: 0, x: isMobile ? 0 : (isEven ? -36 : 36), y: 16 },
         visible: {
           opacity: 1, x: 0, y: 0,
           transition: {

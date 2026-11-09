@@ -28,43 +28,43 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
   return (
     <div className="relative z-10 flex flex-col items-center lg:items-start text-center lg:text-left">
 
-      {/* Phase 1 — Badge */}
+      {/* Phase 1 — Telemetric Availability Badge */}
       <div style={reveal(1)}>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-primary/10 border border-primary/30 rounded-full text-xs sm:text-sm text-primary mb-4 sm:mb-6 backdrop-blur-sm">
-          <span className="relative flex h-2 w-2 sm:h-3 sm:w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 sm:h-3 sm:w-3 bg-primary" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs font-mono-code text-emerald-400 mb-4 sm:mb-6 backdrop-blur-md shadow-lg shadow-emerald-500/5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
-          <span className="font-medium">Available for opportunities</span>
+          <span className="font-semibold tracking-wider uppercase">Jabalpur, IN · Available for Q1/Q2 Roles</span>
         </div>
       </div>
 
-      {/* Phase 2 — Name — Clash Display applied */}
+      {/* Phase 2 — Name with Clash Display */}
       <div style={reveal(2)}>
         <h1
-          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white mb-3 sm:mb-4 leading-tight tracking-tighter"
+          className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white mb-3 sm:mb-4 leading-[1.08] tracking-tighter"
           style={{ textShadow }}
         >
           Hi, I&apos;m{' '}
-          <span className="text-primary">{profile?.name || 'Ayush Tiwari'}</span>
+          <span className="gradient-text font-display">{profile?.name || 'Ayush Tiwari'}</span>
         </h1>
       </div>
 
       {/* Phase 3 & 4 Combined — Dynamic Rolling Title */}
-      <div style={reveal(3)} className="min-h-[70px] sm:min-h-[90px] md:min-h-[110px] lg:min-h-[120px] mb-8 sm:mb-12 flex items-start w-full">
+      <div style={reveal(3)} className="min-h-[64px] sm:min-h-[88px] lg:min-h-[100px] mb-6 sm:mb-10 flex items-start w-full">
         {profile?.rolling_texts && profile.rolling_texts.length > 0 ? (
           <div 
-            className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight relative w-full h-[70px] sm:h-[90px] md:h-[110px] lg:h-[120px]"
+            className="font-display text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight relative w-full h-[64px] sm:h-[88px] lg:h-[100px]"
             style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}
           >
             <AnimatePresence mode="wait">
               <motion.div
                 key={rollingIndex}
-                initial={{ opacity: 0, y: 30, filter: 'blur(8px)', scale: 0.95 }}
+                initial={{ opacity: 0, y: 24, filter: 'blur(6px)', scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
-                exit={{ opacity: 0, y: -30, filter: 'blur(8px)', scale: 1.05 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute top-0 left-0 w-full text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] pr-4 sm:pr-8 leading-snug sm:leading-tight"
+                exit={{ opacity: 0, y: -24, filter: 'blur(6px)', scale: 1.04 }}
+                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute top-0 left-0 w-full text-foreground/95 leading-snug sm:leading-tight"
               >
                 {profile.rolling_texts[rollingIndex]}
               </motion.div>
@@ -72,31 +72,32 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
           </div>
         ) : (
           <p
-            className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-2xl leading-relaxed"
+            className="text-base sm:text-xl md:text-2xl text-gray-300 max-w-2xl leading-relaxed"
             style={{ textShadow: '0 1px 10px rgba(0,0,0,0.98)' }}
           >
             {profile?.description ||
-              'I build production-grade web systems using MERN Stack, Next.js, Three.js, and AWS. My research on network security is published in Springer. AWS certified — 5,600+ GitHub commits, 885+ DSA problems solved.'}
+              'Full Stack Engineer specializing in distributed web systems, Next.js architecture, and AWS cloud infrastructure. Published researcher in network security (Springer) with 5,600+ GitHub commits.'}
           </p>
         )}
       </div>
 
       {/* Phase 5 — CTA Buttons */}
-      <div style={reveal(5)}>
-        <div className="flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 flex-wrap mb-6">
-          <Link href={ROUTES.PROJECTS}>
+      <div style={reveal(5)} className="w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-6 w-full sm:w-auto">
+          <Link href={ROUTES.PROJECTS} className="w-full sm:w-auto">
             <Button size="lg"
-              className="h-12 px-6 sm:px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white text-sm sm:text-base font-semibold rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 transition-all hover:scale-105 border-0 whitespace-nowrap">
-              View My Work <ArrowRight className="ml-2" size={18} />
+              className="w-full sm:w-auto h-12 px-6 sm:px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white text-sm sm:text-base font-semibold rounded-xl shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all hover:scale-105 active:scale-95 border-0 whitespace-nowrap">
+              View Featured Work <ArrowRight className="ml-2" size={18} />
             </Button>
           </Link>
 
-          <Link href={ROUTES.CONTACT}>
+          <Link href={ROUTES.CONTACT} className="w-full sm:w-auto">
             <Button size="lg" variant="outline"
-              className="h-12 px-6 sm:px-8 border border-white/30 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 hover:border-white/50 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 whitespace-nowrap">
+              className="w-full sm:w-auto h-12 px-6 sm:px-8 border border-white/20 bg-white/[0.04] backdrop-blur-md text-white hover:bg-white/10 hover:border-white/40 text-sm sm:text-base font-semibold rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
               <Mail className="mr-2" size={18} />Get In Touch
             </Button>
           </Link>
+        </div>
 
           {resumeUrl && (
             <a href={resumeUrl} target="_blank" rel="noopener noreferrer">

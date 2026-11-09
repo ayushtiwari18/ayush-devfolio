@@ -86,38 +86,50 @@ export default function LatestBlog({ posts }) {
         >
           {posts.map((post) => (
             <Link key={post.id} href={`/blog/${post.slug}`} className="group block h-full">
-              <article className="bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all h-full flex flex-col">
+              <article className="bg-[#0D111A] border border-white/10 rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 h-full flex flex-col">
 
                 <BlogImage src={post.cover_image} title={post.title} tags={post.tags} />
 
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={12} />
+                <div className="p-5 sm:p-6 flex-1 flex flex-col">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3 font-mono-code">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar size={12} className="text-primary" />
                       <span>{formatDate(post.created_at)}</span>
                     </div>
                     {post.reading_time && (
-                      <div className="flex items-center gap-1">
-                        <Clock size={12} />
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={12} className="text-primary" />
                         <span>{post.reading_time} min read</span>
                       </div>
                     )}
                   </div>
 
-                  <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2 font-display leading-snug">
                     {post.title}
                   </h3>
 
                   {post.excerpt && (
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3 flex-1 leading-relaxed">
                       {post.excerpt}
                     </p>
                   )}
 
                   {post.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-auto">
-                      {post.tags.slice(0, 2).map((tag, i) => (
+                    <div className="flex flex-wrap gap-1.5 mt-auto pt-2 border-t border-white/5">
+                      {post.tags.slice(0, 3).map((tag, i) => (
                         <span
+                          key={i}
+                          className="px-2.5 py-0.5 bg-primary/10 text-primary text-[11px] font-mono-code font-semibold rounded-full border border-primary/20"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </article>
+            </Link>
+          ))}
                           key={i}
                           className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20"
                         >

@@ -53,16 +53,16 @@ function ProjectImage({ src, title }) {
 // ---------------------------------------------------------------------------
 function ProjectCard({ project }) {
   return (
-    <div className="group bg-card border border-border rounded-xl overflow-hidden card-glow hover-lift transition-all h-full flex flex-col">
+    <div className="group bg-[#0D111A] border border-white/10 rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 h-full flex flex-col">
 
       <ProjectImage src={project.cover_image} title={project.title} />
 
-      <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors leading-snug">
+      <div className="p-5 sm:p-6 flex flex-col flex-1">
+        <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors leading-snug font-display">
           {project.title}
         </h3>
 
-        <p className="text-sm text-muted-foreground mb-4 flex-1 line-clamp-3">
+        <p className="text-xs sm:text-sm text-muted-foreground mb-4 flex-1 line-clamp-3 leading-relaxed">
           {project.description}
         </p>
 
@@ -72,30 +72,30 @@ function ProjectCard({ project }) {
             {project.technologies.slice(0, 5).map((tech, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20 font-medium"
+                className="px-2.5 py-0.5 bg-primary/10 text-primary text-[11px] font-mono-code rounded-full border border-primary/20 font-medium"
               >
                 {tech}
               </span>
             ))}
             {project.technologies.length > 5 && (
-              <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-full">
+              <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[11px] font-mono-code rounded-full">
                 +{project.technologies.length - 5}
               </span>
             )}
           </div>
         )}
 
-        {/* Action row — all independent <a> tags, no nesting */}
-        <div className="flex items-center gap-3 mt-auto pt-3 border-t border-border">
+        {/* Action row */}
+        <div className="flex items-center gap-3 mt-auto pt-3 border-t border-white/10">
           {project.github_url && (
             <a
               href={project.github_url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${project.title} GitHub repository`}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/10 transition-all"
             >
-              <GitHubIcon size={18} />
+              <GitHubIcon size={17} />
             </a>
           )}
           {project.live_url && (
@@ -104,16 +104,17 @@ function ProjectCard({ project }) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${project.title} live demo`}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/10 transition-all"
             >
-              <ExternalLink size={18} />
+              <ExternalLink size={17} />
             </a>
           )}
           <Link
             href={`/projects/${project.slug}`}
-            className="ml-auto text-primary text-xs font-semibold hover:underline flex items-center gap-1"
+            className="ml-auto text-primary text-xs font-semibold font-mono-code hover:underline flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform"
           >
-            View Details <ArrowRight size={14} />
+            <span>View Details</span>
+            <ArrowRight size={13} />
           </Link>
         </div>
       </div>

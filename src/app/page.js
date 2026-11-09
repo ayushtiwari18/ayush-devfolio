@@ -82,7 +82,7 @@ export default async function Home() {
   const achievements = dbAchievements.length > 0 ? dbAchievements : ACHIEVEMENTS;
 
   return (
-    <main id="main-content" className="min-h-screen">
+    <div className="min-h-screen">
       <Hero profile={profile} />
       <About profile={profile} achievements={achievements} />
       <Experience />
@@ -92,6 +92,6 @@ export default async function Home() {
       <FeaturedProjects projects={featuredProjects} />
       <LatestBlog posts={recentPosts} />
       <Contact />
-    </main>
+    </div>
   );
 }

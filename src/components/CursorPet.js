@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 export default function CursorPet() {
   const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
   const [isClient, setIsClient] = useState(false);
+  const [isFinePointer, setIsFinePointer] = useState(false);
   
   const spriteRef = useRef(null);
   const containerRef = useRef(null);
@@ -16,7 +17,13 @@ export default function CursorPet() {
   });
 
   useEffect(() => {
+    // Check if device supports fine pointer (mouse/trackpad), exclude touch-only
+    const hasFinePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches;
+    if (!hasFinePointer) return;
+
     setIsClient(true);
+    setIsFinePointer(true);
+
     const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX + 15, y: e.clientY + 15 });
     };
@@ -25,7 +32,7 @@ export default function CursorPet() {
   }, []);
 
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !isFinePointer) return;
 
     let animationFrameId;
     let lastAnimTime = performance.now();
@@ -140,10 +147,11 @@ export default function CursorPet() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [mousePosition, isClient]);
 
-  if (!isClient) return null;
+  if (!isClient || !isFinePointer) return null;
 
   return (
     <div
+      className="hidden md:block"
       style={{
         position: 'fixed',
         left: 0,

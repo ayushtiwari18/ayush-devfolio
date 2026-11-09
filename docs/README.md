@@ -16,6 +16,8 @@
 | 6 | [SEO & Routing Strategy](./06-seo-routing-strategy.md) | Complete SEO guide |
 | 7 | [Admin Panel](./07-admin-panel-implementation.md) | CMS implementation |
 | 8 | [Implementation Roadmap](./08-implementation-roadmap.md) | Week-by-week plan |
+| 9 | [Responsive Design Audit](./09-responsive-design-audit.md) | In-depth mobile & tablet breakpoint fix plan |
+| 10 | [Visual Design Modernization](./10-visual-design-modernization.md) | UI/UX elevation, obsidian palette & tasteskill standards |
 
 ### AI Instructions (Critical for Development)
 

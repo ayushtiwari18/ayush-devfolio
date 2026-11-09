@@ -193,39 +193,35 @@ export default function Hero({ profile }) {
         </div>
       </div>
 
-      {/* Controls — z-10 (was z-20, was colliding with navbar) */}
+      {/* Controls — Docked in bottom-right corner to never collide with hero typography */}
       <div
-        className="absolute top-20 sm:top-24 right-2 sm:right-4 z-10 flex flex-col gap-2"
+        className="absolute bottom-20 right-3 sm:bottom-8 sm:right-8 z-20 flex sm:flex-col items-center sm:items-end gap-1.5 p-1.5 rounded-2xl bg-[#07090E]/85 backdrop-blur-xl border border-white/15 shadow-2xl shadow-black/80"
         style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 0.6s ease 1.8s', pointerEvents: sceneReady ? 'auto' : 'none' }}
       >
         <button
           onClick={() => setShowOrbits(v => !v)}
           aria-label={showOrbits ? 'Hide orbit paths' : 'Show orbit paths'}
-          className={`px-3 py-2 sm:px-4 sm:py-2 backdrop-blur-md rounded-lg text-xs sm:text-sm font-medium transition-all shadow-lg ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono-code transition-all ${
             showOrbits
-              ? 'bg-primary/30 border-2 border-primary text-white'
-              : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20'
+              ? 'bg-primary text-white shadow-md shadow-primary/30'
+              : 'text-muted-foreground hover:text-white hover:bg-white/5'
           }`}
         >
           <span className="hidden sm:inline">{showOrbits ? '✓ Orbits ON' : 'Show Orbits'}</span>
-          <span className="sm:hidden">{showOrbits ? '✓' : '🔭'}</span>
+          <span className="sm:hidden">{showOrbits ? '✓ Orbit' : '🔭 Orbit'}</span>
         </button>
         <button
           onClick={() => setAutoRotate(v => !v)}
           aria-label={autoRotate ? 'Pause rotation' : 'Resume rotation'}
-          className={`px-3 py-2 sm:px-4 sm:py-2 backdrop-blur-md rounded-lg text-xs sm:text-sm font-medium transition-all shadow-lg ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono-code transition-all ${
             autoRotate
-              ? 'bg-accent/30 border-2 border-accent text-white'
-              : 'bg-black/60 border border-primary/30 text-white hover:bg-primary/20'
+              ? 'bg-accent/20 text-accent border border-accent/40 shadow-sm'
+              : 'text-muted-foreground hover:text-white hover:bg-white/5'
           }`}
         >
-          <span className="hidden sm:inline">{autoRotate ? '⏸ Playing' : '▶ Paused'}</span>
+          <span className="hidden sm:inline">{autoRotate ? '⏸ Orbiting' : '▶ Paused'}</span>
           <span className="sm:hidden">{autoRotate ? '⏸' : '▶'}</span>
         </button>
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-xs text-gray-400 border border-white/10">
-          <div className={`w-2 h-2 rounded-full ${autoRotate ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
-          <span>{autoRotate ? 'Live' : 'Paused'}</span>
-        </div>
       </div>
 
       <div className="absolute top-1/4 left-6 w-40 h-40 bg-primary/8 rounded-full blur-3xl animate-pulse pointer-events-none" />

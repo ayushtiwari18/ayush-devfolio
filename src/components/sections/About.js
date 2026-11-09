@@ -52,15 +52,15 @@ function StatCard({ achievement, index, visible }) {
   return (
     <div
       style={fadeUp(visible, index * 0.08)}
-      className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group"
+      className="bg-[#0D111A] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group"
     >
-      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-        <Icon size={20} className="text-primary" />
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-105 group-hover:bg-primary/20 transition-all">
+        <Icon size={18} className="text-primary" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-foreground leading-none mb-1">{achievement.value}</p>
-        <p className="text-sm font-semibold text-foreground">{achievement.label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{achievement.description}</p>
+        <p className="text-xl sm:text-2xl font-bold font-mono-code text-foreground leading-none mb-1.5">{achievement.value}</p>
+        <p className="text-xs sm:text-sm font-semibold text-foreground line-clamp-1">{achievement.label}</p>
+        <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{achievement.description}</p>
       </div>
     </div>
   );
@@ -71,13 +71,13 @@ function ValueCard({ item, index, visible }) {
   return (
     <div
       style={fadeUp(visible, 0.2 + index * 0.08)}
-      className="bg-card border border-border rounded-2xl p-6 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group"
+      className="bg-[#0D111A] border border-white/10 rounded-2xl p-5 sm:p-6 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group"
     >
-      <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-        <Icon size={22} className="text-primary" />
+      <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/20 transition-all">
+        <Icon size={20} className="text-primary" />
       </div>
       <h4 className="text-base font-bold text-foreground mb-1.5">{item.title}</h4>
-      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
     </div>
   );
 }

@@ -167,7 +167,7 @@ export default function CodingStats() {
         {/* Overall stats — CountUp on all numeric values */}
         <div
           ref={stats.ref}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-12"
           style={fadeUp(stats.visible, 0.1)}
         >
           {overallStats.map((stat, index) => {
@@ -175,18 +175,18 @@ export default function CodingStats() {
             return (
               <div
                 key={index}
-                className="relative p-6 bg-card border border-border rounded-xl hover:border-primary/50 transition-all duration-300 group"
+                className="relative p-4 sm:p-6 bg-[#0D111A] border border-white/10 rounded-2xl hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 mb-4 rounded-lg bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon size={24} className={stat.color} />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Icon size={22} className={stat.color} />
                   </div>
                   <StatValue
                     value={stat.value}
-                    className="text-3xl font-bold font-mono-code text-foreground mb-1 block"
+                    className="text-2xl sm:text-3xl font-bold font-mono-code text-foreground mb-1 block"
                   />
-                  <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-foreground mb-0.5">{stat.label}</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground">{stat.description}</p>
                 </div>
               </div>
             );
@@ -194,7 +194,7 @@ export default function CodingStats() {
         </div>
 
         {/* Platform cards */}
-        <div ref={cards.ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div ref={cards.ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {codingPlatforms.map((platform, index) => {
             const PlatformIcon = platform.icon;
             return (
@@ -207,20 +207,20 @@ export default function CodingStats() {
                 className="group cursor-pointer"
                 style={fadeUp(cards.visible, index * 0.08)}
               >
-                <div className={`relative h-full p-6 bg-card border ${platform.borderColor} rounded-2xl hover:border-primary/50 transition-all duration-300 overflow-hidden`}>
+                <div className={`relative h-full p-5 sm:p-6 bg-[#0D111A] border border-white/10 rounded-2xl hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden`}>
                   <div className={`absolute inset-0 bg-gradient-to-br ${platform.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
 
-                  <div className="relative mb-6">
+                  <div className="relative mb-5 sm:mb-6">
                     <div className="flex items-center justify-between mb-4">
-                      <div className={`w-14 h-14 rounded-xl ${platform.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                        <PlatformIcon size={28} className="text-foreground" />
+                      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${platform.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform border border-white/10`}>
+                        <PlatformIcon size={26} className="text-foreground" />
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Profile</p>
-                        <p className="text-sm font-medium text-foreground font-mono-code">@{platform.username}</p>
+                        <p className="text-[11px] text-muted-foreground">Profile</p>
+                        <p className="text-xs sm:text-sm font-medium text-foreground font-mono-code">@{platform.username}</p>
                       </div>
                     </div>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{platform.name}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors">{platform.name}</h3>
                   </div>
 
                   <div className="relative space-y-3">

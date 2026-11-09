@@ -29,18 +29,19 @@ export default function Footer() {
 
           {/* Brand */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center font-bold text-white">
+            <div className="flex items-center space-x-2.5 mb-4">
+              <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-primary/20">
                 AT
               </div>
-              <span className="text-xl font-bold gradient-text">Ayush Tiwari</span>
+              <span className="text-xl font-bold gradient-text font-display">Ayush Tiwari</span>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Full Stack Developer passionate about creating exceptional digital experiences.
+            <p className="text-sm text-muted-foreground mb-4 leading-relaxed max-w-sm">
+              Full Stack Engineer & Researcher crafting high-performance distributed systems, Next.js applications, and cloud architecture.
             </p>
-            <Link href="/admin/dashboard" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-              Admin Panel →
-            </Link>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-mono-code text-primary">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Jabalpur, IN · IST (UTC+5:30)</span>
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -80,17 +81,28 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p className="flex items-center gap-1">
-              © {currentYear} Ayush Tiwari. Built with
-              <Heart size={14} className="text-red-500 fill-red-500" />
-              using Next.js
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
+            <p className="flex items-center gap-1.5">
+              © {currentYear} Ayush Tiwari. Engineered with Next.js 14, Tailwind & Supabase.
             </p>
-            <div className="flex items-center gap-4">
-              <Link href="/admin/login" className="hover:text-primary transition-colors">Admin Login</Link>
+            <div className="flex items-center gap-4 font-mono-code text-xs">
+              <a
+                href="https://github.com/ayushtiwari18/ayush-devfolio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors flex items-center gap-1"
+              >
+                <span>View Source</span>
+                <span>↗</span>
+              </a>
               <span className="text-border">•</span>
-              <a href="https://github.com/ayushtiwari18/ayush-devfolio" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
-                Source Code
+              <a
+                href="https://github.com/ayushtiwari18"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                @ayushtiwari18
               </a>
             </div>
           </div>
