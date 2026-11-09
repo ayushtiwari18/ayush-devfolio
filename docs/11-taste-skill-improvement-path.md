@@ -44,7 +44,7 @@ flowchart TD
   * **Telemetry Availability Chip:** Replace generic status text with a live engineering telemetry badge:
     `🟢 JABALPUR, IN · AVAILABLE FOR Q1/Q2 ROLES · 5,600+ COMMITS`.
   * **Micro-Tactile Buttons:** Primary CTA buttons with active press states (`active:scale-95`), subtle inner highlight line (`inset 0 1px 0 rgba(255,255,255,0.2)`), and magnetic hover feel.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -58,7 +58,7 @@ flowchart TD
   * **Sliding Layout Pill (`layoutId="activeNavPill"`):** Use Framer Motion's shared layout animation so the active indicator glides smoothly underneath links when clicking or scrolling between sections.
   * **Keyboard Shortcut Tooltips:** Subtle shortcut hints (e.g. `Press 1 for About`, `Press 2 for Projects`, `/ to search`).
   * **Mobile Drawer Elevation:** Slide-down drawer with spring physics (`damping: 25`), blurred frosted backing, quick "Download Resume" action, and direct social pill triggers.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -74,7 +74,7 @@ flowchart TD
     * **Tile B (System Architecture Terminal):** Interactive dark terminal card showing code snippets or deployment philosophies (MERN, Docker, AWS).
     * **Tile C (Academic Pedigree):** B.Tech CSE (2021–2025) Gyan Ganga CSE graduation showcase with core CS course badges (DSA, OS, DBMS).
     * **Tile D (AWS Verified Credentials):** Dual AWS Cloud Practitioner & Solutions Architect badges with direct validation anchors.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -92,7 +92,7 @@ flowchart TD
       3. *Creative & System Performance* (Three.js, GSAP, WebGL, Algorithms).
     * **Live Project Cross-Linking:** Hovering on any skill card highlights: *"Deployed in 4 projects in this portfolio"* with direct links to view those project case studies.
     * Official full-color brand SVGs with subtle glow on hover.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -107,7 +107,7 @@ flowchart TD
     * **Rating Progress Gauges:** Visual rating meters for LeetCode (1657 rating), CodeChef (1443), and Codeforces.
     * **Tabular Monospace Digits:** Numbers aligned with `font-variant-numeric: tabular-nums` for rock-solid visual precision.
     * Live sparkline indicator showing consistency across 885+ solved DSA challenges.
-* **Status:** ⏳ *Pending your review to start*
+* **Status:** ✅ *Completed & Verified*
 
 ---
 
@@ -187,16 +187,16 @@ flowchart TD
 
 | # | Section / Component | Route / Anchor | Core Problem (Before) | Taste Skill Elevation (After) | Status |
 |---|---------------------|----------------|-----------------------|--------------------------------|--------|
-| **1** | **Hero & Profile Halo** | `/#hero` | Generic circular frame & standard copy | Concentric celestial counter-rotating orbital halo + telemetry badge | ⏳ Ready |
-| **2** | **Floating Glass Nav** | Top Header | Static active link tabs | Gliding active pill (`layoutId="navPill"`) + spring mobile drawer | ⏳ Ready |
-| **3** | **About Bento Grid** | `/#about` | Disconnected text paragraphs | 4-cell architectural bento with Springer research spotlight | ⏳ Ready |
-| **4** | **Capabilities Matrix** | `/#skills` | Passive infinite scrolling marquee | Curated 3-domain tech radar with live project cross-linking | ⏳ Ready |
-| **5** | **Terminal Command Center**| `/#stats` | Standard cards & plain numbers | Developer command deck with LeetCode 1657 rating gauges | ⏳ Ready |
-| **6** | **Experience Journal** | `/#experience` | Flat digital slate | Debossed gold/emerald foil badges, paper texture & spine depth | ⏳ Ready |
-| **7** | **Featured Projects** | `/#projects` | Generic image cards | Engineering artifacts with live status chips & architecture peek | ⏳ Ready |
-| **8** | **Deep Project Case Study** | `/projects/[slug]` | Standard long-scroll article | High-contrast Mermaid dark diagrams & trade-off matrix | ⏳ Ready |
-| **9** | **Editorial Blog** | `/blog/[slug]` | Dense prose | Substack-grade typography, progress bar & custom code blocks | ⏳ Ready |
-| **10** | **Contact & Footer** | `/#contact` | Generic blank inputs | Topic intent pills (`[Web App]`, `[AWS]`, `[Hire]`) + local IST time | ⏳ Ready |
+| **1** | **Hero & Profile Halo** | `/#hero` | Generic circular frame & standard copy | Concentric celestial counter-rotating orbital halo + telemetry badge | ✅ Done |
+| **2** | **Floating Glass Nav** | Top Header | Static active link tabs | Gliding active pill (`layoutId="navPill"`) + spring mobile drawer | ✅ Done |
+| **3** | **About Bento Grid** | `/#about` | Disconnected text paragraphs | 4-cell architectural bento with Springer research spotlight | ✅ Done |
+| **4** | **Capabilities Matrix** | `/#skills` | Passive infinite scrolling marquee | Curated 3-domain tech radar with view switcher (Matrix / Stream) | ✅ Done |
+| **5** | **Terminal Command Center**| `/#stats` | Standard cards & plain numbers | Developer command deck with LeetCode 1657 rating gauges | ✅ Done |
+| **6** | **Experience Journal** | `/#experience` | Flat digital slate | Debossed gold/emerald foil badges, paper texture & spine depth | ⏳ Next |
+| **7** | **Featured Projects** | `/#projects` | Generic image cards | Engineering artifacts with live status chips & architecture peek | ⏳ Queued |
+| **8** | **Deep Project Case Study** | `/projects/[slug]` | Standard long-scroll article | High-contrast Mermaid dark diagrams & trade-off matrix | ⏳ Queued |
+| **9** | **Editorial Blog** | `/blog/[slug]` | Dense prose | Substack-grade typography, progress bar & custom code blocks | ⏳ Queued |
+| **10** | **Contact & Footer** | `/#contact` | Generic blank inputs | Topic intent pills (`[Web App]`, `[AWS]`, `[Hire]`) + local IST time | ⏳ Queued |
 
 ---
 
