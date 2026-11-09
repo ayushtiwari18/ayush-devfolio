@@ -20,6 +20,7 @@
 | 10 | [Visual Design Modernization](./10-visual-design-modernization.md) | UI/UX elevation, obsidian palette & tasteskill standards |
 | 11 | [Taste Skill Roadmap](./11-taste-skill-improvement-path.md) | 10-step sequential verification path for Home Page |
 | 12 | [Blog Editorial Modernization](./12-blog-editorial-modernization.md) | Substack-grade editorial reading experience & blog catalog |
+| 13 | [Projects Storytelling Modernization](./13-projects-storytelling-modernization.md) | Narrative engineering case studies & projects catalog hub |
 
 ### AI Instructions (Critical for Development)
 

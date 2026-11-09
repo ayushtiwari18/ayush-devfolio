@@ -1,46 +1,42 @@
 import { notFound } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Github, ExternalLink, Clock, Calendar, Tag } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   getProjectBySlug,
   getPublishedProjectSlugs,
   getRelatedProjects,
   getRelatedBlogs,
 } from '@/services/projects.service';
-import ProjectHero            from '@/components/projects/ProjectHero';
-import ProjectSection         from '@/components/projects/ProjectSection';
-import StrategyGrid           from '@/components/projects/StrategyGrid';
-import ChallengeAccordion     from '@/components/projects/ChallengeAccordion';
-import RelatedContentSection  from '@/components/projects/RelatedContentSection';
+import { getProfileSettings } from '@/services/profile.service';
+import ProjectStoryView from '@/components/projects/ProjectStoryView';
 import { BASE_URL } from '@/lib/config';
-import ProjectCTASection      from '@/components/projects/ProjectCTASection';
-import PerformanceMetrics     from '@/components/projects/PerformanceMetrics';
-
-const ArchitectureViewer = dynamic(
-  () => import('@/components/projects/ArchitectureViewer'),
-  { ssr: false }
-);
 
 // Always fetch fresh from Supabase — never serve stale cached project pages
-export const revalidate   = 0;
+export const revalidate = 60;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
   try {
     const slugs = await getPublishedProjectSlugs();
     return slugs.map((slug) => ({ slug }));
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   let project;
-  try { project = await getProjectBySlug(slug); } catch { return { title: 'Project Not Found' }; }
+  try {
+    project = await getProjectBySlug(slug);
+  } catch {
+    return { title: 'Project Not Found' };
+  }
   if (!project) return { title: 'Project Not Found' };
 
-  const baseUrl        = BASE_URL;
-  const ogImage        = project.hero_image || project.cover_image;
+  const baseUrl = BASE_URL;
+  const ogImage = project.hero_image || project.cover_image;
   const metaDescription = project.problem_statement?.slice(0, 160) ?? project.description;
 
   return {
@@ -63,103 +59,24 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// ── Sticky sidebar TOC ─────────────────────────────────────────────
-const TOC_ITEMS = [
-  { id: 'overview',     label: 'Overview' },
-  { id: 'problem-statement', label: 'Problem' },
-  { id: 'solution',    label: 'Solution' },
-  { id: 'architecture', label: 'Architecture' },
-  { id: 'code-structure', label: 'Code Structure' },
-  { id: 'strategies',  label: 'Strategies' },
-  { id: 'challenges',  label: 'Challenges' },
-  { id: 'performance', label: 'Performance' },
-  { id: 'trade-offs-made', label: 'Trade-offs' },
-  { id: 'lessons-learned', label: 'Lessons' },
-  { id: 'future-improvements', label: 'Future Plans' },
-  { id: 'security-considerations', label: 'Security' },
-];
-
-function Sidebar({ project }) {
-  const hasSections = [
-    project.problem_statement, project.solution,
-    project.architecture_plan, project.code_structure,
-    project.strategies?.length, project.challenges?.length,
-    project.performance_metrics?.length, project.performance_notes,
-    project.trade_offs, project.lessons_learned,
-    project.future_improvements, project.security_notes,
-  ].some(Boolean);
-
-  return (
-    <aside className="hidden xl:block w-60 shrink-0">
-      <div className="sticky top-28 space-y-5">
-        {hasSections && (
-          <div className="bg-[#090D16] border border-white/10 rounded-2xl p-5 shadow-xl">
-            <p className="text-xs font-mono-code font-bold text-gray-400 uppercase tracking-wider mb-3">
-              On This Page
-            </p>
-            <nav className="space-y-1">
-              {TOC_ITEMS.map(({ id, label }) => (
-                <a
-                  key={id}
-                  href={`#${id}`}
-                  className="block text-xs font-mono-code text-gray-400 hover:text-primary hover:translate-x-1 transition-all duration-150 py-1 border-l-2 border-transparent hover:border-primary pl-2.5"
-                >
-                  {label}
-                </a>
-              ))}
-            </nav>
-          </div>
-        )}
-
-        <div className="bg-[#090D16] border border-white/10 rounded-2xl p-5 space-y-3.5 shadow-xl font-mono-code">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Project Telemetry</p>
-          {project.duration && (
-            <div className="flex items-center gap-2 text-xs text-gray-300">
-              <Clock size={12} className="text-primary shrink-0" />
-              <span>{project.duration}</span>
-            </div>
-          )}
-          {project.date && (
-            <div className="flex items-center gap-2 text-xs text-gray-300">
-              <Calendar size={12} className="text-primary shrink-0" />
-              <span>{new Date(project.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-            </div>
-          )}
-          {project.tags?.slice(0, 4).map(tag => (
-            <div key={tag} className="flex items-center gap-2 text-xs text-gray-400">
-              <Tag size={12} className="text-primary shrink-0" />
-              <span>{tag}</span>
-            </div>
-          ))}
-          {project.github_url && (
-            <a href={project.github_url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-primary hover:text-white transition-colors pt-2 border-t border-white/5">
-              <Github size={12} /><span>View Source Code</span>
-            </a>
-          )}
-          {project.live_url && (
-            <a href={project.live_url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-emerald-400 hover:text-white transition-colors">
-              <ExternalLink size={12} /><span>Live Deployment</span>
-            </a>
-          )}
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-// ── Page ───────────────────────────────────────────────────────────────────
 export default async function ProjectDetailPage({ params }) {
   const { slug } = await params;
-  let project;
-  try { project = await getProjectBySlug(slug); } catch { notFound(); }
+
+  const [projectResult, profileResult] = await Promise.all([
+    getProjectBySlug(slug).catch(() => null),
+    getProfileSettings().catch(() => null),
+  ]);
+
+  const project = projectResult;
   if (!project) notFound();
 
   const [relatedProjects, relatedBlogs] = await Promise.allSettled([
     getRelatedProjects(project.tags || [], slug),
     getRelatedBlogs(project.related_blogs || []),
-  ]).then(r => r.map(x => x.status === 'fulfilled' ? x.value : []));
+  ]).then((r) => r.map((x) => (x.status === 'fulfilled' ? x.value : [])));
+
+  const authorHeroImage = profileResult?.image_url || '/profile.png';
+  const authorName = profileResult?.name || 'Ayush Tiwari';
 
   const baseUrl = BASE_URL;
   const jsonLd = {
@@ -168,151 +85,72 @@ export default async function ProjectDetailPage({ params }) {
     name: project.title,
     description: project.description,
     url: `${baseUrl}/projects/${slug}`,
-    author: { '@type': 'Person', name: 'Ayush Tiwari' },
+    author: { '@type': 'Person', name: authorName },
     applicationCategory: 'WebApplication',
     dateCreated: project.created_at,
     ...(project.tags?.length > 0 && { keywords: project.tags.join(', ') }),
   };
+
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home',     item: baseUrl },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
       { '@type': 'ListItem', position: 2, name: 'Projects', item: `${baseUrl}/projects` },
       { '@type': 'ListItem', position: 3, name: project.title, item: `${baseUrl}/projects/${slug}` },
     ],
   };
-
-  const show = (key) => project[key] !== false;
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      <main className="min-h-screen pt-20 pb-24 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 bg-[#05070B] selection:bg-primary/20 selection:text-white relative overflow-hidden">
+        {/* Background ambient radial glow */}
+        <div
+          aria-hidden="true"
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%)',
+          }}
+        />
 
-        <div className="max-w-7xl mx-auto mb-8">
-          <Link href="/projects"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft size={15} />
-            <span>All Projects</span>
-          </Link>
-        </div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          {/* Breadcrumb Navigation Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
+            <nav className="flex items-center gap-2 text-xs font-mono text-gray-400">
+              <Link href="/" className="hover:text-white transition-colors">
+                Index
+              </Link>
+              <ChevronRight size={12} className="text-gray-600" />
+              <Link href="/projects" className="hover:text-white transition-colors">
+                Artifacts
+              </Link>
+              <ChevronRight size={12} className="text-gray-600" />
+              <span className="text-primary truncate max-w-[200px] sm:max-w-xs">
+                {project.title.split('—')[0].trim()}
+              </span>
+            </nav>
 
-        <div className="max-w-7xl mx-auto mb-12">
-          <ProjectHero
-            heroImage={project.hero_image}
-            coverImage={project.cover_image}
-            previewVideo={project.preview_video}
-            youtubeUrl={project.youtube_url}
-            title={project.title}
+            <Link href="/projects">
+              <Button
+                variant="outline"
+                className="h-9 px-3.5 text-xs font-mono border-white/10 bg-white/[0.03] hover:bg-white/10 hover:border-primary/40 text-gray-300 hover:text-white rounded-xl transition-all"
+              >
+                <ArrowLeft className="mr-1.5" size={13} />
+                <span>All Projects</span>
+              </Button>
+            </Link>
+          </div>
+
+          {/* High-Craft Narrative Story Case Study */}
+          <ProjectStoryView
+            project={project}
+            authorHeroImage={authorHeroImage}
+            authorName={authorName}
+            relatedProjects={relatedProjects}
           />
-        </div>
-
-        <div className="max-w-7xl mx-auto flex gap-10 items-start">
-
-          <article className="flex-1 min-w-0">
-
-            <div id="overview" className="mb-12 scroll-mt-24">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                {project.tags?.map(tag => (
-                  <span key={tag} className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full border border-primary/20">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-4 leading-tight">
-                {project.title}
-              </h1>
-              {project.description && (
-                <p className="text-lg text-muted-foreground leading-relaxed mb-6">{project.description}</p>
-              )}
-              {project.technologies?.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {project.technologies.map(t => (
-                    <span key={t} className="px-3 py-1.5 bg-card border border-border text-xs font-medium text-foreground rounded-lg hover:border-primary/40 transition-colors">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-3">
-                {project.github_url && (
-                  <a href={project.github_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-card border border-border text-sm font-semibold text-foreground rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all">
-                    <Github size={16} /> View Source
-                  </a>
-                )}
-                {project.live_url && (
-                  <a href={project.live_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-all">
-                    <ExternalLink size={16} /> Live Demo
-                  </a>
-                )}
-              </div>
-            </div>
-
-            <ProjectSection title="Problem Statement" content={project.problem_statement} />
-            <ProjectSection title="Solution"          content={project.solution} />
-
-            {show('show_architecture') && (
-              <ArchitectureViewer
-                architecturePlan={project.architecture_plan}
-                architectureType={project.architecture_type || 'text'}
-                apiFlowDiagram={project.api_flow_diagram}
-                dbSchemaVisual={project.db_schema_visual}
-              />
-            )}
-
-            {show('show_code_structure') && (
-              <ProjectSection title="Code Structure" content={project.code_structure} />
-            )}
-
-            {show('show_strategies') && (
-              <StrategyGrid strategies={project.strategies} />
-            )}
-
-            {show('show_challenges') && (
-              <ChallengeAccordion challenges={project.challenges} />
-            )}
-
-            {show('show_performance') && (
-              <>
-                <PerformanceMetrics metrics={project.performance_metrics} />
-                <ProjectSection title="Performance Decisions" content={project.performance_notes} />
-              </>
-            )}
-
-            {show('show_tradeoffs') && (
-              <ProjectSection title="Trade-offs Made" content={project.trade_offs} />
-            )}
-
-            {show('show_lessons') && (
-              <ProjectSection title="Lessons Learned" content={project.lessons_learned} />
-            )}
-
-            {show('show_future') && (
-              <ProjectSection title="Future Improvements" content={project.future_improvements} />
-            )}
-
-            {show('show_security') && (
-              <ProjectSection title="Security Considerations" content={project.security_notes} />
-            )}
-
-            <ProjectCTASection
-              githubUrl={project.github_url}
-              liveUrl={project.live_url}
-              title={project.title}
-            />
-
-            <RelatedContentSection
-              relatedProjects={relatedProjects}
-              relatedBlogs={relatedBlogs}
-            />
-          </article>
-
-          <Sidebar project={project} />
         </div>
       </main>
     </>
