@@ -90,17 +90,19 @@ function Sidebar({ project }) {
   ].some(Boolean);
 
   return (
-    <aside className="hidden xl:block w-56 shrink-0">
-      <div className="sticky top-28 space-y-6">
+    <aside className="hidden xl:block w-60 shrink-0">
+      <div className="sticky top-28 space-y-5">
         {hasSections && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">On This Page</p>
+          <div className="bg-[#090D16] border border-white/10 rounded-2xl p-5 shadow-xl">
+            <p className="text-xs font-mono-code font-bold text-gray-400 uppercase tracking-wider mb-3">
+              On This Page
+            </p>
             <nav className="space-y-1">
               {TOC_ITEMS.map(({ id, label }) => (
                 <a
                   key={id}
                   href={`#${id}`}
-                  className="block text-xs text-muted-foreground hover:text-primary hover:translate-x-1 transition-all duration-150 py-1 border-l-2 border-transparent hover:border-primary pl-2"
+                  className="block text-xs font-mono-code text-gray-400 hover:text-primary hover:translate-x-1 transition-all duration-150 py-1 border-l-2 border-transparent hover:border-primary pl-2.5"
                 >
                   {label}
                 </a>
@@ -109,36 +111,36 @@ function Sidebar({ project }) {
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Project Info</p>
+        <div className="bg-[#090D16] border border-white/10 rounded-2xl p-5 space-y-3.5 shadow-xl font-mono-code">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Project Telemetry</p>
           {project.duration && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-gray-300">
               <Clock size={12} className="text-primary shrink-0" />
               <span>{project.duration}</span>
             </div>
           )}
           {project.date && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-gray-300">
               <Calendar size={12} className="text-primary shrink-0" />
               <span>{new Date(project.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
             </div>
           )}
           {project.tags?.slice(0, 4).map(tag => (
-            <div key={tag} className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div key={tag} className="flex items-center gap-2 text-xs text-gray-400">
               <Tag size={12} className="text-primary shrink-0" />
               <span>{tag}</span>
             </div>
           ))}
           {project.github_url && (
             <a href={project.github_url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-primary hover:underline mt-1">
-              <Github size={12} /><span>View Source</span>
+              className="flex items-center gap-2 text-xs text-primary hover:text-white transition-colors pt-2 border-t border-white/5">
+              <Github size={12} /><span>View Source Code</span>
             </a>
           )}
           {project.live_url && (
             <a href={project.live_url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-primary hover:underline">
-              <ExternalLink size={12} /><span>Live Demo</span>
+              className="flex items-center gap-2 text-xs text-emerald-400 hover:text-white transition-colors">
+              <ExternalLink size={12} /><span>Live Deployment</span>
             </a>
           )}
         </div>

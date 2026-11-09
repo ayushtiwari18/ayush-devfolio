@@ -23,7 +23,19 @@ function MermaidDiagram({ code }) {
         mermaid.initialize({
           startOnLoad: false,
           theme: 'dark',
-          themeVariables: { primaryColor: '#6366f1', edgeLabelBackground: '#1e1e2e' },
+          themeVariables: {
+            darkMode: true,
+            background: '#090D16',
+            primaryColor: '#6366f1',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: 'rgba(99,102,241,0.5)',
+            lineColor: '#818cf8',
+            secondaryColor: '#1e1b4b',
+            tertiaryColor: '#0b0f19',
+            edgeLabelBackground: '#0b0f19',
+            fontFamily: 'ui-monospace, monospace',
+            fontSize: '13px',
+          },
         });
         const id  = `mermaid-${Math.random().toString(36).slice(2)}`;
         const { svg } = await mermaid.render(id, code);
@@ -47,11 +59,22 @@ function MermaidDiagram({ code }) {
   );
 
   return (
-    <div className="relative w-full rounded-xl bg-muted/10 border border-border overflow-hidden group">
+    <div className="relative w-full rounded-2xl bg-[#090D16] border border-white/10 overflow-hidden group shadow-2xl">
+      {/* Terminal Title Bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#070A12] border-b border-white/10 font-mono-code text-xs text-gray-400">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+        </div>
+        <span className="text-[11px] font-semibold text-gray-300">SYSTEM ARCHITECTURE // INTERACTIVE CANVAS</span>
+        <span className="text-[10px] text-primary hidden sm:inline">PINCH / DRAG TO EXPLORE</span>
+      </div>
+
       {!ready && (
         <div className="absolute inset-0 z-20 flex items-center gap-2 justify-center text-muted-foreground text-sm bg-background/50 backdrop-blur-sm">
-          <Loader2 size={16} className="animate-spin" />
-          <span>Rendering diagram…</span>
+          <Loader2 size={16} className="animate-spin text-primary" />
+          <span className="font-mono-code text-xs">Rendering diagram pipeline…</span>
         </div>
       )}
       
@@ -65,16 +88,16 @@ function MermaidDiagram({ code }) {
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
             {/* Floating Zoom Toolbar - Reveals on hover */}
-            <div className={`absolute top-4 right-4 z-30 flex-col gap-1.5 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border shadow-lg transition-all duration-200 ${ready ? 'flex opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0' : 'hidden'}`}>
-              <button onClick={() => zoomIn()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-md text-muted-foreground transition-colors" title="Zoom In">
-                <ZoomIn size={18} />
+            <div className={`absolute top-12 right-4 z-30 flex-col gap-1.5 bg-[#0B0F19]/95 backdrop-blur-md p-1.5 rounded-xl border border-white/15 shadow-xl transition-all duration-200 ${ready ? 'flex opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0' : 'hidden'}`}>
+              <button onClick={() => zoomIn()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-lg text-gray-400 transition-colors" title="Zoom In">
+                <ZoomIn size={16} />
               </button>
-              <button onClick={() => zoomOut()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-md text-muted-foreground transition-colors" title="Zoom Out">
-                <ZoomOut size={18} />
+              <button onClick={() => zoomOut()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-lg text-gray-400 transition-colors" title="Zoom Out">
+                <ZoomOut size={16} />
               </button>
-              <div className="w-full h-[1px] bg-border my-0.5" />
-              <button onClick={() => resetTransform()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-md text-muted-foreground transition-colors" title="Reset View">
-                <Maximize size={18} />
+              <div className="w-full h-[1px] bg-white/10 my-0.5" />
+              <button onClick={() => resetTransform()} className="p-2 hover:bg-primary/20 hover:text-primary rounded-lg text-gray-400 transition-colors" title="Reset View">
+                <Maximize size={16} />
               </button>
             </div>
 

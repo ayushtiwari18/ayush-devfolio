@@ -34,83 +34,93 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
   return (
     <div
       ref={ref}
-      className="page w-[560px] h-[540px] bg-[#0c1017] border border-amber-500/25 border-r-0 border-l-4 border-l-primary/70 rounded-l-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
-      style={{ backgroundColor: '#0c1017' }}
+      className="page w-[560px] h-[540px] bg-[#0A0E17] border border-white/10 border-r-0 border-l-[6px] border-l-primary rounded-l-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
+      style={{
+        backgroundColor: '#0A0E17',
+        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+        backgroundSize: '18px 18px',
+        boxShadow: '-4px 0 0 -1px #070A10, -8px 0 0 -2px #05070B, -14px 0 24px -4px rgba(0,0,0,0.9)',
+      }}
     >
-      {/* Inner Spine Seam Shadow */}
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/60 via-black/20 to-transparent pointer-events-none z-20" />
+      {/* Deep Inner Spine Seam Shadow */}
+      <div
+        className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-20"
+        style={{
+          background: 'linear-gradient(to left, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+        }}
+      />
 
-      {/* Book Spine Stitching Dots */}
-      <div className="absolute top-0 right-1 bottom-0 w-1 flex flex-col justify-around items-center opacity-40 pointer-events-none z-20">
-        {[...Array(9)].map((_, i) => (
-          <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary" />
+      {/* Book Spine Stitching Thread Dots */}
+      <div className="absolute top-4 right-1.5 bottom-4 w-1 flex flex-col justify-around items-center opacity-50 pointer-events-none z-20">
+        {[...Array(11)].map((_, i) => (
+          <span key={i} className="w-1 h-2 rounded-full bg-amber-400/80 shadow-[0_0_4px_rgba(251,191,36,0.5)]" />
         ))}
       </div>
 
-      {/* Background Accent Sheen */}
+      {/* Background Ambient Sheen */}
       <div className="absolute top-0 left-0 w-80 h-80 bg-gradient-to-br from-primary/15 via-accent/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* TOP METADATA BAR */}
-      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-3 pr-3">
-        <div className="flex items-center gap-2.5">
-          <span className="px-3 py-1 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
-            <BookOpen size={13} className="animate-pulse" />
+      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-white/10 pb-3 pr-4">
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 bg-white/[0.04] text-white text-xs font-bold rounded-full border border-white/15 flex items-center gap-1.5 shadow-sm font-mono-code">
+            <BookOpen size={12} className="text-primary animate-pulse" />
             Page {pageNum} of {totalPages}
           </span>
           {entry.employment_type && (
-            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-              TYPE_COLORS[entry.employment_type] || 'bg-muted text-muted-foreground'
+            <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+              TYPE_COLORS[entry.employment_type] || 'bg-white/5 text-gray-300'
             }`}>
               {entry.employment_type}
             </span>
           )}
         </div>
 
-        <span className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/80 px-3.5 py-1 rounded-full font-mono-code border border-border shadow-sm">
-          <Calendar size={13} className="text-primary" />
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-300 bg-white/[0.03] px-3 py-1 rounded-full font-mono-code border border-white/10 shadow-sm">
+          <Calendar size={12} className="text-primary" />
           {entry.start_date}{entry.end_date ? ` – ${entry.end_date}` : ' – Present'}
         </span>
       </div>
 
       {/* BODY: ROLE BRANDING & BREATHABLE MISSION BLOCKQUOTE */}
-      <div className="relative z-10 flex-1 my-4 pr-3 flex flex-col justify-between space-y-4">
+      <div className="relative z-10 flex-1 my-4 pr-4 flex flex-col justify-between space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1 font-mono-code flex items-center gap-1.5">
-            <Briefcase size={13} /> Context & Architecture Scope
+          <p className="text-[11px] uppercase tracking-wider font-bold text-primary mb-1 font-mono-code flex items-center gap-1.5">
+            <Briefcase size={12} /> Architectural Scope & Context
           </p>
-          <h3 className="text-2xl sm:text-[26px] font-extrabold text-foreground mb-1.5 leading-snug tracking-tight text-pretty">
+          <h3 className="font-display text-2xl font-bold text-white mb-1.5 leading-snug tracking-tight">
             {entry.role}
           </h3>
           <div className="flex items-center gap-2.5">
-            <p className="text-primary font-bold text-base sm:text-lg">
+            <p className="text-primary font-bold text-base">
               {entry.company}
             </p>
             {entry.location && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium bg-muted/50 px-2.5 py-0.5 rounded-full border border-border/60">
-                <MapPin size={12} />
+              <span className="flex items-center gap-1 text-xs text-gray-400 font-medium bg-white/[0.03] px-2.5 py-0.5 rounded-full border border-white/5 font-mono-code">
+                <MapPin size={11} className="text-primary" />
                 {entry.location}
               </span>
             )}
           </div>
         </div>
 
-        <div className="border-l-2 border-primary/60 pl-4 py-1.5 my-1">
-          <p className="italic text-muted-foreground text-[14px] sm:text-[15px] leading-relaxed">
-            Spearheaded technical development and software architecture at {entry.company}, driving scalable frontend engineering, robust API services, and high-quality cloud infrastructure.
+        <div className="border-l-2 border-primary/60 pl-4 py-1.5 my-1 bg-white/[0.01] rounded-r-xl">
+          <p className="italic text-gray-300 text-sm leading-relaxed">
+            Spearheaded technical systems and software architecture at {entry.company}, driving scalable frontend engineering, robust API services, and high-reliability cloud deployments.
           </p>
         </div>
 
         {/* PRIMARY APPLICATION TECH STACK */}
         {techs.length > 0 && (
-          <div className="space-y-1.5 pt-2 border-t border-border/50">
-            <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
-              <Server size={12} className="text-primary" /> Core Application Stack
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 flex items-center gap-1.5 font-mono-code">
+              <Server size={11} className="text-primary" /> Core Technology Stack
             </p>
             <div className="flex flex-wrap gap-1.5">
               {techs.map((tech) => (
                 <span
                   key={tech}
-                  className="px-2.5 py-1 bg-muted/80 text-foreground text-xs font-semibold rounded-lg border border-border/80 shadow-sm"
+                  className="px-2.5 py-1 bg-white/[0.03] text-gray-200 text-xs font-mono-code font-semibold rounded-lg border border-white/10 shadow-sm"
                 >
                   {tech}
                 </span>
@@ -121,9 +131,9 @@ const ContextPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref)
       </div>
 
       {/* FOOTER */}
-      <div className="relative z-10 pt-3 border-t border-border/60 shrink-0 flex items-center justify-between pr-3">
-        <span className="text-xs text-muted-foreground font-mono-code">Context • Left Page</span>
-        <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full border border-primary/30">
+      <div className="relative z-10 pt-3 border-t border-white/10 shrink-0 flex items-center justify-between pr-4">
+        <span className="text-[11px] text-gray-400 font-mono-code">LEDGER // SPREAD {spreadIndex + 1}</span>
+        <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
           <span>Turn to Impact →</span>
         </div>
       </div>
@@ -151,38 +161,50 @@ const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) 
   return (
     <div
       ref={ref}
-      className="page w-[560px] h-[540px] bg-[#0c1017] border border-amber-500/25 border-l-0 rounded-r-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
-      style={{ backgroundColor: '#0c1017' }}
+      className="page group w-[560px] h-[540px] bg-[#0A0E17] border border-white/10 border-l-0 border-r-[6px] border-r-primary rounded-r-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl overflow-hidden relative select-none"
+      style={{
+        backgroundColor: '#0A0E17',
+        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+        backgroundSize: '18px 18px',
+        boxShadow: '4px 0 0 -1px #070A10, 8px 0 0 -2px #05070B, 14px 0 24px -4px rgba(0,0,0,0.9)',
+      }}
     >
-      {/* Inner Spine Seam Shadow */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/60 via-black/20 to-transparent pointer-events-none z-20" />
+      {/* Deep Inner Spine Seam Shadow */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20"
+        style={{
+          background: 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+        }}
+      />
 
       {/* Background Accent Sheen */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-accent/15 via-primary/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-      {/* Dog-Eared Paper Corner Fold */}
-      <div className="absolute bottom-0 right-0 w-7 h-7 bg-gradient-to-tl from-primary/30 via-primary/10 to-transparent rounded-tl-lg border-t border-l border-primary/40 pointer-events-none z-20" />
+      {/* Tactile Dog-Eared Paper Corner Fold */}
+      <div className="absolute bottom-0 right-0 w-8 h-8 bg-gradient-to-tl from-amber-400/30 via-primary/20 to-transparent rounded-tl-xl border-t border-l border-amber-400/40 pointer-events-none z-20 group-hover:w-10 group-hover:h-10 transition-all duration-300" />
 
       {/* TOP METADATA BAR */}
-      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-border/60 pb-3 pl-3">
-        <span className="px-3 py-1 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 shadow-sm">
-          <BookOpen size={13} className="animate-pulse" />
+      <div className="relative z-10 flex items-center justify-between gap-4 shrink-0 border-b border-white/10 pb-3 pl-4">
+        <span className="px-3 py-1 bg-white/[0.04] text-white text-xs font-bold rounded-full border border-white/15 flex items-center gap-1.5 shadow-sm font-mono-code">
+          <BookOpen size={12} className="text-primary animate-pulse" />
           Page {pageNum} of {totalPages}
         </span>
 
-        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-mono-code">
-          <Zap size={12} /> Technical Impact
+        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/25 flex items-center gap-1.5 font-mono-code shadow-[inset_0_1px_1px_rgba(52,211,153,0.3)]">
+          <Zap size={12} /> Verified Technical Impact
         </span>
       </div>
 
       {/* BODY: ENGINEERING ACHIEVEMENTS & METHODOLOGIES */}
-      <div className="relative z-10 flex-1 my-4 pl-3 flex flex-col justify-between space-y-4">
+      <div className="relative z-10 flex-1 my-4 pl-4 flex flex-col justify-between space-y-4">
         {topMetric && (
-          <div className="p-3.5 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent border border-primary/30 rounded-2xl flex items-start gap-3 shadow-md">
-            <Zap size={17} className="text-primary shrink-0 mt-0.5 animate-pulse" />
+          <div className="p-4 bg-gradient-to-r from-amber-500/10 via-primary/10 to-transparent border border-amber-500/30 rounded-2xl flex items-start gap-3 shadow-[inset_0_1px_1px_rgba(251,191,36,0.25)]">
+            <Zap size={18} className="text-amber-400 shrink-0 mt-0.5 animate-pulse" />
             <div>
-              <p className="text-[11px] uppercase tracking-wider font-bold text-primary mb-0.5 font-mono-code">Core Engineering Highlight</p>
-              <p className="text-xs sm:text-[14px] text-foreground/90 font-medium leading-relaxed line-clamp-2">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-amber-300 mb-0.5 font-mono-code">
+                Key Engineering Deliverable
+              </p>
+              <p className="text-xs sm:text-sm text-gray-200 font-medium leading-relaxed">
                 {topMetric}
               </p>
             </div>
@@ -190,30 +212,30 @@ const ImpactPage = React.forwardRef(({ entry, spreadIndex, totalSpreads }, ref) 
         )}
 
         <div className="space-y-3">
-          <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5 font-mono-code">
-            <Award size={13} className="text-primary" /> Achievements & Testing Methodologies
+          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 flex items-center gap-1.5 font-mono-code">
+            <Award size={12} className="text-primary" /> Proven Production Metrics
           </p>
-          <ul className="space-y-3">
+          <ul className="space-y-2.5">
             {bullets.slice(0, 3).map((bullet, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-xs sm:text-[14px] text-foreground/90 leading-relaxed">
-                <CheckCircle2 size={16} className="text-primary shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-200 leading-relaxed">
+                <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
                 <span className="line-clamp-2">{bullet.replace(/^[✓•-]\s*/, '')}</span>
               </li>
             ))}
-            <li className="flex items-start gap-2.5 text-xs sm:text-[14px] text-foreground/90 leading-relaxed font-mono-code bg-muted/30 p-2.5 rounded-xl border border-border/50">
-              <TestTube2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-              <span>Rigorous E2E & Unit Testing with Cypress & Jest (95%+ code coverage).</span>
+            <li className="flex items-start gap-2.5 text-xs text-gray-300 leading-relaxed font-mono-code bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+              <TestTube2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+              <span>Rigorous E2E &amp; Unit Coverage (Jest / Cypress).</span>
             </li>
           </ul>
         </div>
       </div>
 
       {/* FOOTER */}
-      <div className="relative z-10 pt-3 border-t border-border/60 shrink-0 flex items-center justify-between pl-3">
-        <span className="text-xs text-muted-foreground font-mono-code">Impact • Right Page</span>
-        <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3.5 py-1 rounded-full border border-primary/30 cursor-pointer">
-          <span>Turn Page</span>
-          <ArrowRight size={13} />
+      <div className="relative z-10 pt-3 border-t border-white/10 shrink-0 flex items-center justify-between pl-4">
+        <span className="text-[11px] text-gray-400 font-mono-code">EXECUTIVE JOURNAL</span>
+        <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/10 px-3.5 py-1 rounded-full border border-primary/20">
+          <span>Turn Spread</span>
+          <ArrowRight size={12} />
         </div>
       </div>
     </div>
@@ -240,7 +262,13 @@ function MobileJournalCard({ entry, index, totalSpreads, activeTab, onTabChange 
   const topMetric = bullets[0] ? bullets[0].replace(/^[✓•-]\s*/, '') : null;
 
   return (
-    <div className="w-full bg-[#0c1017] border border-amber-500/30 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+    <div
+      className="w-full bg-[#0A0E17] border border-white/15 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden"
+      style={{
+        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+        backgroundSize: '16px 16px',
+      }}
+    >
       {/* Background Sheen */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/15 via-accent/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
@@ -251,17 +279,17 @@ function MobileJournalCard({ entry, index, totalSpreads, activeTab, onTabChange 
           className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold font-mono-code transition-all ${
             activeTab === 'context'
               ? 'bg-primary text-white shadow-md shadow-primary/30'
-              : 'text-muted-foreground hover:text-white'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
-          Context & Stack
+          Context &amp; Stack
         </button>
         <button
           onClick={() => onTabChange('impact')}
           className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold font-mono-code transition-all ${
             activeTab === 'impact'
               ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/30'
-              : 'text-muted-foreground hover:text-white'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
           Technical Impact
@@ -270,49 +298,49 @@ function MobileJournalCard({ entry, index, totalSpreads, activeTab, onTabChange 
 
       {activeTab === 'context' ? (
         <div className="space-y-4 relative z-10">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
-            <span className="px-3 py-1 bg-primary/15 text-primary text-xs font-bold rounded-full border border-primary/30 flex items-center gap-1.5 font-mono-code">
-              Spread {index + 1} of {totalSpreads}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <span className="px-3 py-1 bg-white/[0.04] text-white text-xs font-bold rounded-full border border-white/15 flex items-center gap-1.5 font-mono-code">
+              Role {index + 1} of {totalSpreads}
             </span>
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted/80 px-3 py-1 rounded-full font-mono-code border border-border">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-300 bg-white/[0.03] px-3 py-1 rounded-full font-mono-code border border-white/10">
               <Calendar size={12} className="text-primary" />
               {entry.start_date}{entry.end_date ? ` – ${entry.end_date}` : ' – Present'}
             </span>
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1.5">
               {entry.employment_type && (
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                  TYPE_COLORS[entry.employment_type] || 'bg-muted text-muted-foreground'
+                  TYPE_COLORS[entry.employment_type] || 'bg-white/5 text-gray-300'
                 }`}>
                   {entry.employment_type}
                 </span>
               )}
               {entry.location && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin size={11} /> {entry.location}
+                <span className="text-xs text-gray-400 flex items-center gap-1 font-mono-code">
+                  <MapPin size={11} className="text-primary" /> {entry.location}
                 </span>
               )}
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-foreground">{entry.role}</h3>
+            <h3 className="font-display text-xl sm:text-2xl font-bold text-white">{entry.role}</h3>
             <p className="text-primary font-bold text-base mt-0.5">{entry.company}</p>
           </div>
 
-          <div className="border-l-2 border-primary/60 pl-3.5 py-1">
-            <p className="italic text-muted-foreground text-xs sm:text-sm leading-relaxed">
+          <div className="border-l-2 border-primary/60 pl-3.5 py-1 bg-white/[0.01] rounded-r-lg">
+            <p className="italic text-gray-300 text-xs sm:text-sm leading-relaxed">
               Spearheaded engineering architecture at {entry.company}, driving scalable frontend systems, performant APIs, and cloud infrastructure.
             </p>
           </div>
 
           {techs.length > 0 && (
             <div className="pt-2">
-              <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-2 font-mono-code flex items-center gap-1.5">
-                <Server size={12} className="text-primary" /> Core Stack
+              <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-2 font-mono-code flex items-center gap-1.5">
+                <Server size={11} className="text-primary" /> Core Stack
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {techs.map((t) => (
-                  <span key={t} className="px-2.5 py-1 bg-muted/80 text-foreground text-xs font-semibold rounded-lg border border-border">
+                  <span key={t} className="px-2.5 py-1 bg-white/[0.03] text-gray-200 text-xs font-mono-code font-semibold rounded-lg border border-white/10">
                     {t}
                   </span>
                 ))}
@@ -322,21 +350,21 @@ function MobileJournalCard({ entry, index, totalSpreads, activeTab, onTabChange 
         </div>
       ) : (
         <div className="space-y-4 relative z-10">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-mono-code">
               <Zap size={12} /> Key Deliverables
             </span>
-            <span className="text-xs text-muted-foreground font-mono-code">
-              Impact Profile
+            <span className="text-xs text-gray-400 font-mono-code">
+              VERIFIED IMPACT
             </span>
           </div>
 
           {topMetric && (
-            <div className="p-3 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent border border-primary/30 rounded-2xl flex items-start gap-2.5">
-              <Zap size={16} className="text-primary shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-primary/10 to-transparent border border-amber-500/30 rounded-2xl flex items-start gap-2.5 shadow-[inset_0_1px_1px_rgba(251,191,36,0.25)]">
+              <Zap size={16} className="text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-[10px] uppercase tracking-wider font-bold text-primary font-mono-code">Key Metric</p>
-                <p className="text-xs sm:text-sm text-foreground/90 font-medium leading-relaxed">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-amber-300 font-mono-code">Key Metric</p>
+                <p className="text-xs sm:text-sm text-gray-200 font-medium leading-relaxed">
                   {topMetric}
                 </p>
               </div>
@@ -345,14 +373,14 @@ function MobileJournalCard({ entry, index, totalSpreads, activeTab, onTabChange 
 
           <div className="space-y-2.5">
             {bullets.slice(0, 3).map((bullet, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs sm:text-sm text-foreground/90 leading-relaxed">
-                <CheckCircle2 size={15} className="text-primary shrink-0 mt-0.5" />
+              <div key={i} className="flex items-start gap-2 text-xs sm:text-sm text-gray-200 leading-relaxed">
+                <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
                 <span>{bullet.replace(/^[✓•-]\s*/, '')}</span>
               </div>
             ))}
-            <div className="flex items-start gap-2 text-xs text-foreground/90 leading-relaxed font-mono-code bg-muted/30 p-2.5 rounded-xl border border-border/50">
+            <div className="flex items-start gap-2 text-xs text-gray-300 leading-relaxed font-mono-code bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
               <TestTube2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
-              <span>Rigorous E2E & Unit Testing (Cypress / Jest).</span>
+              <span>Rigorous E2E &amp; Unit Coverage (Cypress / Jest).</span>
             </div>
           </div>
         </div>
@@ -442,38 +470,38 @@ export default function Experience() {
     : mobileIndex === 0;
 
   return (
-    <section id="experience" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/10 overflow-hidden">
-      <div className="max-w-6xl mx-auto">
+    <section id="experience" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-[#05070B] overflow-hidden">
+      
+      {/* Background ambient radial glow */}
+      <div
+        aria-hidden="true"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-primary/[0.03] rounded-full blur-[140px] pointer-events-none"
+      />
+
+      <div className="max-w-6xl mx-auto relative z-10">
 
         {/* Section Header */}
         <div
           ref={section.ref}
-          className="mb-14"
+          className="mb-14 text-center max-w-3xl mx-auto"
           style={fadeUp(section.visible || !isMounted)}
         >
-          <div className="flex items-center gap-2 mb-4">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            <span className="text-xs font-semibold text-emerald-400 tracking-wide uppercase font-mono-code">
-              Career Track Record
-            </span>
-          </div>
+          <p className="text-xs font-mono-code font-semibold tracking-[0.2em] uppercase text-primary mb-3">
+            // 03. EXECUTIVE EXPERIENCE JOURNAL
+          </p>
 
-          <p className="section-label mb-3">Career History</p>
-          <h2 className="section-heading mb-4">
-            Engineering & <span className="gradient-text">Leadership Roles</span>
+          <h2 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-[-0.03em] leading-tight mb-4">
+            Engineering &amp; <span className="text-primary inline-block">Technical Leadership</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl leading-relaxed">
-            Executive journal spread — view project architecture and context alongside verified technical impact metrics.
+          <p className="text-base sm:text-lg text-gray-400 leading-relaxed">
+            Physical dual-page ledger documenting system architecture context alongside verified technical impact metrics.
           </p>
         </div>
 
         {/* LOADING STATE */}
         {loading || !isMounted ? (
-          <div className="h-[460px] w-full bg-card/50 border border-border rounded-3xl animate-pulse flex items-center justify-center">
-            <span className="text-muted-foreground text-sm flex items-center gap-2 font-mono-code">
+          <div className="h-[460px] w-full bg-[#0A0E17] border border-white/10 rounded-3xl animate-pulse flex items-center justify-center">
+            <span className="text-gray-400 text-sm flex items-center gap-2 font-mono-code">
               <Sparkles size={16} className="animate-spin text-primary" /> Loading Executive Experience Journal...
             </span>
           </div>
@@ -481,7 +509,7 @@ export default function Experience() {
           <>
             {/* DESKTOP VIEW (>= 1024px): 3D PHYSICAL BOOK SPREAD */}
             {isDesktop ? (
-              <div className="flex justify-center items-center overflow-visible my-4">
+              <div className="flex justify-center items-center overflow-visible my-6">
                 {/* @ts-ignore */}
                 <HTMLFlipBook
                   ref={bookRef}
@@ -532,18 +560,18 @@ export default function Experience() {
             )}
 
             {/* NAVIGATION CONTROLS & PAGINATION DOTS */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto mt-8 px-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto mt-8 px-2">
               <div className="flex items-center gap-3">
                 <button
                   onClick={handlePrev}
                   disabled={isFirstPage}
                   aria-label="Previous Career Spread"
-                  className="p-2.5 rounded-full bg-card border border-border text-foreground hover:bg-primary/10 hover:border-primary/40 disabled:opacity-30 disabled:hover:bg-card transition-all active:scale-95"
+                  className="p-2.5 rounded-full bg-[#0A0E17] border border-white/10 text-white hover:bg-white/10 hover:border-white/30 disabled:opacity-30 disabled:hover:bg-[#0A0E17] transition-all active:scale-95"
                 >
                   <ChevronLeft size={18} />
                 </button>
 
-                <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2 bg-card border border-border px-4 py-2 rounded-full shadow-sm font-medium font-mono-code">
+                <span className="text-xs sm:text-sm text-gray-300 flex items-center gap-2 bg-[#0A0E17] border border-white/10 px-4 py-2 rounded-full shadow-sm font-medium font-mono-code">
                   <Sparkles size={14} className="text-primary animate-pulse" />
                   {isDesktop ? (
                     isFinalPage
@@ -558,7 +586,7 @@ export default function Experience() {
                   onClick={handleNext}
                   disabled={isFinalPage}
                   aria-label="Next Career Spread"
-                  className="p-2.5 rounded-full bg-card border border-border text-foreground hover:bg-primary/10 hover:border-primary/40 disabled:opacity-30 disabled:hover:bg-card transition-all active:scale-95"
+                  className="p-2.5 rounded-full bg-[#0A0E17] border border-white/10 text-white hover:bg-white/10 hover:border-white/30 disabled:opacity-30 disabled:hover:bg-[#0A0E17] transition-all active:scale-95"
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -585,10 +613,10 @@ export default function Experience() {
                         }
                       }}
                       aria-label={`Go to career record ${i + 1}`}
-                      className={`h-2.5 rounded-full transition-all duration-300 ${
+                      className={`h-2 rounded-full transition-all duration-300 ${
                         isActive
                           ? 'w-8 bg-primary ring-2 ring-primary/30 shadow-sm'
-                          : 'w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground/60'
+                          : 'w-2 bg-white/20 hover:bg-white/40'
                       }`}
                     />
                   );
