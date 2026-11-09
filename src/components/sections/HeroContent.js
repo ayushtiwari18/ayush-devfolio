@@ -46,7 +46,12 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
           style={{ textShadow }}
         >
           Hi, I&apos;m{' '}
-          <span className="gradient-text font-display">{profile?.name || 'Ayush Tiwari'}</span>
+          <span
+            className="text-primary font-display inline-block"
+            style={{ textShadow: '0 0 35px rgba(99,102,241,0.5)' }}
+          >
+            {profile?.name || 'Ayush Tiwari'}
+          </span>
         </h1>
       </div>
 
