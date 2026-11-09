@@ -46,26 +46,43 @@ export default async function BlogPage() {
   const postCount = posts.length;
 
   return (
-    <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
-              <PenLine size={17} className="text-primary" />
-            </div>
-            <span className="text-xs font-bold text-primary uppercase tracking-widest">Writing</span>
+    <main className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 bg-[#05070B] relative overflow-hidden">
+      
+      {/* Background ambient radial glow */}
+      <div
+        aria-hidden="true"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-primary/[0.03] rounded-full blur-[140px] pointer-events-none"
+      />
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        
+        {/* Editorial Masthead */}
+        <div className="mb-14 text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-xs font-mono-code text-gray-400 mb-4 backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span>AYUSH TIWARI // PUBLICATIONS &amp; FIELD NOTES</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3 leading-tight">
-            Articles &amp; <span className="gradient-text">Deep-dives</span>
+
+          <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-[-0.03em] leading-tight mb-4">
+            Engineering Notes &amp;{' '}
+            <span className="text-primary inline-block">System Deep-Dives</span>
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Production engineering stories, tutorials and opinions.
-            {postCount > 0 && (
-              <span className="ml-2 text-sm text-muted-foreground/60">{postCount} {postCount === 1 ? 'article' : 'articles'} published</span>
-            )}
+
+          <p className="text-base sm:text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto">
+            Production post-mortems, software architecture breakdowns, and algorithmic mental models from building distributed systems.
           </p>
+
+          {postCount > 0 && (
+            <div className="mt-5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono-code text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>{postCount} {postCount === 1 ? 'PUBLICATION' : 'PUBLICATIONS'} INDEXED</span>
+            </div>
+          )}
         </div>
+
+        {/* Client filter & search client */}
         <BlogFilterClient posts={posts} />
+
       </div>
     </main>
   );

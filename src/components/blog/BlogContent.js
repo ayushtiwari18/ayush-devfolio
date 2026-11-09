@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 
 const SyntaxHighlighter = dynamic(
@@ -44,23 +45,30 @@ function headingId(content) {
 
 // ── Copy-code button ──────────────────────────────────────────
 function CopyButton({ code }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <button
       type="button"
-      onClick={(e) => {
-        navigator.clipboard.writeText(code).then(() => {
-          const btn = e.currentTarget;
-          btn.textContent = 'Copied!';
-          btn.classList.add('text-green-400');
-          setTimeout(() => {
-            btn.textContent = 'Copy';
-            btn.classList.remove('text-green-400');
-          }, 1500);
-        });
-      }}
-      className="text-xs text-zinc-400 hover:text-white font-mono transition-colors px-2 py-0.5 rounded hover:bg-zinc-700"
+      onClick={handleCopy}
+      aria-label="Copy code to clipboard"
+      className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white font-mono-code transition-all px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/10 border border-white/10 active:scale-95"
     >
-      Copy
+      {copied ? (
+        <>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-emerald-400 font-semibold">Copied!</span>
+        </>
+      ) : (
+        <span>Copy</span>
+      )}
     </button>
   );
 }
@@ -73,9 +81,9 @@ function Block({ block }) {
 
   switch (type) {
     case 'paragraph':
-      if (!content?.length) return <div className="mb-3" />;
+      if (!content?.length) return <div className="mb-4" />;
       return (
-        <p className={`text-zinc-300 leading-[1.75] mb-6 text-[1.125rem] font-sans antialiased ${align}`}>
+        <p className={`text-gray-200/90 leading-[1.85] mb-7 text-[1.0625rem] sm:text-[1.125rem] font-sans antialiased selection:bg-primary/20 selection:text-white ${align}`}>
           <InlineContent content={content} />
         </p>
       );
@@ -83,27 +91,28 @@ function Block({ block }) {
     case 'heading': {
       const id = headingId(content);
       const level = props.level || 2;
-      const base = `group relative font-bold text-foreground scroll-mt-28 ${align}`;
+      const base = `group relative font-bold text-foreground scroll-mt-28 tracking-tight ${align}`;
       const anchor = (
         <a href={`#${id}`}
-          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 text-primary/60 hover:text-primary transition-opacity text-base font-mono">
+          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 text-primary/70 hover:text-primary transition-opacity text-base font-mono select-none"
+          title="Direct link to heading">
           #
         </a>
       );
       const inner = <><InlineContent content={content} /></>;
-      if (level === 1) return <h1 id={id} className={`${base} text-4xl lg:text-5xl font-extrabold tracking-tight mt-14 mb-6 text-foreground`}>{anchor}{inner}</h1>;
+      if (level === 1) return <h1 id={id} className={`${base} text-3xl sm:text-4xl lg:text-5xl font-extrabold mt-16 mb-6 text-white`}>{anchor}{inner}</h1>;
       if (level === 2) return (
-        <h2 id={id} className={`${base} text-3xl font-bold tracking-tight mt-12 mb-6 text-foreground border-b border-border/40 pb-2`}>
-          {anchor}
-          {inner}
+        <h2 id={id} className={`${base} text-2xl sm:text-3xl font-bold mt-14 mb-6 text-white border-b border-white/10 pb-3 flex items-center justify-between`}>
+          <span>{anchor}{inner}</span>
+          <span className="text-[11px] font-mono font-normal uppercase tracking-widest text-primary/60 hidden sm:inline-block">Section</span>
         </h2>
       );
-      return <h3 id={id} className={`${base} text-2xl font-bold tracking-tight mt-8 mb-4 text-foreground/90`}>{anchor}{inner}</h3>;
+      return <h3 id={id} className={`${base} text-xl sm:text-2xl font-bold mt-10 mb-4 text-gray-100`}>{anchor}{inner}</h3>;
     }
 
     case 'bulletListItem':
       return (
-        <li className={`text-foreground/80 leading-relaxed mb-2 ${align}`}>
+        <li className={`text-gray-200/90 leading-[1.8] mb-2 font-sans antialiased ${align}`}>
           <InlineContent content={content} />
           {children.length > 0 && <ul className="list-disc list-outside pl-5 mt-1.5 space-y-1"><Blocks blocks={children} /></ul>}
         </li>
@@ -111,7 +120,7 @@ function Block({ block }) {
 
     case 'numberedListItem':
       return (
-        <li className={`text-foreground/80 leading-relaxed mb-2 ${align}`}>
+        <li className={`text-gray-200/90 leading-[1.8] mb-2 font-sans antialiased ${align}`}>
           <InlineContent content={content} />
           {children.length > 0 && <ol className="list-decimal list-outside pl-5 mt-1.5 space-y-1"><Blocks blocks={children} /></ol>}
         </li>
@@ -126,7 +135,7 @@ function Block({ block }) {
             }`}>
               {props.checked && '✓'}
             </span>
-            <span className={`text-zinc-300 leading-[1.75] text-[1.125rem] font-sans antialiased ${props.checked ? 'line-through opacity-40' : ''}`}>
+            <span className={`text-gray-200/90 leading-[1.8] text-[1.0625rem] sm:text-[1.125rem] font-sans antialiased ${props.checked ? 'line-through opacity-40' : ''}`}>
               <InlineContent content={content} />
             </span>
           </div>
@@ -142,24 +151,34 @@ function Block({ block }) {
       const lang = props.language || 'text';
       const code = content?.filter(i => i.type === 'text').map(i => i.text).join('') || '';
       return (
-        <div className="relative my-7 rounded-xl overflow-hidden border border-zinc-700/60 shadow-xl shadow-black/20">
-          <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-700/60">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-zinc-600" />
-                <div className="w-3 h-3 rounded-full bg-zinc-600" />
-                <div className="w-3 h-3 rounded-full bg-zinc-600" />
+        <div className="relative my-8 rounded-2xl overflow-hidden border border-white/10 bg-[#07090E] shadow-2xl shadow-black/50 group">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#0B0F19] border-b border-white/[0.08]">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5 items-center">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]/90 border border-[#E0443E]/50 shadow-sm shadow-[#FF5F56]/20" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]/90 border border-[#DEA123]/50 shadow-sm shadow-[#FFBD2E]/20" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]/90 border border-[#1AAB29]/50 shadow-sm shadow-[#27C93F]/20" />
               </div>
-              <span className="text-xs font-mono text-zinc-400 ml-1">{lang}</span>
+              <span className="text-[11px] font-mono tracking-wider text-gray-400 uppercase font-semibold">
+                {lang} <span className="text-gray-600">// source</span>
+              </span>
             </div>
             <CopyButton code={code} />
           </div>
           <SyntaxHighlighter
             language={lang}
             style={oneDark}
-            customStyle={{ margin: 0, borderRadius: 0, background: '#0d1117', fontSize: '0.875rem', lineHeight: '1.7' }}
+            customStyle={{
+              margin: 0,
+              padding: '1.25rem 1.5rem',
+              borderRadius: 0,
+              background: '#07090E',
+              fontSize: '0.875rem',
+              lineHeight: '1.75',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+            }}
             showLineNumbers
-            lineNumberStyle={{ color: '#4a5568', fontSize: '0.75rem', minWidth: '2.5em' }}
+            lineNumberStyle={{ color: '#4B5563', fontSize: '0.75rem', minWidth: '2.5em', paddingRight: '1rem', userSelect: 'none' }}
           >
             {code}
           </SyntaxHighlighter>
@@ -218,8 +237,8 @@ function Block({ block }) {
 
     case 'quote':
       return (
-        <blockquote className="relative pl-6 pr-5 py-5 my-8 border-l-4 border-primary bg-primary/5 rounded-r-xl">
-          <p className="text-zinc-200 italic text-xl font-medium leading-relaxed">
+        <blockquote className="relative pl-6 sm:pl-8 pr-6 py-5 my-8 border-l-2 border-primary bg-gradient-to-r from-primary/[0.08] to-transparent rounded-r-2xl">
+          <p className="text-gray-100 italic text-lg sm:text-xl font-medium leading-relaxed font-serif">
             <InlineContent content={content} />
           </p>
         </blockquote>
@@ -228,18 +247,20 @@ function Block({ block }) {
     case 'callout': {
       const emoji = props.emoji || '💡';
       const colorMap = {
-        blue:   { wrap: 'bg-blue-950/40 border-blue-500/30',   text: 'text-blue-200' },
-        red:    { wrap: 'bg-red-950/40 border-red-500/30',     text: 'text-red-200' },
-        yellow: { wrap: 'bg-yellow-950/40 border-yellow-500/30', text: 'text-yellow-200' },
-        green:  { wrap: 'bg-green-950/40 border-green-500/30', text: 'text-green-200' },
-        purple: { wrap: 'bg-purple-950/40 border-purple-500/30', text: 'text-purple-200' },
-        gray:   { wrap: 'bg-zinc-800/50 border-zinc-600/40',   text: 'text-zinc-300' },
+        blue:   { wrap: 'bg-blue-950/30 border-blue-500/30 text-blue-200',   icon: 'bg-blue-500/20 text-blue-300' },
+        red:    { wrap: 'bg-red-950/30 border-red-500/30 text-red-200',     icon: 'bg-red-500/20 text-red-300' },
+        yellow: { wrap: 'bg-amber-950/30 border-amber-500/30 text-amber-200', icon: 'bg-amber-500/20 text-amber-300' },
+        green:  { wrap: 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200', icon: 'bg-emerald-500/20 text-emerald-300' },
+        purple: { wrap: 'bg-purple-950/30 border-purple-500/30 text-purple-200', icon: 'bg-purple-500/20 text-purple-300' },
+        gray:   { wrap: 'bg-[#090D16] border-white/10 text-gray-200',   icon: 'bg-white/10 text-gray-300' },
       };
       const c = colorMap[props.backgroundColor] || colorMap.gray;
       return (
-        <div className={`flex gap-3.5 p-4 my-6 rounded-xl border ${c.wrap}`}>
-          <span className="text-xl shrink-0 mt-0.5">{emoji}</span>
-          <div className={`text-sm leading-relaxed ${c.text}`}>
+        <div className={`flex gap-4 p-5 my-7 rounded-2xl border backdrop-blur-sm ${c.wrap} shadow-lg shadow-black/20`}>
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-base ${c.icon}`}>
+            {emoji}
+          </div>
+          <div className="text-[0.9375rem] leading-[1.75] font-sans">
             <InlineContent content={content} />
           </div>
         </div>
@@ -251,22 +272,22 @@ function Block({ block }) {
       if (!rows.length) return null;
       const [header, ...body] = rows;
       return (
-        <div className="overflow-x-auto my-7 rounded-xl border border-border shadow-sm">
+        <div className="overflow-x-auto my-8 rounded-2xl border border-white/10 shadow-xl bg-[#07090E]">
           <table className="w-full text-sm">
-            <thead className="bg-primary/10 border-b border-border">
+            <thead className="bg-[#0B0F19] border-b border-white/10">
               <tr>
                 {header?.cells?.map((cell, i) => (
-                  <th key={i} className="px-5 py-3 text-left font-semibold text-foreground text-xs uppercase tracking-wider">
+                  <th key={i} className="px-5 py-3.5 text-left font-mono font-semibold text-gray-300 text-xs uppercase tracking-wider">
                     <InlineContent content={cell.content || cell} />
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-white/5">
               {body.map((row, ri) => (
-                <tr key={ri} className={ri % 2 === 0 ? '' : 'bg-primary/3'}>
+                <tr key={ri} className={ri % 2 === 0 ? '' : 'bg-white/[0.02] hover:bg-white/[0.04] transition-colors'}>
                   {row.cells?.map((cell, ci) => (
-                    <td key={ci} className="px-5 py-3 text-foreground/80">
+                    <td key={ci} className="px-5 py-3.5 text-gray-300/90 leading-relaxed font-sans">
                       <InlineContent content={cell.content || cell} />
                     </td>
                   ))}
@@ -281,19 +302,19 @@ function Block({ block }) {
     case 'divider':
       return (
         <div className="flex items-center gap-4 my-10">
-          <div className="flex-1 h-px bg-border" />
-          <div className="flex gap-1">
+          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
             <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-            <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-            <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/20" />
           </div>
-          <div className="flex-1 h-px bg-border" />
+          <div className="flex-1 h-px bg-white/10" />
         </div>
       );
 
     default:
       if (content?.length) {
-        return <p className="text-foreground/80 leading-relaxed mb-4"><InlineContent content={content} /></p>;
+        return <p className="text-gray-200/90 leading-[1.8] mb-5 font-sans"><InlineContent content={content} /></p>;
       }
       return null;
   }
@@ -310,17 +331,17 @@ function Blocks({ blocks }) {
       const items = [];
       while (i < blocks.length && blocks[i].type === 'bulletListItem') items.push(blocks[i++]);
       result.push(
-        <ul key={`ul-${i}`} className="list-none pl-0 space-y-2 mb-6">
+        <ul key={`ul-${i}`} className="list-none pl-0 space-y-3 mb-7">
           {items.map((item, j) => (
             <li key={j} className="flex flex-col gap-1 w-full">
               <div className="flex items-start gap-3">
-                <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                <span className="text-zinc-300 leading-[1.75] text-[1.125rem] font-sans antialiased">
+                <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0 shadow-sm shadow-primary/60" />
+                <span className="text-gray-200/90 leading-[1.8] text-[1.0625rem] sm:text-[1.125rem] font-sans antialiased">
                   <InlineContent content={item.content} />
                 </span>
               </div>
               {item.children?.length > 0 && (
-                <div className="pl-5 mt-1 w-full">
+                <div className="pl-6 mt-2 w-full">
                   <Blocks blocks={item.children} />
                 </div>
               )}
@@ -332,19 +353,19 @@ function Blocks({ blocks }) {
       const items = [];
       while (i < blocks.length && blocks[i].type === 'numberedListItem') items.push(blocks[i++]);
       result.push(
-        <ol key={`ol-${i}`} className="space-y-2 mb-6 pl-0 list-none">
+        <ol key={`ol-${i}`} className="space-y-3 mb-7 pl-0 list-none">
           {items.map((item, j) => (
             <li key={j} className="flex flex-col gap-1 w-full">
-              <div className="flex items-start gap-3">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-bold flex items-center justify-center mt-1">
+              <div className="flex items-start gap-3.5">
+                <span className="shrink-0 w-6 h-6 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-mono font-bold flex items-center justify-center mt-0.5">
                   {j + 1}
                 </span>
-                <span className="text-zinc-300 leading-[1.75] text-[1.125rem] font-sans antialiased">
+                <span className="text-gray-200/90 leading-[1.8] text-[1.0625rem] sm:text-[1.125rem] font-sans antialiased">
                   <InlineContent content={item.content} />
                 </span>
               </div>
               {item.children?.length > 0 && (
-                <div className="pl-7 mt-1 w-full">
+                <div className="pl-8 mt-2 w-full">
                   <Blocks blocks={item.children} />
                 </div>
               )}
@@ -356,7 +377,7 @@ function Blocks({ blocks }) {
       const items = [];
       while (i < blocks.length && blocks[i].type === 'checkListItem') items.push(blocks[i++]);
       result.push(
-        <ul key={`cl-${i}`} className="space-y-2 mb-6 list-none pl-0">
+        <ul key={`cl-${i}`} className="space-y-2.5 mb-7 list-none pl-0">
           {items.map((item, j) => <Block key={j} block={item} />)}
         </ul>
       );
@@ -377,7 +398,7 @@ export default function BlogContent({ content }) {
   } catch {
     return (
       <div className="prose prose-invert prose-lg max-w-none">
-        <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{content}</p>
+        <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">{content}</p>
       </div>
     );
   }
@@ -385,7 +406,7 @@ export default function BlogContent({ content }) {
   if (!Array.isArray(blocks)) return null;
 
   return (
-    <div className="blog-content max-w-[750px] mx-auto w-full">
+    <div className="blog-content max-w-[720px] mx-auto w-full">
       <Blocks blocks={blocks} />
     </div>
   );
