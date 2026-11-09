@@ -135,6 +135,7 @@ export default function ProjectStoryView({ project, authorHeroImage, authorName,
               className="object-cover object-top"
               priority
               sizes="(max-width: 1280px) 100vw, 1200px"
+              unoptimized={Boolean(project.cover_image && project.cover_image.includes('supabase.co'))}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#05070B] via-transparent to-transparent opacity-80" />
           </div>
