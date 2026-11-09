@@ -11,7 +11,19 @@ import {
 } from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
-import ArchitectureViewer from '@/components/projects/ArchitectureViewer';
+import dynamic from 'next/dynamic';
+
+const ArchitectureViewer = dynamic(
+  () => import('@/components/projects/ArchitectureViewer'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 rounded-2xl bg-[#090D16] border border-white/10 flex items-center justify-center text-xs font-mono text-gray-500">
+        Loading interactive architecture canvas...
+      </div>
+    ),
+  }
+);
 
 export default function ProjectStoryView({ project, authorHeroImage, authorName, relatedProjects = [] }) {
   const [activeTab, setActiveTab] = useState('story');
