@@ -21,25 +21,26 @@ export default function PehelStoryView({ event }) {
   const youtubeEmbedId = 'zhoe5JBrwJ4';
   const linkedinUrl = links.github || links.linkedin || 'https://www.linkedin.com/posts/tiwariaayush_peheleknayisubha-gyangangainstitutions-gratitude-activity-7256210384066371584-uoR9';
 
-  // Gather all photos for the gallery
-  const galleryImages = [];
-  if (event.cover_image) {
-    galleryImages.push({
-      url: event.cover_image,
-      caption: 'Pehel 8th Edition Official Event Cover & Production Asset'
-    });
-  }
+  // Gather all photos for the gallery (excluding raw desktop screenshot captures)
+  const allSources = [];
+  if (event.cover_image) allSources.push(event.cover_image);
   if (Array.isArray(event.images)) {
-    event.images.forEach((img, i) => {
+    event.images.forEach((img) => {
       const src = typeof img === 'string' ? img : img.url;
-      if (src && !galleryImages.some(g => g.url === src)) {
-        galleryImages.push({
-          url: src,
-          caption: `Pehel 8th Edition Live Event Capture #${i + 1}`
-        });
+      if (src && !allSources.includes(src)) {
+        allSources.push(src);
       }
     });
   }
+
+  // Filter out the desktop screenshot with the window toolbar header
+  const cleanSources = allSources.filter(src => !src.includes('screenshot-from-2026-07-15'));
+  const activeSources = cleanSources.length > 0 ? cleanSources : allSources;
+
+  const galleryImages = activeSources.map((src, i) => ({
+    url: src,
+    caption: `Pehel 8th Edition Live Event Capture #${i + 1}`
+  }));
 
   // Keyboard navigation for lightbox
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);

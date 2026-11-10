@@ -200,11 +200,20 @@ export async function getPublishedEvents() {
       .order('date', { ascending: false });
 
     if (!error && data) {
-      dbEvents = data.map(item => ({
-        ...item,
-        hasCaseStudy: Boolean(item.story || item.slug === 'pehel'),
-        caseStudyUrl: `/events/${item.slug}`,
-      }));
+      dbEvents = data.map(item => {
+        let cover = item.cover_image;
+        // For Pehel, prefer the authentic event photograph over the uncropped desktop screenshot
+        if (item.slug === 'pehel' && Array.isArray(item.images) && item.images.length > 0) {
+          const realPhoto = item.images.find(img => (typeof img === 'string' ? img : img.url)?.includes('1730015367035'));
+          if (realPhoto) cover = typeof realPhoto === 'string' ? realPhoto : realPhoto.url;
+        }
+        return {
+          ...item,
+          cover_image: cover,
+          hasCaseStudy: Boolean(item.story || item.slug === 'pehel'),
+          caseStudyUrl: `/events/${item.slug}`,
+        };
+      });
     }
   } catch (err) {
     console.warn('[events.service] Supabase events query error:', err?.message);
@@ -241,7 +250,13 @@ export async function getEventBySlug(slug) {
       .eq('published', true)
       .maybeSingle();
 
-    if (!error && data) return data;
+    if (!error && data) {
+      if (data.slug === 'pehel' && Array.isArray(data.images) && data.images.length > 0) {
+        const realPhoto = data.images.find(img => (typeof img === 'string' ? img : img.url)?.includes('1730015367035'));
+        if (realPhoto) data.cover_image = typeof realPhoto === 'string' ? realPhoto : realPhoto.url;
+      }
+      return data;
+    }
   } catch (err) {
     console.warn('[events.service] getEventBySlug DB error:', err?.message);
   }

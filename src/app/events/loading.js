@@ -1,32 +1,53 @@
 export default function EventsLoading() {
   return (
     <div className="space-y-12">
-      {/* Metrics Ribbon Skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-24 bg-[#090D16] border border-white/5 rounded-2xl animate-pulse p-5 space-y-2">
-            <div className="w-12 h-7 bg-white/10 rounded" />
-            <div className="w-28 h-3 bg-white/5 rounded" />
-          </div>
-        ))}
+      {/* Masthead Skeleton */}
+      <div className="mb-14 text-center max-w-3xl mx-auto space-y-4">
+        <div className="h-6 w-56 mx-auto bg-white/5 rounded-full animate-pulse" />
+        <div className="h-12 w-80 sm:w-96 mx-auto bg-white/10 rounded-2xl animate-pulse" />
+        <div className="h-5 w-72 sm:w-80 mx-auto bg-white/5 rounded-lg animate-pulse" />
       </div>
 
       {/* Filter / Search Bar Skeleton */}
-      <div className="h-14 bg-[#090D16] border border-white/5 rounded-2xl animate-pulse" />
+      <div className="h-14 bg-[#090D16] border border-white/10 rounded-2xl animate-pulse" />
 
-      {/* Cards Grid Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="h-96 bg-[#090D16] border border-white/5 rounded-2xl animate-pulse overflow-hidden flex flex-col">
-            <div className="aspect-[16/10] bg-white/5" />
-            <div className="p-6 space-y-4 flex-1">
-              <div className="w-24 h-3 bg-white/10 rounded" />
-              <div className="w-48 h-5 bg-white/10 rounded" />
-              <div className="w-full h-8 bg-white/5 rounded" />
-              <div className="w-32 h-4 bg-white/5 rounded mt-4" />
-            </div>
-          </div>
-        ))}
+      {/* Timeline Skeleton */}
+      <div className="relative pt-6">
+        {/* Spine */}
+        <div className="absolute left-[20px] md:left-1/2 md:-translate-x-1/2 top-4 bottom-8 w-px bg-white/10" />
+
+        {/* Year Pill Skeleton */}
+        <div className="flex items-center md:justify-center mb-10 pl-1 md:pl-0">
+          <div className="ml-9 md:ml-0 h-8 w-24 rounded-full bg-white/5 border border-white/10 animate-pulse" />
+        </div>
+
+        {/* Cards Skeleton */}
+        <div className="space-y-12">
+          {[1, 2, 3].map((i) => {
+            const isEven = i % 2 === 0;
+            return (
+              <div key={i} className="relative flex items-center w-full">
+                {/* Node */}
+                <div className="absolute left-[14px] md:left-1/2 md:-translate-x-1/2 top-7 md:top-8 w-3.5 h-3.5 rounded-full bg-white/20 ring-4 ring-[#05070B]" />
+
+                <div className="w-full pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12">
+                  <div className={`w-full ${isEven ? 'md:col-start-1' : 'md:col-start-2'}`}>
+                    <div className="rounded-2xl bg-[#090D16] border border-white/10 animate-pulse overflow-hidden space-y-4 p-6 sm:p-7">
+                      <div className="aspect-[16/9] w-full bg-white/5 rounded-xl" />
+                      <div className="flex gap-2">
+                        <div className="h-4 w-20 bg-white/10 rounded-full" />
+                        <div className="h-4 w-28 bg-white/10 rounded-full" />
+                      </div>
+                      <div className="h-6 w-3/4 bg-white/10 rounded" />
+                      <div className="h-4 w-1/2 bg-white/5 rounded" />
+                      <div className="h-12 w-full bg-white/5 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
