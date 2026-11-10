@@ -86,8 +86,8 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
         )}
       </div>
 
-      {/* Phase 5 — CTA Buttons & Social Links */}
-      <div style={reveal(5)} className="w-full">
+      {/* Phase 4 — CTA Buttons */}
+      <div style={reveal(4)} className="w-full">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-6 w-full sm:w-auto">
           <Link href={ROUTES.PROJECTS} className="w-full sm:w-auto group">
             <Button size="lg"
@@ -112,8 +112,10 @@ export default function HeroContent({ profile, revealPhase, reveal }) {
             </a>
           )}
         </div>
+      </div>
 
-        {/* Social icons */}
+      {/* Phase 5 — Social icons */}
+      <div style={reveal(5)} className="w-full">
         <div className="flex items-center justify-center lg:justify-start gap-3">
           {githubUrl && (
             <a href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile" title="GitHub"

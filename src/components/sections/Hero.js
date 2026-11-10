@@ -61,10 +61,10 @@ function StarfieldSkeleton() {
       <div
         className="absolute rounded-full"
         style={{
-          width: 120, height: 120,
+          width: 90, height: 90,
           top: '50%', left: '38%',
           transform: 'translate(-50%,-50%)',
-          background: 'radial-gradient(circle, rgba(255,200,60,0.35) 0%, rgba(255,100,0,0.12) 45%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255,170,50,0.22) 0%, rgba(255,100,0,0.06) 50%, transparent 70%)',
           filter: 'blur(8px)',
         }}
       />
@@ -107,7 +107,9 @@ export default function Hero({ profile }) {
     // Cancel the 5s fallback if WebGL loaded normally
     clearTimeout(fallbackRef.current);
     setSceneReady(true);
-    const delays = [500, 900, 1300, 1700, 2100, 2700, 3000];
+    // Allow the 3D Solar System to establish itself first (~900ms)
+    // then reveal UI elements sequentially one by one
+    const delays = [900, 1400, 1900, 2400, 2800, 3300, 3800];
     timersRef.current = delays.map((d, i) =>
       setTimeout(() => setRevealPhase(i + 1), d)
     );
@@ -137,7 +139,7 @@ export default function Hero({ profile }) {
       {/* Solar System */}
       <div
         className="absolute inset-0 w-full h-full"
-        style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 1.2s cubic-bezier(0.16,1,0.3,1)' }}
+        style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1)' }}
       >
         <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} onReady={handleSceneReady} />
       </div>
@@ -145,7 +147,7 @@ export default function Hero({ profile }) {
       {/* Skeleton — fades out when solar system ready */}
       <div
         className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ opacity: sceneReady ? 0 : 1, transition: 'opacity 1.2s cubic-bezier(0.16,1,0.3,1)' }}
+        style={{ opacity: sceneReady ? 0 : 1, transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1)' }}
       >
         <StarfieldSkeleton />
       </div>
@@ -196,7 +198,12 @@ export default function Hero({ profile }) {
       {/* Controls — Docked in bottom-right corner to never collide with hero typography */}
       <div
         className="absolute bottom-20 right-3 sm:bottom-8 sm:right-8 z-20 flex sm:flex-col items-center sm:items-end gap-1.5 p-1.5 rounded-2xl bg-[#07090E]/85 backdrop-blur-xl border border-white/15 shadow-2xl shadow-black/80"
-        style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 0.6s ease 1.8s', pointerEvents: sceneReady ? 'auto' : 'none' }}
+        style={{
+          opacity: revealPhase >= 7 ? 1 : 0,
+          transform: revealPhase >= 7 ? 'translateY(0)' : 'translateY(14px)',
+          transition: 'opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)',
+          pointerEvents: revealPhase >= 7 ? 'auto' : 'none'
+        }}
       >
         <button
           onClick={() => setShowOrbits(v => !v)}

@@ -14,7 +14,7 @@ let MeshStandardMaterial, MeshBasicMaterial, LineBasicMaterial, LineDashedMateri
 let Mesh, Line, Points, InstancedMesh, Group;
 let AmbientLight, PointLight;
 let Vector2, Vector3, Matrix4, Quaternion, Euler;
-let LinearToneMapping, DoubleSide, AdditiveBlending;
+let LinearToneMapping, ACESFilmicToneMapping, DoubleSide, AdditiveBlending;
 let OrbitControls, EffectComposer, RenderPass, UnrealBloomPass, OutputPass;
 
 async function loadThree() {
@@ -63,6 +63,7 @@ async function loadThree() {
       Quaternion             = THREE.Quaternion;
       Euler                  = THREE.Euler;
       LinearToneMapping      = THREE.LinearToneMapping;
+      ACESFilmicToneMapping  = THREE.ACESFilmicToneMapping;
       DoubleSide             = THREE.DoubleSide;
       AdditiveBlending       = THREE.AdditiveBlending;
 
@@ -77,15 +78,15 @@ async function loadThree() {
 }
 
 export const planets = [
-  { name: 'Sun',     size: 42,  color: 0xfff4a0, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true,  emissiveIntensity: 3.5, tilt: 0 },
-  { name: 'Mercury', size: 5,   color: 0xb5b5b5, orbitRadius: 70,  orbitSpeed: 1.6,  rotationSpeed: 0.004, emissiveIntensity: 0.2,  tilt: 0.03 },
-  { name: 'Venus',   size: 8,   color: 0xf0b060, orbitRadius: 100, orbitSpeed: 1.17, rotationSpeed: 0.002, emissiveIntensity: 0.2,  tilt: 177.3 },
-  { name: 'Earth',   size: 9,   color: 0x4f8fd6, orbitRadius: 140, orbitSpeed: 1,    rotationSpeed: 0.02,  emissiveIntensity: 0.22, tilt: 23.5 },
-  { name: 'Mars',    size: 6,   color: 0xd9603a, orbitRadius: 195, orbitSpeed: 0.8,  rotationSpeed: 0.018, emissiveIntensity: 0.2,  tilt: 25.2 },
-  { name: 'Jupiter', size: 26,  color: 0xe8c89a, orbitRadius: 275, orbitSpeed: 0.43, rotationSpeed: 0.04,  emissiveIntensity: 0.18, tilt: 3.1 },
-  { name: 'Saturn',  size: 21,  color: 0xe8dfa0, orbitRadius: 355, orbitSpeed: 0.32, rotationSpeed: 0.038, emissiveIntensity: 0.18, tilt: 26.7, hasRing: true },
-  { name: 'Uranus',  size: 12,  color: 0x7de8e8, orbitRadius: 430, orbitSpeed: 0.23, rotationSpeed: 0.03,  emissiveIntensity: 0.2,  tilt: 97.8 },
-  { name: 'Neptune', size: 11,  color: 0x3a5fff, orbitRadius: 500, orbitSpeed: 0.18, rotationSpeed: 0.031, emissiveIntensity: 0.22, tilt: 28.3 },
+  { name: 'Sun',     size: 24,  color: 0xffa030, orbitRadius: 0,   orbitSpeed: 0,    rotationSpeed: 0.002, emissive: true,  emissiveIntensity: 1.1, tilt: 0 },
+  { name: 'Mercury', size: 5,   color: 0xc8c8c8, orbitRadius: 75,  orbitSpeed: 1.6,  rotationSpeed: 0.004, emissiveIntensity: 0.35, tilt: 0.03 },
+  { name: 'Venus',   size: 7.5, color: 0xefb878, orbitRadius: 105, orbitSpeed: 1.17, rotationSpeed: 0.002, emissiveIntensity: 0.35, tilt: 177.3 },
+  { name: 'Earth',   size: 9,   color: 0x4f8fd6, orbitRadius: 145, orbitSpeed: 1,    rotationSpeed: 0.02,  emissiveIntensity: 0.4,  tilt: 23.5 },
+  { name: 'Mars',    size: 6.5, color: 0xef5350, orbitRadius: 195, orbitSpeed: 0.8,  rotationSpeed: 0.018, emissiveIntensity: 0.35, tilt: 25.2 },
+  { name: 'Jupiter', size: 24,  color: 0xf6d6b2, orbitRadius: 275, orbitSpeed: 0.43, rotationSpeed: 0.04,  emissiveIntensity: 0.3,  tilt: 3.1 },
+  { name: 'Saturn',  size: 19,  color: 0xfef08a, orbitRadius: 355, orbitSpeed: 0.32, rotationSpeed: 0.038, emissiveIntensity: 0.3,  tilt: 26.7, hasRing: true },
+  { name: 'Uranus',  size: 12,  color: 0x67e8f9, orbitRadius: 430, orbitSpeed: 0.23, rotationSpeed: 0.03,  emissiveIntensity: 0.35, tilt: 97.8 },
+  { name: 'Neptune', size: 11,  color: 0x3b82f6, orbitRadius: 500, orbitSpeed: 0.18, rotationSpeed: 0.031, emissiveIntensity: 0.4,  tilt: 28.3 },
 ];
 
 export const createStarfield = (scene) => {
@@ -139,13 +140,19 @@ export const createPlanets = (scene) => {
 
     if (planet.name === 'Sun') {
       material = new MeshStandardMaterial({
-        color: planet.color, emissive: planet.color,
-        emissiveIntensity: planet.emissiveIntensity, roughness: 0.2, metalness: 0.0,
+        color: new Color(0xffa030),
+        emissive: new Color(0xff7700),
+        emissiveIntensity: planet.emissiveIntensity,
+        roughness: 0.2,
+        metalness: 0.0,
       });
     } else {
       material = new MeshStandardMaterial({
-        color: new Color(planet.color), emissive: new Color(planet.color),
-        emissiveIntensity: planet.emissiveIntensity ?? 0.2, roughness: 0.7, metalness: 0.0,
+        color: new Color(planet.color),
+        emissive: new Color(planet.color),
+        emissiveIntensity: planet.emissiveIntensity ?? 0.35,
+        roughness: 0.6,
+        metalness: 0.05,
       });
     }
 
@@ -158,14 +165,29 @@ export const createPlanets = (scene) => {
     }
 
     if (planet.name === 'Sun') {
-      // Corona glow
-      const coronaGeo = new SphereGeometry(planet.size * 1.3, 32, 32);
+      // Inner warm corona
+      const coronaGeo = new SphereGeometry(planet.size * 1.25, 32, 32);
       const coronaMat = new MeshBasicMaterial({
-        color: 0xff8800, transparent: true, opacity: 0.15,
-        side: DoubleSide, blending: AdditiveBlending
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.16,
+        side: DoubleSide,
+        blending: AdditiveBlending
       });
       const corona = new Mesh(coronaGeo, coronaMat);
       mesh.add(corona);
+
+      // Soft outer atmospheric flare
+      const flareGeo = new SphereGeometry(planet.size * 1.55, 32, 32);
+      const flareMat = new MeshBasicMaterial({
+        color: 0xff4400,
+        transparent: true,
+        opacity: 0.05,
+        side: DoubleSide,
+        blending: AdditiveBlending
+      });
+      const flare = new Mesh(flareGeo, flareMat);
+      mesh.add(flare);
     }
     
     let moonPivot = null;
@@ -333,8 +355,8 @@ export const initThreeJS = async (mount) => {
   const renderer = new WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
-  renderer.toneMapping         = LinearToneMapping;
-  renderer.toneMappingExposure = 0.9;
+  renderer.toneMapping         = ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
 
   // Clear any existing canvas nodes (e.g. from HMR or StrictMode)
   while (mount.firstChild) {
@@ -346,7 +368,7 @@ export const initThreeJS = async (mount) => {
   mount.appendChild(renderer.domElement);
 
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass   = new UnrealBloomPass(new Vector2(w, h), 1.6, 0.5, 0.15);
+  const bloomPass   = new UnrealBloomPass(new Vector2(w, h), 0.75, 0.4, 0.5);
   const composer    = new EffectComposer(renderer);
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
@@ -361,8 +383,8 @@ export const initThreeJS = async (mount) => {
   controls.minDistance   = 80;
   controls.maxDistance   = 1200;
 
-  scene.add(new AmbientLight(0x222233, 1.5));
-  const sunLight = new PointLight(0xfff4e0, 6, 0);
+  scene.add(new AmbientLight(0x1a2236, 1.8));
+  const sunLight = new PointLight(0xfff5e6, 3.2, 2500, 0.6);
   sunLight.position.set(0, 0, 0);
   scene.add(sunLight);
 
