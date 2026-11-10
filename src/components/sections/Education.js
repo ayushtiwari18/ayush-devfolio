@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   GraduationCap,
   Calendar,
@@ -16,6 +17,7 @@ import {
   ArrowUpRight,
   School,
   Code2,
+  Cpu,
 } from 'lucide-react';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 
