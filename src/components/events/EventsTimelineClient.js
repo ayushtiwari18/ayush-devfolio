@@ -79,7 +79,6 @@ function groupByYear(events) {
  * a stable 5-column left panel on desktop.
  */
 function EventMediaFrame({ event, isPriority }) {
-  const [imgLoaded, setImgLoaded] = useState(false);
   const imgSrc = event.cover_image;
   const isCert = Boolean(imgSrc && isCertificate(imgSrc, event.title));
   const isSupabase = Boolean(imgSrc && imgSrc.includes('supabase.co'));
@@ -89,7 +88,7 @@ function EventMediaFrame({ event, isPriority }) {
     if (isCert) {
       // Credential Document (framed on an obsidian velvet stage to eliminate harsh white-on-black split)
       return (
-        <div className="relative w-full min-h-[220px] lg:min-h-full bg-gradient-to-br from-[#0B0F1C] via-[#070A12] to-[#04060A] p-4 sm:p-5 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
+        <div className="relative w-full h-full min-h-[220px] bg-gradient-to-br from-[#0B0F1C] via-[#070A12] to-[#04060A] p-4 sm:p-5 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
           {/* Ambient colored glow */}
           <div
             aria-hidden="true"
@@ -97,64 +96,65 @@ function EventMediaFrame({ event, isPriority }) {
           />
 
           {/* Certificate Badge */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono text-gray-300 shadow">
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-mono text-gray-300 shadow-md">
             <Trophy size={11} className="text-amber-400" />
             <span>OFFICIAL CREDENTIAL</span>
           </div>
 
           {/* Framed Certificate Document */}
-          <div className="relative w-full h-[180px] sm:h-[200px] lg:h-[220px] rounded-xl overflow-hidden border border-white/15 shadow-2xl shadow-black/80 bg-white flex items-center justify-center group-hover/media:scale-[1.02] transition-transform duration-300">
+          <div className="relative w-full aspect-[4/3] max-w-[320px] max-h-[210px] rounded-xl overflow-hidden border border-white/15 shadow-2xl shadow-black/80 bg-white flex items-center justify-center group-hover/media:scale-[1.02] transition-transform duration-300">
             <Image
               src={imgSrc}
               alt={event.title}
               fill
-              className={`object-contain p-2 transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className="object-contain p-2"
               sizes="(max-width: 1024px) 100vw, 420px"
               unoptimized={isSupabase}
               priority={isPriority}
-              onLoad={() => setImgLoaded(true)}
             />
-            {!imgLoaded && (
-              <div className="absolute inset-0 bg-white/20 animate-pulse" />
-            )}
           </div>
         </div>
       );
     }
 
-    // Authentic Event Photograph (e.g. Pehel)
+    // Authentic Event Photograph / Project Poster (e.g. Pehel, Marine Minds)
     return (
-      <div className="relative w-full min-h-[220px] lg:min-h-full bg-[#070A12] border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
+      <div className="relative w-full h-full min-h-[220px] bg-[#070A12] border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
         <Image
           src={imgSrc}
           alt={event.title}
           fill
-          className={`object-cover object-center group-hover/media:scale-105 transition-all duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className="object-cover object-center group-hover/media:scale-105 transition-transform duration-500"
           sizes="(max-width: 1024px) 100vw, 420px"
           unoptimized={isSupabase}
           priority={isPriority}
-          onLoad={() => setImgLoaded(true)}
         />
-        {!imgLoaded && (
-          <div className="absolute inset-0 bg-white/5 animate-pulse" />
-        )}
 
         {/* Ambient Dark Vignette overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#090D16]/80 via-transparent to-transparent pointer-events-none" />
 
         {/* Photo Badge */}
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono text-gray-300 shadow">
-          <Film size={11} className="text-primary" />
-          <span>PRODUCTION ARCHIVE</span>
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-mono text-gray-300 shadow-md">
+          {event.slug === 'pehel' ? (
+            <>
+              <Film size={11} className="text-primary" />
+              <span>PRODUCTION ARCHIVE</span>
+            </>
+          ) : (
+            <>
+              <Sparkles size={11} className="text-primary" />
+              <span>PROJECT SHOWCASE</span>
+            </>
+          )}
         </div>
       </div>
     );
   }
 
-  // Fallback for events without images (Devpost, ISTD, SIH, Shark Tank, TechUtsav)
+  // Fallback for events without images (Devpost, ISTD, Shark Tank, TechUtsav)
   // Maintains 100% layout consistency: always 5 cols on desktop!
   return (
-    <div className="relative w-full min-h-[220px] lg:min-h-full bg-gradient-to-br from-[#0B0F1C] via-[#070A12] to-[#04060A] p-5 sm:p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
+    <div className="relative w-full h-full min-h-[220px] bg-gradient-to-br from-[#0B0F1C] via-[#070A12] to-[#04060A] p-5 sm:p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
       {/* Background ambient radial light */}
       <div
         aria-hidden="true"
@@ -358,8 +358,8 @@ export default function EventsTimelineClient({ events = [] }) {
                         <article className="rounded-2xl bg-[#090D16] border border-white/10 hover:border-primary/40 transition-colors duration-200 shadow-xl overflow-hidden">
                           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch">
                             {/* Left Column: Visual Credential / Production Photo / Milestone Emblem */}
-                            <div className="lg:col-span-5">
-                              <EventMediaFrame event={event} isPriority={idx < 2} />
+                            <div className="lg:col-span-5 relative w-full h-full flex flex-col">
+                              <EventMediaFrame event={event} isPriority={idx < 3} />
                             </div>
 
                             {/* Narrative Content Column */}
