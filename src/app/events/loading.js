@@ -32,7 +32,7 @@ export default function EventsLoading() {
               <div className="absolute -left-[24px] sm:-left-[36px] top-6 w-2.5 h-2.5 rounded-full bg-white/20 ring-4 ring-[#05070B]" />
               <div className="rounded-2xl bg-[#090D16] border border-white/10 overflow-hidden animate-pulse">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                  <div className="lg:col-span-5 aspect-[16/9] lg:aspect-auto bg-white/5" />
+                  <div className="lg:col-span-5 min-h-[220px] lg:min-h-full bg-white/5" />
                   <div className="lg:col-span-7 p-6 sm:p-7 space-y-4">
                     <div className="flex gap-2">
                       <div className="h-4 w-20 bg-white/10 rounded-full" />

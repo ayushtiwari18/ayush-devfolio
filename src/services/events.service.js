@@ -207,9 +207,17 @@ export async function getPublishedEvents() {
           const realPhoto = item.images.find(img => (typeof img === 'string' ? img : img.url)?.includes('1730015367035'));
           if (realPhoto) cover = typeof realPhoto === 'string' ? realPhoto : realPhoto.url;
         }
+
+        // Format description/tagline if ALL CAPS from legacy database record
+        let tagline = item.tagline;
+        if (tagline && tagline === tagline.toUpperCase() && tagline.length > 20) {
+          tagline = tagline.charAt(0) + tagline.slice(1).toLowerCase();
+        }
+
         return {
           ...item,
           cover_image: cover,
+          tagline,
           hasCaseStudy: Boolean(item.story || item.slug === 'pehel'),
           caseStudyUrl: `/events/${item.slug}`,
         };

@@ -29,6 +29,12 @@ function isPodium(result) {
   );
 }
 
+function isCertificate(url = '', title = '') {
+  const u = (url || '').toLowerCase();
+  const t = (title || '').toLowerCase();
+  return u.includes('pdf-io') || u.includes('hackbyte.jpg') || u.includes('ibm-hack.jpg') || t.includes('certificate');
+}
+
 function resultBadgeStyle(result) {
   if (!result) return null;
   const r = result.toLowerCase();
@@ -65,6 +71,146 @@ function groupByYear(events) {
     if (b[0] === 'Milestones') return -1;
     return Number(b[0]) - Number(a[0]);
   });
+}
+
+/**
+ * Balanced, museum-grade visual frame for timeline cards.
+ * Prevents erratic 1-col vs 2-col layout shifting by giving EVERY card
+ * a stable 5-column left panel on desktop.
+ */
+function EventMediaFrame({ event, isPriority }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imgSrc = event.cover_image;
+  const isCert = Boolean(imgSrc && isCertificate(imgSrc, event.title));
+  const isSupabase = Boolean(imgSrc && imgSrc.includes('supabase.co'));
+  const isPodiumWin = isPodium(event.result);
+
+  if (imgSrc) {
+    if (isCert) {
+      // Credential Document (framed on an obsidian velvet stage to eliminate harsh white-on-black split)
+      return (
+        <div className="relative w-full min-h-[220px] lg:min-h-full bg-gradient-to-br from-[#0B0F1C] via-[#070A12] to-[#04060A] p-4 sm:p-5 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
+          {/* Ambient colored glow */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-primary/[0.04] rounded-full blur-2xl pointer-events-none"
+          />
+
+          {/* Certificate Badge */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono text-gray-300 shadow">
+            <Trophy size={11} className="text-amber-400" />
+            <span>OFFICIAL CREDENTIAL</span>
+          </div>
+
+          {/* Framed Certificate Document */}
+          <div className="relative w-full h-[180px] sm:h-[200px] lg:h-[220px] rounded-xl overflow-hidden border border-white/15 shadow-2xl shadow-black/80 bg-white flex items-center justify-center group-hover/media:scale-[1.02] transition-transform duration-300">
+            <Image
+              src={imgSrc}
+              alt={event.title}
+              fill
+              className={`object-contain p-2 transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+              sizes="(max-width: 1024px) 100vw, 420px"
+              unoptimized={isSupabase}
+              priority={isPriority}
+              onLoad={() => setImgLoaded(true)}
+            />
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-white/20 animate-pulse" />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Authentic Event Photograph (e.g. Pehel)
+    return (
+      <div className="relative w-full min-h-[220px] lg:min-h-full bg-[#070A12] border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
+        <Image
+          src={imgSrc}
+          alt={event.title}
+          fill
+          className={`object-cover object-center group-hover/media:scale-105 transition-all duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+          sizes="(max-width: 1024px) 100vw, 420px"
+          unoptimized={isSupabase}
+          priority={isPriority}
+          onLoad={() => setImgLoaded(true)}
+        />
+        {!imgLoaded && (
+          <div className="absolute inset-0 bg-white/5 animate-pulse" />
+        )}
+
+        {/* Ambient Dark Vignette overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#090D16]/80 via-transparent to-transparent pointer-events-none" />
+
+        {/* Photo Badge */}
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono text-gray-300 shadow">
+          <Film size={11} className="text-primary" />
+          <span>PRODUCTION ARCHIVE</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback for events without images (Devpost, ISTD, SIH, Shark Tank, TechUtsav)
+  // Maintains 100% layout consistency: always 5 cols on desktop!
+  return (
+    <div className="relative w-full min-h-[220px] lg:min-h-full bg-gradient-to-br from-[#0B0F1C] via-[#070A12] to-[#04060A] p-5 sm:p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden group/media">
+      {/* Background ambient radial light */}
+      <div
+        aria-hidden="true"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/[0.08] rounded-full blur-2xl pointer-events-none"
+      />
+
+      {/* Grid Pattern */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none"
+      />
+
+      {/* Top telemetry tag */}
+      <div className="relative z-10 flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[10px] font-mono text-gray-300">
+          <Sparkles size={11} className="text-primary" />
+          <span>{event.category || 'HACKATHON'}</span>
+        </span>
+        {event.duration && (
+          <span className="text-[10px] font-mono text-gray-400">
+            {event.duration}
+          </span>
+        )}
+      </div>
+
+      {/* Center Emblem */}
+      <div className="relative z-10 my-auto py-4 flex flex-col items-center text-center">
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-3 shadow-xl backdrop-blur-sm group-hover/media:scale-105 group-hover/media:border-primary/40 transition-all duration-300">
+          {isPodiumWin ? (
+            <Trophy size={26} className="text-amber-400" />
+          ) : (
+            <Code2 size={26} className="text-primary" />
+          )}
+        </div>
+        <div className="text-xs font-mono font-semibold text-white tracking-wider uppercase mb-1 line-clamp-1">
+          {event.organizer || 'Competitive Hackathon'}
+        </div>
+        <div className="text-[11px] font-mono text-gray-400 max-w-[220px] line-clamp-1">
+          {event.location || 'India Tech Circuit'}
+        </div>
+      </div>
+
+      {/* Bottom Telemetry Stamp */}
+      <div className="relative z-10 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-gray-400">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>VERIFIED LOG</span>
+        </span>
+        {event.technologies?.[0] && (
+          <span className="text-primary truncate max-w-[120px]">
+            {event.technologies[0]}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function EventsTimelineClient({ events = [] }) {
@@ -197,10 +343,6 @@ export default function EventsTimelineClient({ events = [] }) {
                     const targetUrl = event.caseStudyUrl || (event.slug === 'pehel' ? '/events/pehel' : null);
                     const hasActionLink = Boolean(targetUrl || event.links?.live);
 
-                    // Image handling
-                    const imgSrc = event.cover_image;
-                    const isSupabase = Boolean(imgSrc && imgSrc.includes('supabase.co'));
-
                     return (
                       <div
                         key={event.id || event.slug || idx}
@@ -212,26 +354,16 @@ export default function EventsTimelineClient({ events = [] }) {
                           className="absolute -left-[24px] sm:-left-[36px] top-6 w-2.5 h-2.5 rounded-full bg-white/40 ring-4 ring-[#05070B] group-hover:bg-primary group-hover:ring-primary/20 transition-all z-10"
                         />
 
-                        {/* Full-Width Balanced Journey Card */}
+                        {/* Full-Width Balanced Journey Card: Always 12 cols (5 visual / 7 story) */}
                         <article className="rounded-2xl bg-[#090D16] border border-white/10 hover:border-primary/40 transition-colors duration-200 shadow-xl overflow-hidden">
-                          <div className={`grid grid-cols-1 ${imgSrc ? 'lg:grid-cols-12' : ''} gap-0 items-stretch`}>
-                            {/* Media Poster Column (Clean 16:9 ratio, ZERO black gradient mask) */}
-                            {imgSrc && (
-                              <div className="lg:col-span-5 relative min-h-[220px] lg:min-h-full bg-[#070A12] border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden">
-                                <Image
-                                  src={imgSrc}
-                                  alt={event.title}
-                                  fill
-                                  className="object-cover object-center"
-                                  sizes="(max-width: 1024px) 100vw, 420px"
-                                  unoptimized={isSupabase}
-                                  priority={idx === 0}
-                                />
-                              </div>
-                            )}
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch">
+                            {/* Left Column: Visual Credential / Production Photo / Milestone Emblem */}
+                            <div className="lg:col-span-5">
+                              <EventMediaFrame event={event} isPriority={idx < 2} />
+                            </div>
 
                             {/* Narrative Content Column */}
-                            <div className={`${imgSrc ? 'lg:col-span-7' : 'w-full'} p-6 sm:p-7 flex flex-col justify-between space-y-4`}>
+                            <div className="lg:col-span-7 p-6 sm:p-7 flex flex-col justify-between space-y-4">
                               <div className="space-y-3">
                                 {/* Badges Header */}
                                 <div className="flex flex-wrap items-center gap-2">
