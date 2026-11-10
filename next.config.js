@@ -8,10 +8,8 @@ const nextConfig = {
 
   experimental: {
     optimizePackageImports: [
-      'framer-motion',
       'lucide-react',
       '@radix-ui/react-icons',
-      'three',
     ],
   },
 

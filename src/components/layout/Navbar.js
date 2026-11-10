@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import { Menu, X, ShieldAlert, ArrowUpRight } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
   { href: ROUTES.HOME,           label: 'Home'          },
@@ -131,10 +130,8 @@ export default function Navbar() {
                   }`}
                 >
                   {active && (
-                    <motion.div
-                      layoutId="activeNavPill"
-                      className="absolute inset-0 rounded-full bg-primary/25 border border-primary/45 shadow-[0_0_12px_rgba(99,102,241,0.25)]"
-                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    <div
+                      className="absolute inset-0 rounded-full bg-primary/25 border border-primary/45 shadow-[0_0_12px_rgba(99,102,241,0.25)] transition-all duration-300"
                     />
                   )}
                   <span className="relative z-10">{link.label}</span>
@@ -176,76 +173,66 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Drawer Overlay with Spring Transition */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-xl md:hidden pointer-events-auto"
-            onClick={() => setMobileMenuOpen(false)}
+      {/* Mobile Drawer Overlay with Smooth CSS Transition */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-xl md:hidden pointer-events-auto transition-opacity duration-200"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            className="w-full max-w-md mx-auto mt-20 px-4 transition-transform duration-250 ease-out"
+            onClick={(e) => e.stopPropagation()}
           >
-            <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.96 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-md mx-auto mt-20 px-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="bg-[#0B0F19] border border-white/15 rounded-3xl p-5 shadow-2xl shadow-black/90 space-y-2">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10 px-2">
-                  <span className="text-xs font-mono-code uppercase tracking-wider text-muted-foreground font-semibold">
-                    Navigation
-                  </span>
-                  <span className="text-xs font-mono-code text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
-                    Ayush Tiwari
-                  </span>
-                </div>
-
-                <div className="space-y-1 pt-2">
-                  {navLinks.map((link) => {
-                    const active = isActive(link.href);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                          active
-                            ? 'bg-primary/20 text-white border border-primary/40'
-                            : 'text-muted-foreground hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        <span>{link.label}</span>
-                        {active && <span className="w-2 h-2 rounded-full bg-primary" />}
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {isAdmin && (
-                  <Link
-                    href="/admin/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 mt-3"
-                  >
-                    <ShieldAlert size={16} />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                )}
-
-                <div className="pt-4 border-t border-white/10 mt-3 flex items-center justify-between px-2 text-xs text-muted-foreground font-mono-code">
-                  <span>Jabalpur, IN</span>
-                  <span className="text-emerald-400 font-semibold">Available Q1/Q2</span>
-                </div>
+            <div className="bg-[#0B0F19] border border-white/15 rounded-3xl p-5 shadow-2xl shadow-black/90 space-y-2">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10 px-2">
+                <span className="text-xs font-mono-code uppercase tracking-wider text-muted-foreground font-semibold">
+                  Navigation
+                </span>
+                <span className="text-xs font-mono-code text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+                  Ayush Tiwari
+                </span>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              <div className="space-y-1 pt-2">
+                {navLinks.map((link) => {
+                  const active = isActive(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                        active
+                          ? 'bg-primary/20 text-white border border-primary/40'
+                          : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span>{link.label}</span>
+                      {active && <span className="w-2 h-2 rounded-full bg-primary" />}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {isAdmin && (
+                <Link
+                  href="/admin/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 mt-3"
+                >
+                  <ShieldAlert size={16} />
+                  <span>Admin Dashboard</span>
+                </Link>
+              )}
+
+              <div className="pt-4 border-t border-white/10 mt-3 flex items-center justify-between px-2 text-xs text-muted-foreground font-mono-code">
+                <span>Jabalpur, IN</span>
+                <span className="text-emerald-400 font-semibold">Available Q1/Q2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
