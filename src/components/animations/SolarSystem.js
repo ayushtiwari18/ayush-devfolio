@@ -105,6 +105,10 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
           animationIdRef.current = requestAnimationFrame(animate);
         };
 
+        // Render initial frame immediately so canvas has pixels ready before reveal
+        if (controlsRef.current) controlsRef.current.update();
+        if (composerRef.current) composerRef.current.render();
+
         animate();
 
         // Fire onReady AFTER animate() starts and ONLY ONCE ever.
@@ -148,6 +152,9 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
           } catch (_) {}
         }
         rendererRef.current.dispose();
+      }
+      if (composerRef.current && typeof composerRef.current.dispose === 'function') {
+        try { composerRef.current.dispose(); } catch (_) {}
       }
       if (sceneRef.current) {
         while (sceneRef.current.children.length > 0)

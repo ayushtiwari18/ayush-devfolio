@@ -1,19 +1,11 @@
 /**
- * solarSystemUtils.js — Cycle 2: Three.js tree-shaking
+ * solarSystemUtils.js — Dynamic Three.js solar system with bloom & postprocessing.
  *
- * BEFORE: await import('three') pulls the ENTIRE Three.js namespace (~767KB)
- *         Webpack cannot tree-shake a dynamic namespace import.
- *
- * AFTER:  Named imports from three/src/* subpaths.
- *         Webpack sees exactly which classes are used and dead-code-eliminates
- *         everything else (loaders, geometries, extras we never use).
- *         Expected saving: ~250–350KB from the three-vendor chunk.
- *
- * Addons (OrbitControls, EffectComposer, etc.) are already subpath imports
- * so they were fine before — no change needed there.
+ * Uses cached Promise-based dynamic import of 'three' and official addons.
+ * Safe for React 18 / Next.js StrictMode concurrent invocation.
  */
 
-let _loaded = false;
+let _loadPromise = null;
 
 let Scene, Color, PerspectiveCamera, WebGLRenderer;
 let BufferGeometry, Float32BufferAttribute;
@@ -23,87 +15,65 @@ let Mesh, Line, Points, InstancedMesh, Group;
 let AmbientLight, PointLight;
 let Vector2, Vector3, Matrix4, Quaternion, Euler;
 let LinearToneMapping, DoubleSide, AdditiveBlending;
-let OrbitControls, EffectComposer, RenderPass, UnrealBloomPass;
+let OrbitControls, EffectComposer, RenderPass, UnrealBloomPass, OutputPass;
 
 async function loadThree() {
-  if (_loaded) return;
-  _loaded = true;
+  if (!_loadPromise) {
+    _loadPromise = (async () => {
+      const [
+        threeM,
+        ocM,
+        ecM,
+        rpM,
+        ubM,
+        opM,
+      ] = await Promise.all([
+        import('three'),
+        import('three/addons/controls/OrbitControls.js'),
+        import('three/addons/postprocessing/EffectComposer.js'),
+        import('three/addons/postprocessing/RenderPass.js'),
+        import('three/addons/postprocessing/UnrealBloomPass.js'),
+        import('three/addons/postprocessing/OutputPass.js'),
+      ]);
 
-  const [
-    sceneM, colorM, cameraM, rendererM,
-    bufGeoM, f32M,
-    sphereM, ringM,
-    meshStdM, meshBasicM, lineBasicM, lineDashedM, pointsMatM,
-    meshM, lineM, pointsM, instancedM, groupM,
-    ambLightM, ptLightM,
-    vec2M, vec3M, mat4M, quatM, eulerM,
-    constants,
-    ocM, ecM, rpM, ubM,
-  ] = await Promise.all([
-    import('three/src/scenes/Scene.js'),
-    import('three/src/math/Color.js'),
-    import('three/src/cameras/PerspectiveCamera.js'),
-    import('three/src/renderers/WebGLRenderer.js'),
-    import('three/src/core/BufferGeometry.js'),
-    import('three/src/core/BufferAttribute.js'),
-    import('three/src/geometries/SphereGeometry.js'),
-    import('three/src/geometries/RingGeometry.js'),
-    import('three/src/materials/MeshStandardMaterial.js'),
-    import('three/src/materials/MeshBasicMaterial.js'),
-    import('three/src/materials/LineBasicMaterial.js'),
-    import('three/src/materials/LineDashedMaterial.js'),
-    import('three/src/materials/PointsMaterial.js'),
-    import('three/src/objects/Mesh.js'),
-    import('three/src/objects/Line.js'),
-    import('three/src/objects/Points.js'),
-    import('three/src/objects/InstancedMesh.js'),
-    import('three/src/objects/Group.js'),
-    import('three/src/lights/AmbientLight.js'),
-    import('three/src/lights/PointLight.js'),
-    import('three/src/math/Vector2.js'),
-    import('three/src/math/Vector3.js'),
-    import('three/src/math/Matrix4.js'),
-    import('three/src/math/Quaternion.js'),
-    import('three/src/math/Euler.js'),
-    import('three/src/constants.js'),
-    import('three/addons/controls/OrbitControls.js'),
-    import('three/addons/postprocessing/EffectComposer.js'),
-    import('three/addons/postprocessing/RenderPass.js'),
-    import('three/addons/postprocessing/UnrealBloomPass.js'),
-  ]);
+      const THREE = threeM;
+      Scene                  = THREE.Scene;
+      Color                  = THREE.Color;
+      PerspectiveCamera      = THREE.PerspectiveCamera;
+      WebGLRenderer          = THREE.WebGLRenderer;
+      BufferGeometry         = THREE.BufferGeometry;
+      Float32BufferAttribute = THREE.Float32BufferAttribute;
+      SphereGeometry         = THREE.SphereGeometry;
+      RingGeometry           = THREE.RingGeometry;
+      MeshStandardMaterial   = THREE.MeshStandardMaterial;
+      MeshBasicMaterial      = THREE.MeshBasicMaterial;
+      LineBasicMaterial      = THREE.LineBasicMaterial;
+      LineDashedMaterial     = THREE.LineDashedMaterial;
+      PointsMaterial         = THREE.PointsMaterial;
+      Mesh                   = THREE.Mesh;
+      Line                   = THREE.Line;
+      Points                 = THREE.Points;
+      InstancedMesh          = THREE.InstancedMesh;
+      Group                  = THREE.Group;
+      AmbientLight           = THREE.AmbientLight;
+      PointLight             = THREE.PointLight;
+      Vector2                = THREE.Vector2;
+      Vector3                = THREE.Vector3;
+      Matrix4                = THREE.Matrix4;
+      Quaternion             = THREE.Quaternion;
+      Euler                  = THREE.Euler;
+      LinearToneMapping      = THREE.LinearToneMapping;
+      DoubleSide             = THREE.DoubleSide;
+      AdditiveBlending       = THREE.AdditiveBlending;
 
-  Scene               = sceneM.Scene;
-  Color               = colorM.Color;
-  PerspectiveCamera   = cameraM.PerspectiveCamera;
-  WebGLRenderer       = rendererM.WebGLRenderer;
-  BufferGeometry      = bufGeoM.BufferGeometry;
-  Float32BufferAttribute = f32M.Float32BufferAttribute;
-  SphereGeometry      = sphereM.SphereGeometry;
-  RingGeometry        = ringM.RingGeometry;
-  MeshStandardMaterial = meshStdM.MeshStandardMaterial;
-  MeshBasicMaterial   = meshBasicM.MeshBasicMaterial;
-  LineBasicMaterial   = lineBasicM.LineBasicMaterial;
-  LineDashedMaterial  = lineDashedM.LineDashedMaterial;
-  PointsMaterial      = pointsMatM.PointsMaterial;
-  Mesh                = meshM.Mesh;
-  Line                = lineM.Line;
-  Points              = pointsM.Points;
-  InstancedMesh       = instancedM.InstancedMesh;
-  Group               = groupM.Group;
-  AmbientLight        = ambLightM.AmbientLight;
-  PointLight          = ptLightM.PointLight;
-  Vector2             = vec2M.Vector2;
-  Vector3             = vec3M.Vector3;
-  Matrix4             = mat4M.Matrix4;
-  Quaternion          = quatM.Quaternion;
-  Euler               = eulerM.Euler;
-  LinearToneMapping   = constants.LinearToneMapping;
-  DoubleSide          = constants.DoubleSide;
-  AdditiveBlending    = constants.AdditiveBlending;
-  OrbitControls       = ocM.OrbitControls;
-  EffectComposer      = ecM.EffectComposer;
-  RenderPass          = rpM.RenderPass;
-  UnrealBloomPass     = ubM.UnrealBloomPass;
+      OrbitControls          = ocM.OrbitControls;
+      EffectComposer         = ecM.EffectComposer;
+      RenderPass             = rpM.RenderPass;
+      UnrealBloomPass        = ubM.UnrealBloomPass;
+      OutputPass             = opM.OutputPass;
+    })();
+  }
+  return _loadPromise;
 }
 
 export const planets = [
@@ -238,13 +208,12 @@ export const createPlanets = (scene) => {
       const orbitGeo = new BufferGeometry();
       orbitGeo.setAttribute('position', new Float32BufferAttribute(orbitPoints, 3));
       
-      // Dashed sci-fi orbit lines
+      // Dashed sci-fi orbit lines in the horizontal X-Z orbital plane (y=0)
       const orbitMat = new LineDashedMaterial({ 
-        color: 0x6688aa, transparent: true, opacity: 0.2, 
+        color: 0x6688aa, transparent: true, opacity: 0.25, 
         dashSize: 4, gapSize: 2 
       });
       const orbit = new Line(orbitGeo, orbitMat);
-      orbit.rotation.x = Math.PI / 2;
       orbit.computeLineDistances(); // Required for LineDashedMaterial
       orbit.userData.isOrbit = true;
       scene.add(orbit);
@@ -355,13 +324,13 @@ export const initThreeJS = async (mount) => {
   const scene = new Scene();
   scene.background = new Color(0x00000a);
 
-  const w = mount.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200);
-  const h = mount.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800);
+  const w = mount?.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const h = mount?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800);
 
-  const camera = new PerspectiveCamera(60, w / h, 0.1, 10000);
+  const camera = new PerspectiveCamera(60, (w > 0 && h > 0) ? (w / h) : (16 / 9), 0.1, 10000);
   camera.position.set(0, 320, 650);
 
-  const renderer = new WebGLRenderer({ antialias: true, alpha: false });
+  const renderer = new WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
   renderer.toneMapping         = LinearToneMapping;
@@ -371,6 +340,9 @@ export const initThreeJS = async (mount) => {
   while (mount.firstChild) {
     mount.removeChild(mount.firstChild);
   }
+  renderer.domElement.style.display = 'block';
+  renderer.domElement.style.width   = '100%';
+  renderer.domElement.style.height  = '100%';
   mount.appendChild(renderer.domElement);
 
   const renderScene = new RenderPass(scene, camera);
@@ -378,6 +350,10 @@ export const initThreeJS = async (mount) => {
   const composer    = new EffectComposer(renderer);
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
+  if (OutputPass) {
+    const outputPass = new OutputPass();
+    composer.addPass(outputPass);
+  }
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
