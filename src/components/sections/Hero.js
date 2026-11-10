@@ -47,7 +47,12 @@ export default function Hero({ profile }) {
     // then reveal UI elements sequentially one by one
     const delays = [600, 1000, 1400, 1800, 2200, 2600, 3000];
     timersRef.current = delays.map((d, i) =>
-      setTimeout(() => setRevealPhase(i + 1), d)
+      setTimeout(() => {
+        setRevealPhase(i + 1);
+        if (i + 1 === 7 && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('hero-navbar-show'));
+        }
+      }, d)
     );
   }, []);
 

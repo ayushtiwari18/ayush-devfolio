@@ -24,6 +24,35 @@ export default function Navbar() {
   const [scrolledDeep,   setScrolledDeep]   = useState(false);
   const pathname = usePathname();
   const [isAdmin,        setIsAdmin]        = useState(false);
+  const isHome = pathname === '/';
+  const [navRevealed,    setNavRevealed]    = useState(!isHome);
+
+  // On home page, navbar is the LAST thing to reveal after the Solar System boot sequence.
+  // On other pages, it is revealed immediately.
+  useEffect(() => {
+    if (!isHome) {
+      setNavRevealed(true);
+      return;
+    }
+
+    setNavRevealed(false);
+
+    const onShowNav = () => setNavRevealed(true);
+    window.addEventListener('hero-navbar-show', onShowNav);
+
+    // Fallback: if user scrolls or after timeout, reveal navbar safely
+    const fallbackTimer = setTimeout(() => setNavRevealed(true), 4500);
+    const onScroll = () => {
+      if (window.scrollY > 40) setNavRevealed(true);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('hero-navbar-show', onShowNav);
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(fallbackTimer);
+    };
+  }, [isHome, pathname]);
 
   useEffect(() => {
     let ticking = false;
@@ -85,8 +114,10 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-3 sm:px-6 pointer-events-none transition-all duration-300 ${
-        hideForArticleReading ? '-translate-y-28 opacity-0' : 'translate-y-0 opacity-100'
+      className={`fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-3 sm:px-6 pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        hideForArticleReading || !navRevealed
+          ? '-translate-y-24 opacity-0 pointer-events-none'
+          : 'translate-y-0 opacity-100'
       }`}
     >
       <nav
