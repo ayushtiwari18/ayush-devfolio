@@ -3,6 +3,7 @@ import '../styles/globals.css';
 import PublicShell from '@/components/layout/PublicShell';
 import BfCacheManager from '@/components/BfCacheManager';
 import AdminKeyTrigger from '@/components/AdminKeyTrigger';
+import { AdminModeProvider } from '@/context/AdminModeContext';
 import PWAInit from '@/components/pwa/PWAInit';
 import CursorPet from '@/components/CursorPet';
 import { SEO_KEYWORDS } from '@/lib/constants';
@@ -253,18 +254,20 @@ export default function RootLayout({ children }) {
           `}
         </Script>
 
-        <AdminKeyTrigger />
-        <BfCacheManager />
-        <PWAInit />
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium focus:shadow-lg focus:outline-none"
-        >
-          Skip to main content
-        </a>
-        <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
-        <PublicShell>{children}</PublicShell>
-        <CursorPet />
+        <AdminModeProvider>
+          <AdminKeyTrigger />
+          <BfCacheManager />
+          <PWAInit />
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium focus:shadow-lg focus:outline-none"
+          >
+            Skip to main content
+          </a>
+          <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-primary/5" />
+          <PublicShell>{children}</PublicShell>
+          <CursorPet />
+        </AdminModeProvider>
       </body>
     </html>
   );
