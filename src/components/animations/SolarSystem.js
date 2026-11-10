@@ -21,8 +21,6 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
   const autoRotateRef   = useRef(autoRotate);
   const onReadyFiredRef = useRef(false);
 
-  const isVisibleRef    = useRef(true);
-
   // Keep autoRotateRef in sync on every render — zero re-init cost.
   autoRotateRef.current = autoRotate;
 
@@ -34,13 +32,16 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
 
     let isSubscribed = true;
 
-    // Pause WebGL rendering loop when off-screen to save 30-50% CPU/GPU
-    let observer = null;
-    if (typeof IntersectionObserver !== 'undefined') {
-      observer = new IntersectionObserver(([entry]) => {
-        isVisibleRef.current = entry.isIntersecting;
-      }, { threshold: 0.05 });
-      observer.observe(mountRef.current);
+    // Pause rendering when tab is hidden or when scrolled far past hero section
+    let isVisible = true;
+    const updateVisibility = () => {
+      if (typeof window === 'undefined') return;
+      isVisible = !document.hidden && window.scrollY < (window.innerHeight * 1.5);
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', updateVisibility);
+      window.addEventListener('scroll', updateVisibility, { passive: true });
     }
 
     import('@/lib/solarSystemUtils')
@@ -59,7 +60,15 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
           await initThreeJS(mountRef.current);
 
         // Re-check after the await — StrictMode cleanup may have run.
-        if (!isSubscribed || !mountRef.current) return;
+        if (!isSubscribed || !mountRef.current) {
+          if (renderer.domElement?.parentNode) {
+            try {
+              renderer.domElement.parentNode.removeChild(renderer.domElement);
+            } catch (_) {}
+          }
+          renderer.dispose();
+          return;
+        }
 
         sceneRef.current    = scene;
         cameraRef.current   = camera;
@@ -79,8 +88,8 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
         const animate = () => {
           if (!isSubscribed) return;
 
-          // Only compute & render Three.js frames when visible in viewport
-          if (isVisibleRef.current) {
+          // Only compute & render Three.js frames when hero is in/near viewport and tab is active
+          if (isVisible) {
             timeRef.current += 0.01;
             updatePlanets(planetsRef.current, timeRef.current, autoRotateRef.current);
 
@@ -99,8 +108,6 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
         animate();
 
         // Fire onReady AFTER animate() starts and ONLY ONCE ever.
-        // onReadyFiredRef prevents StrictMode 2nd run from firing it
-        // again (which would be a no-op but is cleaner to guard).
         if (onReady && !onReadyFiredRef.current) {
           onReadyFiredRef.current = true;
           onReady();
@@ -115,8 +122,8 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
         !rendererRef.current ||
         !composerRef.current
       ) return;
-      const w = mountRef.current.clientWidth;
-      const h = mountRef.current.clientHeight;
+      const w = mountRef.current.clientWidth || window.innerWidth || 1200;
+      const h = mountRef.current.clientHeight || window.innerHeight || 800;
       cameraRef.current.aspect = w / h;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(w, h);
@@ -126,7 +133,10 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
 
     return () => {
       isSubscribed = false;
-      observer?.disconnect();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', updateVisibility);
+        window.removeEventListener('scroll', updateVisibility);
+      }
       window.removeEventListener('resize', handleResize);
       if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
       if (rendererRef.current) {

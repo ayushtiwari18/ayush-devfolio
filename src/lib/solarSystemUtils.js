@@ -355,17 +355,22 @@ export const initThreeJS = async (mount) => {
   const scene = new Scene();
   scene.background = new Color(0x00000a);
 
-  const w = mount.clientWidth;
-  const h = mount.clientHeight;
+  const w = mount.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const h = mount.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800);
 
   const camera = new PerspectiveCamera(60, w / h, 0.1, 10000);
   camera.position.set(0, 320, 650);
 
   const renderer = new WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(w, h);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
   renderer.toneMapping         = LinearToneMapping;
   renderer.toneMappingExposure = 0.9;
+
+  // Clear any existing canvas nodes (e.g. from HMR or StrictMode)
+  while (mount.firstChild) {
+    mount.removeChild(mount.firstChild);
+  }
   mount.appendChild(renderer.domElement);
 
   const renderScene = new RenderPass(scene, camera);
