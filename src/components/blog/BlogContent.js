@@ -1,13 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import dynamic from 'next/dynamic';
-
-const SyntaxHighlighter = dynamic(
-  () => import('react-syntax-highlighter').then(mod => mod.Prism),
-  { ssr: false }
-);
-
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 // IDE Editor Theme: removes any artificial line/token background colors & text-shadow

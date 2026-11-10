@@ -22,14 +22,24 @@ const navLinks = [
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled,       setScrolled]       = useState(false);
-  const [scrollY,        setScrollY]        = useState(0);
+  const [scrolledDeep,   setScrolledDeep]   = useState(false);
   const pathname = usePathname();
   const [isAdmin,        setIsAdmin]        = useState(false);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
-      setScrollY(window.scrollY);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const y = window.scrollY;
+          const isScrolled = y > 30;
+          const isDeep = y > 180;
+          setScrolled(prev => prev !== isScrolled ? isScrolled : prev);
+          setScrolledDeep(prev => prev !== isDeep ? isDeep : prev);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -72,7 +82,7 @@ export default function Navbar() {
   // If on an article or event deep-dive and scrolled into reading mode, yield top space to reading nav
   const isArticlePage = (pathname?.startsWith('/blog/') && pathname !== '/blog') ||
                         (pathname?.startsWith('/events/') && pathname !== '/events');
-  const hideForArticleReading = isArticlePage && scrollY > 180;
+  const hideForArticleReading = isArticlePage && scrolledDeep;
 
   return (
     <header

@@ -78,31 +78,6 @@ const nextConfig = {
       };
     }
 
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization?.splitChunks,
-          cacheGroups: {
-            ...config.optimization?.splitChunks?.cacheGroups,
-            three: {
-              test: /[\\/]node_modules[\\/]three[\\/]/,
-              name: 'three-vendor',
-              chunks: 'all',
-              priority: 30,
-              enforce: true,
-            },
-            framerMotion: {
-              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-              name: 'framer-motion-vendor',
-              chunks: 'all',
-              priority: 20,
-              enforce: true,
-            },
-          },
-        },
-      };
-    }
     return config;
   },
 };

@@ -1,22 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowUp, Share2, Check } from 'lucide-react';
 
 export default function BlogReadingNav({ postTitle, postUrl, category }) {
   const [scrolledPast, setScrolledPast] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
+  const progressRef = useRef(null);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      const el = document.documentElement;
-      const scrolled = el.scrollTop;
-      const total = el.scrollHeight - el.clientHeight;
-      const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((scrolled / total) * 100))) : 0;
-      setProgress(pct);
-      setScrolledPast(scrolled > 200);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const el = document.documentElement;
+          const scrolled = el.scrollTop;
+          const total = el.scrollHeight - el.clientHeight;
+          const pct = total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+          
+          if (progressRef.current) {
+            progressRef.current.style.width = `${pct}%`;
+          }
+          
+          const isPast = scrolled > 200;
+          setScrolledPast(prev => prev !== isPast ? isPast : prev);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -110,8 +122,9 @@ export default function BlogReadingNav({ postTitle, postUrl, category }) {
       {/* Progress line */}
       <div className="h-[2px] w-full bg-white/[0.06] overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-primary via-emerald-400 to-primary transition-all duration-100 ease-out"
-          style={{ width: `${progress}%` }}
+          ref={progressRef}
+          className="h-full bg-gradient-to-r from-primary via-emerald-400 to-primary transition-all duration-75 ease-out"
+          style={{ width: '0%' }}
         />
       </div>
     </div>
