@@ -170,27 +170,28 @@ export default function EventsTimelineClient({ events = [] }) {
           {/* Vertical Timeline Spine Line */}
           <div
             aria-hidden="true"
-            className="absolute left-[20px] md:left-1/2 md:-translate-x-1/2 top-4 bottom-8 w-px bg-gradient-to-b from-primary via-white/15 to-transparent pointer-events-none"
+            className="absolute left-4 sm:left-6 top-3 bottom-6 w-px bg-gradient-to-b from-primary via-white/15 to-transparent pointer-events-none"
           />
 
-          <div className="space-y-20">
+          <div className="space-y-16">
             {yearGroups.map(([year, yearEvents]) => (
               <div key={year} className="relative z-10">
                 {/* Year Marker Badge */}
-                <div className="flex items-center md:justify-center mb-10 pl-1 md:pl-0">
-                  <div className="hidden md:flex flex-1 h-px bg-white/10" />
-                  <div className="ml-9 md:ml-0 px-4 py-1.5 rounded-full bg-[#05070B] border border-primary/40 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)]">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="relative z-20 flex items-center justify-center w-8 sm:w-12">
+                    <span className="w-3 h-3 rounded-full bg-primary ring-4 ring-[#05070B] shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
+                  </div>
+                  <div className="px-4 py-1.5 rounded-full bg-[#090D16] border border-primary/40 shadow-[0_0_15px_-3px_rgba(99,102,241,0.25)]">
                     <span className="text-sm font-mono font-bold text-primary tracking-widest">
                       {year}
                     </span>
                   </div>
-                  <div className="hidden md:flex flex-1 h-px bg-white/10" />
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
                 </div>
 
-                {/* Timeline Events for Year */}
-                <div className="space-y-12">
+                {/* Timeline Events List for Year */}
+                <div className="space-y-8 pl-8 sm:pl-12">
                   {yearEvents.map((event, idx) => {
-                    const isEven = idx % 2 === 0;
                     const dateFmt = formatDate(event.date);
                     const isPodiumWin = isPodium(event.result);
                     const targetUrl = event.caseStudyUrl || (event.slug === 'pehel' ? '/events/pehel' : null);
@@ -203,42 +204,35 @@ export default function EventsTimelineClient({ events = [] }) {
                     return (
                       <div
                         key={event.id || event.slug || idx}
-                        className="relative flex items-center w-full"
+                        className="relative group"
                       >
-                        {/* Glowing Timeline Node */}
+                        {/* Timeline Node on Spine */}
                         <div
                           aria-hidden="true"
-                          className="absolute left-[14px] md:left-1/2 md:-translate-x-1/2 top-7 md:top-8 w-3.5 h-3.5 rounded-full bg-primary ring-4 ring-[#05070B] border border-primary/60 z-20 shadow-[0_0_12px_rgba(99,102,241,0.6)]"
+                          className="absolute -left-[24px] sm:-left-[36px] top-6 w-2.5 h-2.5 rounded-full bg-white/40 ring-4 ring-[#05070B] group-hover:bg-primary group-hover:ring-primary/20 transition-all z-10"
                         />
 
-                        {/* Split Layout: Card on Left or Right on Desktop */}
-                        <div className="w-full pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12 items-start">
-                          <div
-                            className={`w-full ${
-                              isEven
-                                ? 'md:col-start-1 md:text-left'
-                                : 'md:col-start-2 md:text-left'
-                            }`}
-                          >
-                            <article className="group rounded-2xl bg-[#090D16] border border-white/10 hover:border-primary/40 transition-all duration-300 shadow-xl overflow-hidden">
-                              {/* Media Poster if present (Pre-framed with zero layout shift) */}
-                              {imgSrc && (
-                                <div className="relative w-full aspect-[16/9] bg-[#070A12] overflow-hidden border-b border-white/[0.08]">
-                                  <Image
-                                    src={imgSrc}
-                                    alt={event.title}
-                                    fill
-                                    className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-                                    sizes="(max-width: 768px) 100vw, 550px"
-                                    unoptimized={isSupabase}
-                                    priority={idx < 2}
-                                  />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-transparent to-transparent opacity-60" />
-                                </div>
-                              )}
+                        {/* Full-Width Balanced Journey Card */}
+                        <article className="rounded-2xl bg-[#090D16] border border-white/10 hover:border-primary/40 transition-colors duration-200 shadow-xl overflow-hidden">
+                          <div className={`grid grid-cols-1 ${imgSrc ? 'lg:grid-cols-12' : ''} gap-0 items-stretch`}>
+                            {/* Media Poster Column (Clean 16:9 ratio, ZERO black gradient mask) */}
+                            {imgSrc && (
+                              <div className="lg:col-span-5 relative min-h-[220px] lg:min-h-full bg-[#070A12] border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-hidden">
+                                <Image
+                                  src={imgSrc}
+                                  alt={event.title}
+                                  fill
+                                  className="object-cover object-center"
+                                  sizes="(max-width: 1024px) 100vw, 420px"
+                                  unoptimized={isSupabase}
+                                  priority={idx === 0}
+                                />
+                              </div>
+                            )}
 
-                              {/* Card Content */}
-                              <div className="p-6 sm:p-7 space-y-4">
+                            {/* Narrative Content Column */}
+                            <div className={`${imgSrc ? 'lg:col-span-7' : 'w-full'} p-6 sm:p-7 flex flex-col justify-between space-y-4`}>
+                              <div className="space-y-3">
                                 {/* Badges Header */}
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-medium uppercase tracking-wider bg-white/[0.04] border border-white/10 text-gray-300">
@@ -309,37 +303,37 @@ export default function EventsTimelineClient({ events = [] }) {
                                     ))}
                                   </div>
                                 )}
-
-                                {/* Action Link if deep story or demo exists */}
-                                {hasActionLink && (
-                                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                                    {targetUrl ? (
-                                      <Link
-                                        href={targetUrl}
-                                        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-primary hover:text-white group-hover:gap-2.5 transition-all"
-                                      >
-                                        <span>
-                                          {event.slug === 'pehel' ? 'Explore Pehel Event Story & Video' : 'Explore Case Study'}
-                                        </span>
-                                        <ArrowRight size={13} />
-                                      </Link>
-                                    ) : event.links?.live ? (
-                                      <a
-                                        href={event.links.live}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-xs font-mono text-gray-300 hover:text-primary transition-colors"
-                                      >
-                                        <span>Project Live Demo</span>
-                                        <ExternalLink size={12} />
-                                      </a>
-                                    ) : null}
-                                  </div>
-                                )}
                               </div>
-                            </article>
+
+                              {/* Action Link if deep story or demo exists */}
+                              {hasActionLink && (
+                                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                                  {targetUrl ? (
+                                    <Link
+                                      href={targetUrl}
+                                      className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-primary hover:text-white group-hover:gap-2.5 transition-all"
+                                    >
+                                      <span>
+                                        {event.slug === 'pehel' ? 'Explore Pehel Event Story & Video' : 'Explore Case Study'}
+                                      </span>
+                                      <ArrowRight size={13} />
+                                    </Link>
+                                  ) : event.links?.live ? (
+                                    <a
+                                      href={event.links.live}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 text-xs font-mono text-gray-300 hover:text-primary transition-colors"
+                                    >
+                                      <span>Project Live Demo</span>
+                                      <ExternalLink size={12} />
+                                    </a>
+                                  ) : null}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        </article>
                       </div>
                     );
                   })}

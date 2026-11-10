@@ -12,41 +12,40 @@ export default function EventsLoading() {
       <div className="h-14 bg-[#090D16] border border-white/10 rounded-2xl animate-pulse" />
 
       {/* Timeline Skeleton */}
-      <div className="relative pt-6">
+      <div className="relative pt-4">
         {/* Spine */}
-        <div className="absolute left-[20px] md:left-1/2 md:-translate-x-1/2 top-4 bottom-8 w-px bg-white/10" />
+        <div className="absolute left-4 sm:left-6 top-3 bottom-6 w-px bg-white/10" />
 
         {/* Year Pill Skeleton */}
-        <div className="flex items-center md:justify-center mb-10 pl-1 md:pl-0">
-          <div className="ml-9 md:ml-0 h-8 w-24 rounded-full bg-white/5 border border-white/10 animate-pulse" />
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-8 sm:w-12 flex justify-center">
+            <div className="w-3 h-3 rounded-full bg-white/20 ring-4 ring-[#05070B]" />
+          </div>
+          <div className="h-8 w-24 rounded-full bg-white/5 border border-white/10 animate-pulse" />
+          <div className="flex-1 h-px bg-white/5" />
         </div>
 
         {/* Cards Skeleton */}
-        <div className="space-y-12">
-          {[1, 2, 3].map((i) => {
-            const isEven = i % 2 === 0;
-            return (
-              <div key={i} className="relative flex items-center w-full">
-                {/* Node */}
-                <div className="absolute left-[14px] md:left-1/2 md:-translate-x-1/2 top-7 md:top-8 w-3.5 h-3.5 rounded-full bg-white/20 ring-4 ring-[#05070B]" />
-
-                <div className="w-full pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12">
-                  <div className={`w-full ${isEven ? 'md:col-start-1' : 'md:col-start-2'}`}>
-                    <div className="rounded-2xl bg-[#090D16] border border-white/10 animate-pulse overflow-hidden space-y-4 p-6 sm:p-7">
-                      <div className="aspect-[16/9] w-full bg-white/5 rounded-xl" />
-                      <div className="flex gap-2">
-                        <div className="h-4 w-20 bg-white/10 rounded-full" />
-                        <div className="h-4 w-28 bg-white/10 rounded-full" />
-                      </div>
-                      <div className="h-6 w-3/4 bg-white/10 rounded" />
-                      <div className="h-4 w-1/2 bg-white/5 rounded" />
-                      <div className="h-12 w-full bg-white/5 rounded" />
+        <div className="space-y-8 pl-8 sm:pl-12">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="relative">
+              <div className="absolute -left-[24px] sm:-left-[36px] top-6 w-2.5 h-2.5 rounded-full bg-white/20 ring-4 ring-[#05070B]" />
+              <div className="rounded-2xl bg-[#090D16] border border-white/10 overflow-hidden animate-pulse">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                  <div className="lg:col-span-5 aspect-[16/9] lg:aspect-auto bg-white/5" />
+                  <div className="lg:col-span-7 p-6 sm:p-7 space-y-4">
+                    <div className="flex gap-2">
+                      <div className="h-4 w-20 bg-white/10 rounded-full" />
+                      <div className="h-4 w-24 bg-white/10 rounded-full" />
                     </div>
+                    <div className="h-6 w-3/4 bg-white/10 rounded" />
+                    <div className="h-4 w-1/2 bg-white/5 rounded" />
+                    <div className="h-12 w-full bg-white/5 rounded" />
                   </div>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
