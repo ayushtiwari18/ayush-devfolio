@@ -1,6 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import {
+  initThreeJS,
+  createStarfield,
+  createPlanets,
+  createAsteroidBelt,
+  updatePlanets,
+} from '@/lib/solarSystemUtils';
 
 export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
   const mountRef        = useRef(null);
@@ -44,31 +51,21 @@ export default function SolarSystem({ showOrbits, autoRotate, onReady }) {
       window.addEventListener('scroll', updateVisibility, { passive: true });
     }
 
-    import('@/lib/solarSystemUtils')
-      .then(async (utilsModule) => {
-        if (!isSubscribed || !mountRef.current) return;
-
-        const {
-          initThreeJS,
-          createStarfield,
-          createPlanets,
-          createAsteroidBelt,
-          updatePlanets,
-        } = utilsModule;
-
-        const { scene, camera, renderer, composer, controls } =
-          await initThreeJS(mountRef.current);
-
-        // Re-check after the await — StrictMode cleanup may have run.
+    initThreeJS(mountRef.current)
+      .then((threeContext) => {
         if (!isSubscribed || !mountRef.current) {
-          if (renderer.domElement?.parentNode) {
+          if (threeContext?.renderer?.domElement?.parentNode) {
             try {
-              renderer.domElement.parentNode.removeChild(renderer.domElement);
+              threeContext.renderer.domElement.parentNode.removeChild(
+                threeContext.renderer.domElement
+              );
             } catch (_) {}
           }
-          renderer.dispose();
+          threeContext?.renderer?.dispose();
           return;
         }
+
+        const { scene, camera, renderer, composer, controls } = threeContext;
 
         sceneRef.current    = scene;
         cameraRef.current   = camera;

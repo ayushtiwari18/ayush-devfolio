@@ -13,76 +13,12 @@ const SolarSystem = dynamic(
 );
 
 /**
- * StarfieldSkeleton — HYDRATION SAFE.
- * Stars generated once on client via useEffect, never on server.
- */
-function StarfieldSkeleton() {
-  const [stars, setStars] = useState([]);
-
-  useEffect(() => {
-    const generated = Array.from({ length: 80 }, (_, i) => ({
-      id: i,
-      w:     (((i * 7  + 13) % 20) / 10 + 0.5).toFixed(2),
-      h:     (((i * 11 +  7) % 20) / 10 + 0.5).toFixed(2),
-      top:   (((i * 37 + 19) % 1000) / 10).toFixed(2),
-      left:  (((i * 53 + 23) % 1000) / 10).toFixed(2),
-      opacity: (0.4 + ((i * 17) % 60) / 100).toFixed(2),
-      dur:   (1.5 + ((i * 29) % 20) / 10).toFixed(2),
-      delay: ((i * 43) % 200 / 100).toFixed(2),
-    }));
-    setStars(generated);
-  }, []);
-
-  return (
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at 50% 40%, #0d1a2e 0%, #000008 65%, #000000 100%)' }}
-    >
-      {stars.length > 0 && (
-        <div className="absolute inset-0" style={{ opacity: 0.7 }}>
-          {stars.map((s) => (
-            <span
-              key={s.id}
-              className="absolute rounded-full bg-white"
-              style={{
-                width:          s.w + 'px',
-                height:         s.h + 'px',
-                top:            s.top + '%',
-                left:           s.left + '%',
-                opacity:        s.opacity,
-                animation:      `pulse ${s.dur}s ease-in-out infinite`,
-                animationDelay: s.delay + 's',
-              }}
-            />
-          ))}
-        </div>
-      )}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 90, height: 90,
-          top: '50%', left: '38%',
-          transform: 'translate(-50%,-50%)',
-          background: 'radial-gradient(circle, rgba(255,170,50,0.22) 0%, rgba(255,100,0,0.06) 50%, transparent 70%)',
-          filter: 'blur(8px)',
-        }}
-      />
-    </div>
-  );
-}
-
-/**
  * Hero — 7-phase cinematic reveal.
  *
- * Animation sequence (intentional, unchanged):
- *   Solar System loads first → onReady fires → text phases in 1-by-1 → image last.
- *
- * What changed in this version:
- *   1. Controls moved from z-20 → z-10  (was colliding with navbar z-50)
- *   2. 5s timeout fallback: if WebGL never fires onReady (slow device / no GPU),
- *      revealPhase starts automatically so content is never permanently hidden.
- *      On normal devices this timeout is cancelled and never fires.
+ * Sequence:
+ *   1. First paint is pure solid black (no placeholder clutter / dead skeletons).
+ *   2. Solar System boots up into a complete black full-view cosmic stage.
+ *   3. UI HUD elements (badge, name, title, CTAs, profile, controls) reveal sequentially.
  */
 export default function Hero({ profile }) {
   const [showOrbits,  setShowOrbits]  = useState(false);
@@ -107,9 +43,9 @@ export default function Hero({ profile }) {
     // Cancel the 5s fallback if WebGL loaded normally
     clearTimeout(fallbackRef.current);
     setSceneReady(true);
-    // Allow the 3D Solar System to establish itself first (~900ms)
+    // Allow the 3D Solar System to establish itself first in pure black view (~600ms)
     // then reveal UI elements sequentially one by one
-    const delays = [900, 1400, 1900, 2400, 2800, 3300, 3800];
+    const delays = [600, 1000, 1400, 1800, 2200, 2600, 3000];
     timersRef.current = delays.map((d, i) =>
       setTimeout(() => setRevealPhase(i + 1), d)
     );
@@ -136,33 +72,25 @@ export default function Hero({ profile }) {
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-black">
 
-      {/* Solar System */}
+      {/* Solar System — pure black background on first paint, fades in smoothly when ready */}
       <div
         className="absolute inset-0 w-full h-full"
-        style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1)' }}
+        style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 0.6s cubic-bezier(0.16,1,0.3,1)' }}
       >
         <SolarSystem showOrbits={showOrbits} autoRotate={autoRotate} onReady={handleSceneReady} />
-      </div>
-
-      {/* Skeleton — fades out when solar system ready */}
-      <div
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ opacity: sceneReady ? 0 : 1, transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1)' }}
-      >
-        <StarfieldSkeleton />
       </div>
 
       {/* Left readability gradient */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.0) 100%)' }}
+        style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.0) 100%)' }}
       />
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col pointer-events-none">
+      {/* Content — pt-28 sm:pt-32 clears the floating navbar with generous breathing room */}
+      <div className="relative z-10 min-h-screen flex flex-col pointer-events-none pt-28 sm:pt-32 pb-12">
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl mx-auto">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-12 lg:py-0">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-16 py-8 lg:py-0">
 
               {/* Profile image — phase 6 */}
               <div

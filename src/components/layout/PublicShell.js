@@ -10,13 +10,14 @@ import Footer from '@/components/layout/Footer';
 export default function PublicShell({ children }) {
   const pathname = usePathname();
   const isAdmin  = pathname?.startsWith('/admin');
+  const isHome   = pathname === '/';
 
   return (
     <>
       {!isAdmin && <Navbar />}
       <main
         id="main-content"
-        className={!isAdmin ? 'pt-16 relative z-10' : ''}
+        className={!isAdmin ? (isHome ? 'relative z-10' : 'pt-24 sm:pt-28 relative z-10') : ''}
       >
         {children}
       </main>
