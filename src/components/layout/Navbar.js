@@ -69,8 +69,9 @@ export default function Navbar() {
   const isActive = (href) =>
     href === ROUTES.HOME ? pathname === href : pathname.startsWith(href);
 
-  // If on a blog article deep-dive and scrolled into reading mode, yield top space to BlogReadingNav
-  const isArticlePage = pathname?.startsWith('/blog/') && pathname !== '/blog';
+  // If on an article or event deep-dive and scrolled into reading mode, yield top space to reading nav
+  const isArticlePage = (pathname?.startsWith('/blog/') && pathname !== '/blog') ||
+                        (pathname?.startsWith('/events/') && pathname !== '/events');
   const hideForArticleReading = isArticlePage && scrollY > 180;
 
   return (

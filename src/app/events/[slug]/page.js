@@ -1,37 +1,29 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import {
-  ArrowLeft, Calendar, MapPin, Clock,
-  Users, Trophy, Github, ExternalLink,
-  FileText, Award, Tag,
-} from 'lucide-react';
 import { getEventBySlug, getAllEventSlugs } from '@/services/events.service';
-import EventGallery from '@/components/events/EventGallery';
-import ZoomParallax from '@/components/events/ZoomParallax';
-import EventPreloader from '@/components/events/EventPreloader';
+import PehelStoryView from '@/components/events/PehelStoryView';
 import { BASE_URL } from '@/lib/config';
 
 export const revalidate    = 86400;
 export const dynamicParams = true;
 
-function parseLinks(raw) {
-  if (!raw) return {};
-  if (typeof raw === 'object') return raw;
-  try { return JSON.parse(raw); } catch { return {}; }
-}
-
 export async function generateStaticParams() {
   try {
     const slugs = await getAllEventSlugs();
     return slugs.map(slug => ({ slug }));
-  } catch { return []; }
+  } catch {
+    return [{ slug: 'pehel' }];
+  }
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   let event;
-  try { event = await getEventBySlug(slug); } catch { return { title: 'Event Not Found' }; }
-  if (!event) return { title: 'Event Not Found' };
+  try {
+    event = await getEventBySlug(slug);
+  } catch {
+    return { title: 'Event Not Found — Ayush Tiwari' };
+  }
+  if (!event) return { title: 'Event Not Found — Ayush Tiwari' };
 
   const baseUrl = BASE_URL;
   const desc    = event.description?.slice(0, 160) ?? `${event.title} — Ayush Tiwari`;
@@ -57,166 +49,17 @@ export async function generateMetadata({ params }) {
   };
 }
 
-const fmtDate = (d) => d
-  ? new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
-  : null;
-
-const fmtShort = (d) => d
-  ? new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  : null;
-
-const TYPE_CONFIG = {
-  hackathon:   { label: 'Hackathon',   color: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
-  conference:  { label: 'Conference',  color: 'bg-blue-500/15   text-blue-400   border-blue-500/30'   },
-  workshop:    { label: 'Workshop',    color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  fest:        { label: 'Fest',        color: 'bg-pink-500/15   text-pink-400   border-pink-500/30'   },
-  competition: { label: 'Competition', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
-  other:       { label: 'Event',       color: 'bg-primary/15    text-primary    border-primary/30'    },
-};
-
-function resultStyle(result) {
-  if (!result) return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
-  const r = result.toLowerCase();
-  if (r.includes('win') || r.includes('1st') || r.includes('first'))
-    return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
-  if (r.includes('final') || r.includes('2nd') || r.includes('top'))
-    return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
-  return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
-}
-
-function Sidebar({ event, links }) {
-  const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
-  return (
-    <aside className="hidden xl:block w-56 shrink-0">
-      <div className="sticky top-28 space-y-4">
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Info</p>
-          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold rounded-full border ${cfg.color}`}>{cfg.label}</span>
-          {event.result && (
-            <div className="flex items-start gap-2 text-xs">
-              <Trophy size={12} className="text-primary shrink-0 mt-0.5" />
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${resultStyle(event.result)}`}>{event.result}</span>
-            </div>
-          )}
-          {fmtShort(event.date) && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Calendar size={12} className="text-primary shrink-0" /><span>{fmtShort(event.date)}</span>
-            </div>
-          )}
-          {event.location && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <MapPin size={12} className="text-primary shrink-0" /><span>{event.location}</span>
-            </div>
-          )}
-          {event.duration && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock size={12} className="text-primary shrink-0" /><span>{event.duration}</span>
-            </div>
-          )}
-          {event.organizer && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Tag size={12} className="text-primary shrink-0" /><span>{event.organizer}</span>
-            </div>
-          )}
-          {event.team_size > 1 && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Users size={12} className="text-primary shrink-0" />
-              <span>Team of {event.team_size}{event.team_name ? ` · ${event.team_name}` : ''}</span>
-            </div>
-          )}
-          {event.role && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Award size={12} className="text-primary shrink-0" /><span>{event.role}</span>
-            </div>
-          )}
-          {event.prize && (
-            <div className="flex items-center gap-2 text-xs text-yellow-400">
-              <Trophy size={12} className="shrink-0" /><span>{event.prize}</span>
-            </div>
-          )}
-        </div>
-        {Object.keys(links).length > 0 && (
-          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Links</p>
-            {links.github && (<a href={links.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><Github size={12} /><span>GitHub Repo</span></a>)}
-            {links.devpost && (<a href={links.devpost} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><ExternalLink size={12} /><span>Devpost</span></a>)}
-            {links.certificate && (<a href={links.certificate} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><FileText size={12} /><span>Certificate</span></a>)}
-            {links.article && (<a href={links.article} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><FileText size={12} /><span>Article</span></a>)}
-            {links.live && (<a href={links.live} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline"><ExternalLink size={12} /><span>Live Demo</span></a>)}
-          </div>
-        )}
-        {event.technologies?.length > 0 && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Tech Stack</p>
-            <div className="flex flex-wrap gap-1.5">
-              {event.technologies.map((t, i) => (
-                <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-full border border-primary/20">{t}</span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </aside>
-  );
-}
-
-function EventHero({ event }) {
-  const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
-  if (!event.cover_image) {
-    return (
-      <div className="w-full h-64 sm:h-80 rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary/10 via-primary/5 to-zinc-900 border border-border">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/20 flex items-center justify-center">
-            <Trophy size={32} className="text-primary/50" />
-          </div>
-          <span className={`px-3 py-1 text-xs font-bold rounded-full border ${cfg.color}`}>{cfg.label}</span>
-        </div>
-      </div>
-    );
-  }
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={event.cover_image}
-      alt={event.title}
-      className="w-full h-[480px] object-contain rounded-2xl border border-border bg-muted"
-    />
-  );
-}
-
-function StorySection({ story }) {
-  if (!story?.trim()) return null;
-  const paragraphs = story.split(/\n\n+/).filter(Boolean);
-  return (
-    <section className="mb-10">
-      <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
-        <span className="w-1 h-5 bg-primary rounded-full inline-block" />
-        The Story
-      </h2>
-      <div className="space-y-4">
-        {paragraphs.map((para, i) => (
-          <p key={i} className="text-muted-foreground leading-relaxed text-[15px]">{para.trim()}</p>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default async function EventDetailPage({ params }) {
   const { slug } = await params;
   let event;
-  try { event = await getEventBySlug(slug); } catch { notFound(); }
+  try {
+    event = await getEventBySlug(slug);
+  } catch {
+    notFound();
+  }
   if (!event) notFound();
 
-  const links  = parseLinks(event.links);
-  const images = Array.isArray(event.images) ? event.images.filter(Boolean) : [];
-  
-  const parallaxSources = [];
-  if (event.cover_image) parallaxSources.push(event.cover_image);
-  images.forEach(img => parallaxSources.push(img.url || img));
-
   const baseUrl = BASE_URL;
-  const cfg     = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -245,17 +88,7 @@ export default async function EventDetailPage({ params }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      {parallaxSources.length > 0 && <EventPreloader images={parallaxSources} />}
-
-      {parallaxSources.length > 0 ? (
-        <ZoomParallax images={parallaxSources} title={event.title} tagline={event.tagline} />
-      ) : (
-        <div className="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto h-[100vh] flex flex-col justify-center">
-          <EventHero event={event} />
-          <h1 className="text-4xl md:text-6xl font-black mt-8 leading-tight tracking-tight uppercase">{event.title}</h1>
-          {event.tagline && <p className="text-xl text-muted-foreground mt-4 font-medium tracking-wide">{event.tagline}</p>}
-        </div>
-      )}
+      <PehelStoryView event={event} />
     </>
   );
 }

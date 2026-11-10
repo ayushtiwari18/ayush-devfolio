@@ -21,6 +21,7 @@
 | 11 | [Taste Skill Roadmap](./11-taste-skill-improvement-path.md) | 10-step sequential verification path for Home Page |
 | 12 | [Blog Editorial Modernization](./12-blog-editorial-modernization.md) | Substack-grade editorial reading experience & blog catalog |
 | 13 | [Projects Storytelling Modernization](./13-projects-storytelling-modernization.md) | Narrative engineering case studies & projects catalog hub |
+| 14 | [Events & Pehel Modernization](./14-events-timeline-modernization.md) | Events & Hackathons catalog & Pehel cinematic case study |
 
 ### AI Instructions (Critical for Development)
 
