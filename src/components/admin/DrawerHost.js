@@ -7,6 +7,7 @@ import ExperienceInspector from './inspectors/ExperienceInspector';
 import EducationInspector from './inspectors/EducationInspector';
 import ProjectInspector from './inspectors/ProjectInspector';
 import BlogInspector from './inspectors/BlogInspector';
+import MessagesDrawer from './inspectors/MessagesDrawer';
 
 export default function DrawerHost() {
   const { activeDrawer, closeDrawer } = useAdminMode();
@@ -28,6 +29,8 @@ export default function DrawerHost() {
       return <BlogInspector mode="new" onClose={closeDrawer} />;
     case 'blog-edit':
       return <BlogInspector mode="edit" post={activeDrawer.data} onClose={closeDrawer} />;
+    case 'messages':
+      return <MessagesDrawer onClose={closeDrawer} />;
     default:
       return null;
   }
