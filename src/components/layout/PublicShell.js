@@ -1,8 +1,8 @@
 'use client';
 /**
- * PublicShell — wraps Navbar + Footer and mounts the in-context AdminDock.
+ * PublicShell — wraps Navbar + Footer and mounts the in-context AdminDock & DrawerHost.
  * Only renders Navbar and Footer when the current path is NOT a legacy /admin route.
- * Dynamically mounts AdminDock only when authenticated as admin.
+ * Dynamically mounts AdminDock and DrawerHost only when authenticated as admin.
  */
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -11,6 +11,9 @@ import Footer from '@/components/layout/Footer';
 import { useAdminMode } from '@/context/AdminModeContext';
 
 const AdminDock = dynamic(() => import('@/components/admin/AdminDock'), {
+  ssr: false,
+});
+const DrawerHost = dynamic(() => import('@/components/admin/DrawerHost'), {
   ssr: false,
 });
 
@@ -30,7 +33,12 @@ export default function PublicShell({ children }) {
         {children}
       </main>
       {!isAdminRoute && <Footer />}
-      {!isAdminRoute && isAdmin && <AdminDock />}
+      {!isAdminRoute && isAdmin && (
+        <>
+          <AdminDock />
+          <DrawerHost />
+        </>
+      )}
     </>
   );
 }
