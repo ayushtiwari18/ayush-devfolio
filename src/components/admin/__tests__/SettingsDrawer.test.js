@@ -42,7 +42,7 @@ describe('SettingsDrawer Component', () => {
             about_location: 'Jabalpur, IN',
             about_availability: 'Open for work',
             github_url: 'https://github.com/ayushtiwari18',
-            about_highlights: ['885+ LeetCode problems', 'SIH Finalist'],
+            about_bio: 'Full Stack Engineer with 5,600+ commits.',
           }),
       });
     });
@@ -73,8 +73,8 @@ describe('SettingsDrawer Component', () => {
     });
 
     expect(container.textContent).toContain('Global Site & SEO Settings');
-    expect(container.textContent).toContain('885+ LeetCode problems');
-    expect(container.textContent).toContain('SIH Finalist');
+    expect(container.textContent).toContain('About Bio Narrative');
+    expect(container.querySelector('textarea').value).toBe('Full Stack Engineer with 5,600+ commits.');
 
     // Click Save Settings button
     const submitBtn = container.querySelector('[data-testid="save-drawer-btn"]');

@@ -19,7 +19,7 @@ const ICON_MAP = {
   trophy:      Trophy,
 };
 
-const FALLBACK_BIO =
+export const FALLBACK_BIO =
   'Started with competitive programming and never stopped — 885+ DSA problems solved across ' +
   'LeetCode (rating 1657), CodeChef, and Codeforces. Completed B.Tech CSE at Gyan Ganga ' +
   'Institute of Technology and Sciences (2021–2025), where research on network security led to ' +
@@ -71,10 +71,16 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
             <span className="text-primary inline-block">verified by research</span>
           </h2>
 
-          <div className="max-w-3xl">
-            <p className="text-base sm:text-lg text-gray-300 leading-relaxed">
-              {bio}
-            </p>
+          <div className="max-w-3xl space-y-4">
+            {typeof bio === 'string' ? (
+              bio.split('\n\n').map((paragraph, idx) => (
+                <p key={idx} className="text-base sm:text-lg text-gray-300 leading-relaxed whitespace-pre-line">
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <p className="text-base sm:text-lg text-gray-300 leading-relaxed">{bio}</p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-5 mt-6 pt-6 border-t border-white/10 text-xs sm:text-sm font-mono-code text-gray-400">

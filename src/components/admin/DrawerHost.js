@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAdminMode } from '@/context/AdminModeContext';
 import HeroInspector from './inspectors/HeroInspector';
+import AboutInspector from './inspectors/AboutInspector';
 import ExperienceInspector from './inspectors/ExperienceInspector';
 import EducationInspector from './inspectors/EducationInspector';
 import ProjectInspector from './inspectors/ProjectInspector';
@@ -19,6 +20,7 @@ export default function DrawerHost() {
     case 'hero':
       return <HeroInspector initialData={activeDrawer.data} onClose={closeDrawer} />;
     case 'about':
+      return <AboutInspector initialData={activeDrawer.data} onClose={closeDrawer} />;
     case 'settings':
       return <SettingsDrawer onClose={closeDrawer} />;
     case 'experience':

@@ -38,10 +38,7 @@ export default function SettingsDrawer({ onClose }) {
   const [twitterUrl, setTwitterUrl]     = useState('');
   const [resumeUrl, setResumeUrl]       = useState('');
   const [formEndpoint, setFormEndpoint] = useState('');
-
-  // Highlights array
-  const [highlights, setHighlights]     = useState([]);
-  const [newHighlight, setNewHighlight] = useState('');
+  const [bio, setBio]                   = useState('');
 
   const secret = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'mysecret123';
 
@@ -65,13 +62,7 @@ export default function SettingsDrawer({ onClose }) {
           setTwitterUrl(data.twitter_url || '');
           setResumeUrl(data.resume_url || '');
           setFormEndpoint(data.form_endpoint || '');
-          if (Array.isArray(data.about_highlights)) {
-            setHighlights(data.about_highlights);
-          } else if (typeof data.about_highlights === 'string') {
-            try {
-              setHighlights(JSON.parse(data.about_highlights));
-            } catch (_) {}
-          }
+          if (data.about_bio) setBio(data.about_bio);
         }
       } catch (err) {
         console.warn('Failed to load profile settings:', err);
@@ -85,19 +76,6 @@ export default function SettingsDrawer({ onClose }) {
       mounted = false;
     };
   }, []);
-
-  const handleAddHighlight = (e) => {
-    e?.preventDefault();
-    const val = newHighlight.trim();
-    if (val && !highlights.includes(val)) {
-      setHighlights((prev) => [...prev, val]);
-      setNewHighlight('');
-    }
-  };
-
-  const handleRemoveHighlight = (item) => {
-    setHighlights((prev) => prev.filter((h) => h !== item));
-  };
 
   const handleSave = async () => {
     if (!profileId) {
@@ -123,7 +101,7 @@ export default function SettingsDrawer({ onClose }) {
           about_email: email.trim() || null,
           about_location: location.trim() || null,
           about_availability: availability.trim() || null,
-          about_highlights: highlights,
+          about_bio: bio.trim() || null,
           github_url: githubUrl.trim() || null,
           linkedin_url: linkedinUrl.trim() || null,
           twitter_url: twitterUrl.trim() || null,
@@ -308,51 +286,22 @@ export default function SettingsDrawer({ onClose }) {
         </div>
       </div>
 
-      {/* About Highlights */}
+      {/* About Bio Narrative */}
       <div className="pt-3 border-t border-white/10 space-y-2">
         <label className="block text-xs font-mono-code uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <Sparkles size={12} className="text-primary" />
-          About Section Highlights
+          <FileText size={12} className="text-primary" />
+          About Bio Narrative
         </label>
         <p className="text-[11px] text-muted-foreground">
-          Bullet highlights rendered on the About dossier view.
+          Biographical story displayed on your portfolio. Write in complete paragraphs; press Enter twice for paragraph breaks.
         </p>
-
-        <div className="space-y-1.5">
-          {highlights.map((h, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-[#0f0f15] border border-white/10 text-xs text-zinc-300 font-sans"
-            >
-              <span>{h}</span>
-              <button
-                type="button"
-                onClick={() => handleRemoveHighlight(h)}
-                className="hover:text-red-400 p-1 transition-colors"
-                title="Remove bullet"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleAddHighlight} className="flex gap-2 pt-1">
-          <input
-            type="text"
-            value={newHighlight}
-            onChange={(e) => setNewHighlight(e.target.value)}
-            placeholder="Add highlight (e.g. 885+ LeetCode problems solved)..."
-            className="flex-1 px-3 py-1.5 rounded-xl bg-[#0f0f15] border border-white/10 text-white text-xs font-mono-code focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <button
-            type="submit"
-            disabled={!newHighlight.trim()}
-            className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-primary text-xs font-mono-code font-bold disabled:opacity-40"
-          >
-            Add
-          </button>
-        </form>
+        <textarea
+          rows={5}
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          placeholder="Biographical narrative..."
+          className="w-full px-3 py-2 rounded-xl bg-[#0f0f15] border border-white/10 text-white text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </div>
     </InspectorDrawer>
   );
