@@ -1,11 +1,27 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, X, Star, ExternalLink, Code2, ArrowRight, Sparkles, Layers } from 'lucide-react';
+import {
+  Search,
+  X,
+  Star,
+  ExternalLink,
+  Code2,
+  ArrowRight,
+  Sparkles,
+  Layers,
+  Eye,
+  Edit2,
+  Trash2,
+  Plus,
+} from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useAdminMode } from '@/context/AdminModeContext';
+import { supabase } from '@/lib/supabase';
 
 const CATEGORIES = [
   'All Projects',
@@ -17,32 +33,124 @@ const CATEGORIES = [
 
 function matchesCategory(project, cat) {
   if (cat === 'All Projects') return true;
-  const tags = (project.tags || []).map(t => t.toLowerCase());
-  const techs = (project.technologies || []).map(t => t.toLowerCase());
+  const tags = (project.tags || []).map((t) => t.toLowerCase());
+  const techs = (project.technologies || []).map((t) => t.toLowerCase());
   const allText = `${project.title} ${project.description} ${tags.join(' ')} ${techs.join(' ')}`.toLowerCase();
 
   if (cat === 'Cybersecurity & WAF') {
-    return allText.includes('security') || allText.includes('waf') || allText.includes('ids') || allText.includes('sentinal');
+    return (
+      allText.includes('security') ||
+      allText.includes('waf') ||
+      allText.includes('ids') ||
+      allText.includes('sentinal')
+    );
   }
   if (cat === 'Full-Stack & Cloud') {
-    return allText.includes('e-commerce') || allText.includes('booking') || allText.includes('consultation') || allText.includes('platform') || allText.includes('base');
+    return (
+      allText.includes('e-commerce') ||
+      allText.includes('booking') ||
+      allText.includes('consultation') ||
+      allText.includes('platform') ||
+      allText.includes('base')
+    );
   }
   if (cat === 'AI & Real-Time') {
-    return allText.includes('ai') || allText.includes('gemini') || allText.includes('stream') || allText.includes('real-time') || allText.includes('websocket') || allText.includes('video');
+    return (
+      allText.includes('ai') ||
+      allText.includes('gemini') ||
+      allText.includes('stream') ||
+      allText.includes('real-time') ||
+      allText.includes('websocket') ||
+      allText.includes('video')
+    );
   }
   if (cat === 'Game Engines') {
-    return allText.includes('game') || allText.includes('memory') || allText.includes('tournament') || allText.includes('word');
+    return (
+      allText.includes('game') ||
+      allText.includes('memory') ||
+      allText.includes('tournament') ||
+      allText.includes('word')
+    );
   }
   return true;
 }
 
 // ── Reusable, Pixel-Perfect Grid Card ──────────────────────────
-function ProjectGridCard({ project }) {
+function ProjectGridCard({
+  project,
+  isAdmin,
+  editMode,
+  onToggleFeatured,
+  onTogglePublished,
+  onEdit,
+  onDelete,
+}) {
   const imgSrc = project.cover_image || project.image || null;
   const isSupabase = Boolean(imgSrc && imgSrc.includes('supabase.co'));
 
   return (
-    <article className="group flex flex-col justify-between rounded-2xl bg-[#090D16] border border-white/10 hover:border-primary/45 hover:bg-[#0D1322] transition-all duration-300 shadow-xl shadow-black/30 overflow-hidden">
+    <article
+      data-testid={`project-card-${project.id}`}
+      className="group flex flex-col justify-between rounded-2xl bg-[#090D16] border border-white/10 hover:border-primary/45 hover:bg-[#0D1322] transition-all duration-300 shadow-xl shadow-black/30 overflow-hidden relative"
+    >
+      {/* Admin Mode In-Context Toolbar */}
+      {isAdmin && editMode && (
+        <div className="flex items-center justify-between px-3.5 py-2 bg-[#06080e]/95 border-b border-primary/20 text-xs font-mono-code z-20">
+          <span
+            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+              project.published
+                ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                : 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
+            }`}
+          >
+            {project.published ? 'Published' : 'Draft / Hidden'}
+          </span>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => onToggleFeatured(e, project)}
+              className={`p-1.5 rounded hover:bg-white/10 transition-colors ${
+                project.featured ? 'text-yellow-400' : 'text-zinc-500 hover:text-yellow-400'
+              }`}
+              title={project.featured ? 'Remove from featured' : 'Mark as featured ⭐'}
+              aria-label={project.featured ? 'Remove featured' : 'Mark featured'}
+            >
+              <Star size={13} fill={project.featured ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => onTogglePublished(e, project)}
+              className={`p-1.5 rounded hover:bg-white/10 transition-colors ${
+                project.published ? 'text-emerald-400' : 'text-zinc-500 hover:text-emerald-400'
+              }`}
+              title={project.published ? 'Unpublish (make draft)' : 'Publish project live 👁️'}
+              aria-label={project.published ? 'Unpublish project' : 'Publish project'}
+            >
+              <Eye size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => onEdit(e, project)}
+              className="p-1.5 rounded text-primary hover:bg-primary/10 transition-colors"
+              title="Quick edit project"
+              aria-label="Edit project"
+            >
+              <Edit2 size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => onDelete(e, project)}
+              className="p-1.5 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              title="Delete project"
+              aria-label="Delete project"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
         {/* Uniform 16:10 Aspect Ratio Image Frame */}
         <div className="relative w-full aspect-[16/10] bg-[#070A12] overflow-hidden border-b border-white/[0.08]">
@@ -71,7 +179,9 @@ function ProjectGridCard({ project }) {
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-400 text-black text-[10px] font-mono font-bold rounded-full shadow-lg">
                 <Star size={10} fill="currentColor" /> Featured
               </span>
-            ) : <span />}
+            ) : (
+              <span />
+            )}
 
             {project.live_url && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-black/80 backdrop-blur-md text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-semibold rounded-full shadow">
@@ -85,9 +195,7 @@ function ProjectGridCard({ project }) {
         {/* Card Content Details */}
         <div className="p-5 sm:p-6">
           <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-primary transition-colors leading-snug line-clamp-2 mb-2.5 font-display">
-            <Link href={`/projects/${project.slug}`}>
-              {project.title}
-            </Link>
+            <Link href={`/projects/${project.slug}`}>{project.title}</Link>
           </h3>
 
           <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 leading-relaxed mb-4 font-sans">
@@ -132,10 +240,10 @@ function ProjectGridCard({ project }) {
             href={project.github_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-colors"
             title="GitHub Repository"
           >
-            <GitHubIcon size={14} />
+            <GitHubIcon className="w-4 h-4 fill-current" />
           </a>
         )}
 
@@ -155,12 +263,134 @@ function ProjectGridCard({ project }) {
   );
 }
 
-export default function ProjectsCatalogClient({ projects = [] }) {
+export default function ProjectsCatalogClient({ projects: initialProjects = [] }) {
+  const { isAdmin, editMode, openDrawer, showToast } = useAdminMode();
+
+  const [projectList, setProjectList] = useState(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All Projects');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // If admin is active, load complete projects including drafts
+  useEffect(() => {
+    let mounted = true;
+    if (isAdmin) {
+      supabase
+        .from('projects')
+        .select('*')
+        .order('order_index', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .then(({ data, error }) => {
+          if (!error && data && mounted) {
+            setProjectList(data);
+          }
+        });
+    } else {
+      setProjectList(initialProjects);
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [isAdmin, initialProjects]);
+
+  const handleToggleFeatured = useCallback(
+    async (e, project) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      const nextVal = !project.featured;
+
+      setProjectList((prev) =>
+        prev.map((p) => (p.id === project.id ? { ...p, featured: nextVal } : p))
+      );
+
+      try {
+        const { error } = await supabase
+          .from('projects')
+          .update({ featured: nextVal, updated_at: new Date().toISOString() })
+          .eq('id', project.id);
+
+        if (error) throw error;
+        showToast(
+          nextVal ? `⭐ "${project.title}" marked as Featured` : `Removed "${project.title}" from Featured`,
+          'success'
+        );
+      } catch (err) {
+        // Rollback
+        setProjectList((prev) =>
+          prev.map((p) => (p.id === project.id ? { ...p, featured: !nextVal } : p))
+        );
+        showToast('Failed to update featured state', 'error');
+      }
+    },
+    [showToast]
+  );
+
+  const handleTogglePublished = useCallback(
+    async (e, project) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      const nextVal = !project.published;
+
+      setProjectList((prev) =>
+        prev.map((p) => (p.id === project.id ? { ...p, published: nextVal } : p))
+      );
+
+      try {
+        const { error } = await supabase
+          .from('projects')
+          .update({ published: nextVal, updated_at: new Date().toISOString() })
+          .eq('id', project.id);
+
+        if (error) throw error;
+        showToast(
+          nextVal ? `👁️ "${project.title}" is now Published live` : `"${project.title}" set to Draft / Hidden`,
+          'info'
+        );
+      } catch (err) {
+        // Rollback
+        setProjectList((prev) =>
+          prev.map((p) => (p.id === project.id ? { ...p, published: !nextVal } : p))
+        );
+        showToast('Failed to update visibility', 'error');
+      }
+    },
+    [showToast]
+  );
+
+  const handleEdit = useCallback(
+    (e, project) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      openDrawer('project-edit', project);
+    },
+    [openDrawer]
+  );
+
+  const handleDeleteClick = useCallback((e, project) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setDeleteTarget(project);
+  }, []);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      setProjectList((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      showToast(`Project "${deleteTarget.title}" deleted`, 'info');
+      setDeleteTarget(null);
+    } catch (err) {
+      showToast(err?.message || 'Failed to delete project', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredProjects = useMemo(() => {
-    return projects.filter((project) => {
+    return projectList.filter((project) => {
       const matchesCat = matchesCategory(project, activeCategory);
       if (!matchesCat) return false;
 
@@ -168,20 +398,20 @@ export default function ProjectsCatalogClient({ projects = [] }) {
       const q = searchQuery.toLowerCase();
       const titleMatch = project.title?.toLowerCase().includes(q);
       const descMatch = project.description?.toLowerCase().includes(q);
-      const techMatch = (project.technologies || []).some(t => t.toLowerCase().includes(q));
-      const tagMatch = (project.tags || []).some(t => t.toLowerCase().includes(q));
+      const techMatch = (project.technologies || []).some((t) => t.toLowerCase().includes(q));
+      const tagMatch = (project.tags || []).some((t) => t.toLowerCase().includes(q));
 
       return titleMatch || descMatch || techMatch || tagMatch;
     });
-  }, [projects, activeCategory, searchQuery]);
+  }, [projectList, activeCategory, searchQuery]);
 
   // Separate into Featured Projects (Top Grid) and Other Projects (Bottom Grid)
   const featuredProjects = useMemo(() => {
-    return filteredProjects.filter(p => p.featured);
+    return filteredProjects.filter((p) => p.featured);
   }, [filteredProjects]);
 
   const otherProjects = useMemo(() => {
-    return filteredProjects.filter(p => !p.featured);
+    return filteredProjects.filter((p) => !p.featured);
   }, [filteredProjects]);
 
   return (
@@ -198,17 +428,29 @@ export default function ProjectsCatalogClient({ projects = [] }) {
               Systems Architecture &amp; Engineering Field Projects
             </h1>
             <p className="mt-4 text-base sm:text-lg text-gray-300 font-sans leading-relaxed max-w-2xl">
-              Production-grade distributed platforms, intrusion detection engines, and full-stack systems built from scratch with verified telemetry.
+              Production-grade distributed platforms, intrusion detection engines, and full-stack systems built from
+              scratch with verified telemetry.
             </p>
           </div>
 
           <div className="shrink-0 flex items-center gap-3">
+            {isAdmin && editMode && (
+              <button
+                type="button"
+                onClick={() => openDrawer('project-new')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-primary text-black font-mono font-bold text-xs hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all cursor-pointer"
+              >
+                <Plus size={14} />
+                <span>Add Project</span>
+              </button>
+            )}
+
             <div className="px-4 py-2.5 rounded-2xl bg-[#090D16] border border-white/10 text-right">
               <span className="text-[10px] font-mono uppercase text-gray-400 block tracking-widest">
                 Artifacts Indexed
               </span>
               <span className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
-                {String(projects.length).padStart(2, '0')} Builds
+                {String(projectList.length).padStart(2, '0')} Builds
               </span>
             </div>
           </div>
@@ -275,10 +517,18 @@ export default function ProjectsCatalogClient({ projects = [] }) {
             </span>
           </div>
 
-          {/* Clean 3-Column Grid for Featured Projects */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
             {featuredProjects.map((project) => (
-              <ProjectGridCard key={project.id} project={project} />
+              <ProjectGridCard
+                key={project.id}
+                project={project}
+                isAdmin={isAdmin}
+                editMode={editMode}
+                onToggleFeatured={handleToggleFeatured}
+                onTogglePublished={handleTogglePublished}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+              />
             ))}
           </div>
         </section>
@@ -299,10 +549,18 @@ export default function ProjectsCatalogClient({ projects = [] }) {
             </span>
           </div>
 
-          {/* Clean 3-Column Grid for Other Projects */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
             {otherProjects.map((project) => (
-              <ProjectGridCard key={project.id} project={project} />
+              <ProjectGridCard
+                key={project.id}
+                project={project}
+                isAdmin={isAdmin}
+                editMode={editMode}
+                onToggleFeatured={handleToggleFeatured}
+                onTogglePublished={handleTogglePublished}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+              />
             ))}
           </div>
         </section>
@@ -318,13 +576,28 @@ export default function ProjectsCatalogClient({ projects = [] }) {
           </p>
           <Button
             variant="outline"
-            onClick={() => { setSearchQuery(''); setActiveCategory('All Projects'); }}
+            onClick={() => {
+              setSearchQuery('');
+              setActiveCategory('All Projects');
+            }}
             className="mt-4 text-xs font-mono border-white/10 hover:border-primary/40"
           >
             Reset Filters
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete Project?"
+        description={`"${deleteTarget?.title}" will be permanently deleted from the database.`}
+        confirmLabel="Delete Project"
+        danger={true}
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
