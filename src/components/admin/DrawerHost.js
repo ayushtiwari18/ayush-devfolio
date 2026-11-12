@@ -5,6 +5,7 @@ import { useAdminMode } from '@/context/AdminModeContext';
 import HeroInspector from './inspectors/HeroInspector';
 import ExperienceInspector from './inspectors/ExperienceInspector';
 import EducationInspector from './inspectors/EducationInspector';
+import ProjectInspector from './inspectors/ProjectInspector';
 
 export default function DrawerHost() {
   const { activeDrawer, closeDrawer } = useAdminMode();
@@ -18,6 +19,10 @@ export default function DrawerHost() {
       return <ExperienceInspector onClose={closeDrawer} />;
     case 'education':
       return <EducationInspector onClose={closeDrawer} />;
+    case 'project-new':
+      return <ProjectInspector mode="new" onClose={closeDrawer} />;
+    case 'project-edit':
+      return <ProjectInspector mode="edit" project={activeDrawer.data} onClose={closeDrawer} />;
     default:
       return null;
   }

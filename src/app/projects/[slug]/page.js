@@ -10,6 +10,7 @@ import {
 } from '@/services/projects.service';
 import { getProfileSettings } from '@/services/profile.service';
 import ProjectStoryView from '@/components/projects/ProjectStoryView';
+import EditableSection from '@/components/admin/EditableSection';
 import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase — never serve stale cached project pages
@@ -145,12 +146,18 @@ export default async function ProjectDetailPage({ params }) {
           </div>
 
           {/* High-Craft Narrative Story Case Study */}
-          <ProjectStoryView
-            project={project}
-            authorHeroImage={authorHeroImage}
-            authorName={authorName}
-            relatedProjects={relatedProjects}
-          />
+          <EditableSection
+            title={`Case Study (${project.title})`}
+            drawerId="project-edit"
+            drawerData={project}
+          >
+            <ProjectStoryView
+              project={project}
+              authorHeroImage={authorHeroImage}
+              authorName={authorName}
+              relatedProjects={relatedProjects}
+            />
+          </EditableSection>
         </div>
       </main>
     </>
