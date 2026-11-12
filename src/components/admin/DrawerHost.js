@@ -8,6 +8,7 @@ import EducationInspector from './inspectors/EducationInspector';
 import ProjectInspector from './inspectors/ProjectInspector';
 import BlogInspector from './inspectors/BlogInspector';
 import MessagesDrawer from './inspectors/MessagesDrawer';
+import SettingsDrawer from './inspectors/SettingsDrawer';
 
 export default function DrawerHost() {
   const { activeDrawer, closeDrawer } = useAdminMode();
@@ -17,6 +18,9 @@ export default function DrawerHost() {
   switch (activeDrawer.id) {
     case 'hero':
       return <HeroInspector initialData={activeDrawer.data} onClose={closeDrawer} />;
+    case 'about':
+    case 'settings':
+      return <SettingsDrawer onClose={closeDrawer} />;
     case 'experience':
       return <ExperienceInspector onClose={closeDrawer} />;
     case 'education':
