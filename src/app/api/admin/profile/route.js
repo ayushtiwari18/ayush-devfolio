@@ -93,7 +93,7 @@ export async function PATCH(request) {
     if (form_endpoint !== undefined) updates.form_endpoint = form_endpoint;
 
     // About fields
-    if (about_bio          !== undefined) updates.about_bio          = about_bio;
+    if (about_bio          !== undefined) updates.about_bio          = typeof about_bio === 'string' ? about_bio.replace(/\r\n/g, '\n').trim() : about_bio;
     if (about_location     !== undefined) updates.about_location     = about_location;
     if (about_email        !== undefined) updates.about_email        = about_email;
     if (about_availability !== undefined) updates.about_availability = about_availability;

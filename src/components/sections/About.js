@@ -34,7 +34,12 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
   const bento  = useReveal({ threshold: 0.05 });
   const stats  = useReveal({ threshold: 0.05 });
 
-  const bio          = profile.about_bio          || FALLBACK_BIO;
+  const rawBio = typeof profile.about_bio === 'string' && profile.about_bio.trim().length > 0
+    ? profile.about_bio
+    : FALLBACK_BIO;
+  const bio = rawBio.replace(/\r\n/g, '\n').trim();
+  const paragraphs = bio.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
   const availability = profile.about_availability || 'Open to opportunities';
   const location     = profile.about_location     || 'Jabalpur, Madhya Pradesh, India';
   const email        = profile.about_email        || 'ayushtiwari.dev@gmail.com';
@@ -71,15 +76,24 @@ export default function About({ profile = {}, achievements = ACHIEVEMENTS }) {
             <span className="text-primary inline-block">verified by research</span>
           </h2>
 
-          <div className="max-w-3xl space-y-4">
-            {typeof bio === 'string' ? (
-              bio.split('\n\n').map((paragraph, idx) => (
-                <p key={idx} className="text-base sm:text-lg text-gray-300 leading-relaxed whitespace-pre-line">
+          <div className="max-w-3xl space-y-4" suppressHydrationWarning>
+            {paragraphs.length > 0 ? (
+              paragraphs.map((paragraph, idx) => (
+                <p
+                  key={idx}
+                  suppressHydrationWarning
+                  className="text-base sm:text-lg text-gray-300 leading-relaxed whitespace-pre-line"
+                >
                   {paragraph}
                 </p>
               ))
             ) : (
-              <p className="text-base sm:text-lg text-gray-300 leading-relaxed">{bio}</p>
+              <p
+                suppressHydrationWarning
+                className="text-base sm:text-lg text-gray-300 leading-relaxed whitespace-pre-line"
+              >
+                {bio}
+              </p>
             )}
           </div>
 

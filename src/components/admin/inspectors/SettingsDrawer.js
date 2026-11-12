@@ -101,7 +101,7 @@ export default function SettingsDrawer({ onClose }) {
           about_email: email.trim() || null,
           about_location: location.trim() || null,
           about_availability: availability.trim() || null,
-          about_bio: bio.trim() || null,
+          about_bio: bio.replace(/\r\n/g, '\n').trim() || null,
           github_url: githubUrl.trim() || null,
           linkedin_url: linkedinUrl.trim() || null,
           twitter_url: twitterUrl.trim() || null,

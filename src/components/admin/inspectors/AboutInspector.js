@@ -112,7 +112,7 @@ export default function AboutInspector({ initialData = null, onClose }) {
         },
         body: JSON.stringify({
           id: profileId,
-          about_bio: bio.trim(),
+          about_bio: bio.replace(/\r\n/g, '\n').trim(),
           about_availability: availability.trim() || null,
           about_location: location.trim() || null,
           about_email: email.trim() || null,
