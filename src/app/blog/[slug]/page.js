@@ -10,6 +10,7 @@ import BlogSidebar from '@/components/blog/BlogSidebar';
 import BlogTakeaways from '@/components/blog/BlogTakeaways';
 import BlogReadingNav from '@/components/blog/BlogReadingNav';
 import SeriesBanner from '@/components/blog/SeriesBanner';
+import EditableSection from '@/components/admin/EditableSection';
 import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase on every request
@@ -95,7 +96,6 @@ export default async function BlogPostPage({ params }) {
       .from('blog_posts')
       .select('*')
       .eq('slug', slug)
-      .eq('published', true)
       .single(),
     getProfileSettings().catch(() => null),
     supabase
@@ -219,7 +219,21 @@ export default async function BlogPostPage({ params }) {
           {/* Main Layout: Article + Editorial Sidebar */}
           <div className="flex flex-col xl:flex-row gap-12 lg:gap-16">
 
-            <article className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0">
+              <EditableSection
+                title={`Article (${post.title})`}
+                drawerId="blog-edit"
+                drawerData={post}
+              >
+                {!post.published && (
+                  <div className="mb-6 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono-code font-bold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                      <span>DRAFT PREVIEW MODE — This article is currently unpublished</span>
+                    </div>
+                  </div>
+                )}
+                <article>
 
               {/* Category & Metadata Pills */}
               <div className="flex flex-wrap items-center gap-2.5 mb-5 font-mono text-xs">
@@ -405,7 +419,9 @@ export default async function BlogPostPage({ params }) {
                 </section>
               )}
 
-            </article>
+                </article>
+              </EditableSection>
+            </div>
 
             {/* Editorial Sticky Sidebar */}
             <aside className="xl:w-80 shrink-0">
