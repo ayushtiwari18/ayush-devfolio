@@ -8,8 +8,11 @@ import ExperienceInspector from './inspectors/ExperienceInspector';
 import EducationInspector from './inspectors/EducationInspector';
 import SkillsInspector from './inspectors/SkillsInspector';
 import CodingStatsInspector from './inspectors/CodingStatsInspector';
+import ProjectsSectionInspector from './inspectors/ProjectsSectionInspector';
 import ProjectInspector from './inspectors/ProjectInspector';
+import BlogSectionInspector from './inspectors/BlogSectionInspector';
 import BlogInspector from './inspectors/BlogInspector';
+import ContactInspector from './inspectors/ContactInspector';
 import MessagesDrawer from './inspectors/MessagesDrawer';
 import SettingsDrawer from './inspectors/SettingsDrawer';
 
@@ -34,14 +37,20 @@ export default function DrawerHost() {
     case 'coding-stats':
     case 'stats':
       return <CodingStatsInspector onClose={closeDrawer} />;
+    case 'projects':
+      return <ProjectsSectionInspector onClose={closeDrawer} />;
     case 'project-new':
       return <ProjectInspector mode="new" onClose={closeDrawer} />;
     case 'project-edit':
       return <ProjectInspector mode="edit" project={activeDrawer.data} onClose={closeDrawer} />;
+    case 'blog':
+      return <BlogSectionInspector onClose={closeDrawer} />;
     case 'blog-new':
       return <BlogInspector mode="new" onClose={closeDrawer} />;
     case 'blog-edit':
       return <BlogInspector mode="edit" post={activeDrawer.data} onClose={closeDrawer} />;
+    case 'contact':
+      return <ContactInspector onClose={closeDrawer} />;
     case 'messages':
       return <MessagesDrawer onClose={closeDrawer} />;
     default:

@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ExternalLink, Code2, Sparkles, Layers } from 'lucide-react';
+import { ArrowRight, ExternalLink, Code2, Sparkles, Layers, Edit3 } from 'lucide-react';
 import { GitHubIcon } from '@/components/icons/BrandIcons';
 import { Button } from '@/components/ui/button';
 import { useReveal, fadeUp } from '@/components/animations/useReveal';
 import StaggeredList from '@/components/animations/StaggeredList';
+import { useAdminMode } from '@/context/AdminModeContext';
 
 // ---------------------------------------------------------------------------
 // PROJECT IMAGE — with error fallback and status telemetry badge
@@ -65,8 +66,24 @@ function ProjectImage({ src, title, hasLiveUrl }) {
 // PROJECT CARD
 // ---------------------------------------------------------------------------
 function ProjectCard({ project }) {
+  const { isAdmin, editMode, openDrawer } = useAdminMode();
+
   return (
-    <div className="group bg-[#090D16] border border-white/10 hover:border-indigo-500/40 rounded-3xl overflow-hidden shadow-2xl shadow-black/80 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+    <div className="group bg-[#090D16] border border-white/10 hover:border-indigo-500/40 rounded-3xl overflow-hidden shadow-2xl shadow-black/80 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col relative">
+      {isAdmin && editMode && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openDrawer('project-edit', project);
+          }}
+          className="absolute top-3 right-3 z-30 p-2 rounded-xl bg-black/80 hover:bg-primary border border-white/20 text-white shadow-lg transition-all"
+          title={`Edit ${project.title}`}
+        >
+          <Edit3 size={13} />
+        </button>
+      )}
       <ProjectImage
         src={project.cover_image}
         title={project.title}
