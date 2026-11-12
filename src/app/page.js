@@ -6,6 +6,7 @@ import Education from '@/components/sections/Education';
 import Contact from '@/components/sections/Contact';
 import LatestBlog from '@/components/sections/LatestBlog';
 import FeaturedProjects from '@/components/sections/FeaturedProjects';
+import EditableSection from '@/components/admin/EditableSection';
 import { HERO_COPY, ACHIEVEMENTS } from '@/lib/constants';
 import { BASE_URL } from '@/lib/config';
 import { getProfileSettings } from '@/services/profile.service';
@@ -83,15 +84,39 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen">
-      <Hero profile={profile} />
-      <About profile={profile} achievements={achievements} />
-      <Experience />
-      <Education />
-      <Skills />
+      <EditableSection title="Hero & Profile" drawerId="hero" drawerData={profile}>
+        <Hero profile={profile} />
+      </EditableSection>
+
+      <EditableSection title="About & Bio" drawerId="about" drawerData={{ profile, achievements }}>
+        <About profile={profile} achievements={achievements} />
+      </EditableSection>
+
+      <EditableSection title="Experience" drawerId="experience">
+        <Experience />
+      </EditableSection>
+
+      <EditableSection title="Education" drawerId="education">
+        <Education />
+      </EditableSection>
+
+      <EditableSection title="Skills" drawerId="skills">
+        <Skills />
+      </EditableSection>
+
       <CodingStats />
-      <FeaturedProjects projects={featuredProjects} />
-      <LatestBlog posts={recentPosts} />
-      <Contact />
+
+      <EditableSection title="Featured Projects" drawerId="projects">
+        <FeaturedProjects projects={featuredProjects} />
+      </EditableSection>
+
+      <EditableSection title="Recent Blog Posts" drawerId="blog">
+        <LatestBlog posts={recentPosts} />
+      </EditableSection>
+
+      <EditableSection title="Contact Information" drawerId="contact">
+        <Contact />
+      </EditableSection>
     </div>
   );
 }
