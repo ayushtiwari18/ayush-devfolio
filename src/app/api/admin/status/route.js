@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 
 const secret = process.env.ADMIN_SECRET;
@@ -19,6 +20,7 @@ export async function GET() {
       .limit(1)
       .maybeSingle();
     if (error) throw error;
+    revalidatePath('/');
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -89,6 +91,7 @@ export async function PATCH(request) {
       .single();
 
     if (error) throw error;
+    revalidatePath('/');
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

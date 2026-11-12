@@ -6,6 +6,8 @@ import HeroInspector from './inspectors/HeroInspector';
 import AboutInspector from './inspectors/AboutInspector';
 import ExperienceInspector from './inspectors/ExperienceInspector';
 import EducationInspector from './inspectors/EducationInspector';
+import SkillsInspector from './inspectors/SkillsInspector';
+import CodingStatsInspector from './inspectors/CodingStatsInspector';
 import ProjectInspector from './inspectors/ProjectInspector';
 import BlogInspector from './inspectors/BlogInspector';
 import MessagesDrawer from './inspectors/MessagesDrawer';
@@ -27,6 +29,11 @@ export default function DrawerHost() {
       return <ExperienceInspector onClose={closeDrawer} />;
     case 'education':
       return <EducationInspector onClose={closeDrawer} />;
+    case 'skills':
+      return <SkillsInspector onClose={closeDrawer} />;
+    case 'coding-stats':
+    case 'stats':
+      return <CodingStatsInspector onClose={closeDrawer} />;
     case 'project-new':
       return <ProjectInspector mode="new" onClose={closeDrawer} />;
     case 'project-edit':

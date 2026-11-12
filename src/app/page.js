@@ -100,11 +100,13 @@ export default async function Home() {
         <Education />
       </EditableSection>
 
-      <EditableSection title="Skills" drawerId="skills">
+      <EditableSection title="Skills Matrix" drawerId="skills">
         <Skills />
       </EditableSection>
 
-      <CodingStats />
+      <EditableSection title="Coding & Competitive Stats" drawerId="coding-stats">
+        <CodingStats />
+      </EditableSection>
 
       <EditableSection title="Featured Projects" drawerId="projects">
         <FeaturedProjects projects={featuredProjects} />
