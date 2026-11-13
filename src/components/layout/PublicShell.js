@@ -20,18 +20,14 @@ const DrawerHost = dynamic(() => import('@/components/admin/DrawerHost'), {
 export default function PublicShell({ children }) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/admin');
-  const isHome = pathname === '/';
   const { isAdmin } = useAdminMode();
 
   return (
     <>
       {!isAdminRoute && <Navbar />}
-      <main
-        id="main-content"
-        className={!isAdminRoute ? (isHome ? 'relative z-10' : 'pt-24 sm:pt-28 relative z-10') : ''}
-      >
+      <div id="main-shell" className={!isAdminRoute ? 'relative z-10' : ''}>
         {children}
-      </main>
+      </div>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && isAdmin && (
         <>

@@ -46,7 +46,7 @@ export default async function CertificationsPage() {
   const issuers = [...new Set(certifications.map(c => c.issuer).filter(Boolean))];
 
   return (
-    <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
+    <main id="main-content" className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <Link href="/">
           <Button variant="outline" className="mb-8 hover:bg-primary/10 hover:border-primary">

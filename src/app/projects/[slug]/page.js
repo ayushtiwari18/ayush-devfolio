@@ -107,7 +107,7 @@ export default async function ProjectDetailPage({ params }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      <main className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 bg-[#05070B] selection:bg-primary/20 selection:text-white relative overflow-hidden">
+      <main id="main-content" className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 bg-[#05070B] selection:bg-primary/20 selection:text-white relative overflow-hidden">
         {/* Background ambient radial glow */}
         <div
           aria-hidden="true"

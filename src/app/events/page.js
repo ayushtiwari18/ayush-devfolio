@@ -74,7 +74,7 @@ async function EventsList() {
 
 export default function EventsPage() {
   return (
-    <main className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 bg-[#05070B] text-slate-200 relative overflow-hidden selection:bg-primary/20 selection:text-white">
+    <main id="main-content" className="min-h-screen pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 bg-[#05070B] text-slate-200 relative overflow-hidden selection:bg-primary/20 selection:text-white">
       {/* Background ambient radial glow */}
       <div
         aria-hidden="true"

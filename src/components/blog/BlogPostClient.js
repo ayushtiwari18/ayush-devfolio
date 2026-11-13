@@ -327,7 +327,7 @@ export default function BlogPostClient({
       )}
 
       {/* Main Container */}
-      <main className="min-h-screen pt-4 pb-32 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-white">
+      <main id="main-content" className="min-h-screen pt-4 pb-32 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-white">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb & Navigation Controls */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">

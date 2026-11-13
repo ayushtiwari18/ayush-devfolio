@@ -58,7 +58,7 @@ const INFO_CARDS = [
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen pt-24 pb-24 px-4 sm:px-6 lg:px-8">
+    <main id="main-content" className="min-h-screen pt-24 pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
           <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Contact</p>

@@ -83,7 +83,7 @@ export default async function Home() {
   const achievements = dbAchievements.length > 0 ? dbAchievements : ACHIEVEMENTS;
 
   return (
-    <div className="min-h-screen">
+    <main id="main-content" className="min-h-screen">
       <EditableSection title="Hero & Profile" drawerId="hero" drawerData={profile}>
         <Hero profile={profile} />
       </EditableSection>
@@ -119,6 +119,6 @@ export default async function Home() {
       <EditableSection title="Contact Information" drawerId="contact">
         <Contact />
       </EditableSection>
-    </div>
+    </main>
   );
 }

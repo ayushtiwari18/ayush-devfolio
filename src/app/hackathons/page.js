@@ -26,7 +26,7 @@ export default async function HackathonsPage() {
   }
 
   return (
-    <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
+    <main id="main-content" className="min-h-screen py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
 
         <Link href="/">
