@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Send, CheckCircle, Sparkles, MapPin, Clock } from 'lucide-react';
+import { Mail, Send, CheckCircle, Sparkles, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
+import { submitContactForm } from '@/app/actions/contact';
 
 const INTENT_PILLS = [
   { label: '🚀 Full-Stack Web App', prefix: "I'd like to discuss building a full-stack web application with Next.js & Node.js: " },
@@ -15,6 +15,7 @@ const INTENT_PILLS = [
 export default function Contact() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedIntent, setSelectedIntent] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -39,22 +40,28 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
-      const { error } = await supabase.from('contact_messages').insert([{
-        ...formData,
-        status: 'unread',
-      }]);
+      const result = await submitContactForm({
+        name: formData.name,
+        email: formData.email,
+        subject: selectedIntent || 'Portfolio Collaboration Inquiry',
+        message: formData.message,
+      });
 
-      if (error) throw error;
+      if (!result.success) {
+        setError(result.message || 'Failed to send message. Please try again.');
+        return;
+      }
 
       setSuccess(true);
       setFormData({ name: '', email: '', message: '' });
       setSelectedIntent(null);
       setTimeout(() => setSuccess(false), 5000);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Network error. Please try again or email me directly.');
     } finally {
       setLoading(false);
     }
@@ -127,6 +134,12 @@ export default function Contact() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs font-mono">
+                  <AlertCircle size={14} className="shrink-0 text-red-400" />
+                  <span>{error}</span>
+                </div>
+              )}
               {/* Name & Email Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>

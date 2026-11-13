@@ -16,7 +16,8 @@ import { supabase } from '@/lib/supabase';
  *   status       text  → default 'unread'
  */
 export async function submitContactForm({ name, email, subject, message }) {
-  if (!name?.trim() || !email?.trim() || !subject?.trim() || !message?.trim()) {
+  const finalSubject = subject?.trim() || 'Portfolio Collaboration Inquiry';
+  if (!name?.trim() || !email?.trim() || !message?.trim()) {
     return { success: false, message: 'All fields are required.' };
   }
 
@@ -26,7 +27,7 @@ export async function submitContactForm({ name, email, subject, message }) {
       .insert([{
         name:         name.trim(),
         email:        email.trim(),
-        subject:      subject.trim(),
+        subject:      finalSubject,
         message:      message.trim(),
         status:       'unread',
         responded_at: null,
