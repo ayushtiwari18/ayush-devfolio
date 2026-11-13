@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowUp, Share2, Check } from 'lucide-react';
 export default function BlogReadingNav({ postTitle, postUrl, category }) {
   const [scrolledPast, setScrolledPast] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [progress, setProgress] = useState(0);
   const progressRef = useRef(null);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function BlogReadingNav({ postTitle, postUrl, category }) {
           if (progressRef.current) {
             progressRef.current.style.width = `${pct}%`;
           }
+          setProgress(Math.round(pct));
           
           const isPast = scrolled > 200;
           setScrolledPast(prev => prev !== isPast ? isPast : prev);
