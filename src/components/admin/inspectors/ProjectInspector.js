@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import InspectorDrawer from '../InspectorDrawer';
 import { useAdminMode } from '@/context/AdminModeContext';
@@ -56,6 +56,35 @@ export default function ProjectInspector({ mode = 'edit', project = null, onClos
   const [tags, setTags]                 = useState(project?.tags || []);
   const [techInput, setTechInput]       = useState('');
   const [tagInput, setTagInput]         = useState('');
+
+  // Hydrate full project record if only slug reference is passed
+  useEffect(() => {
+    if (project?.slug && !project?.title) {
+      supabase
+        .from('projects')
+        .select('*')
+        .eq('slug', project.slug)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setTitle(data.title || '');
+            setSlug(data.slug || '');
+            setDescription(data.description || '');
+            setCoverImage(data.cover_image || data.image || '');
+            setFeatured(Boolean(data.featured));
+            setPublished(Boolean(data.published));
+            setGithubUrl(data.github_url || '');
+            setLiveUrl(data.live_url || '');
+            setArchitectureType(data.architecture_type || 'text');
+            setArchitecturePlan(data.architecture_plan || '');
+            setOrderIndex(data.order_index ?? 0);
+            setTechnologies(data.technologies || []);
+            setTags(data.tags || []);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [project]);
 
   const handleTitleChange = (e) => {
     const nextTitle = e.target.value;

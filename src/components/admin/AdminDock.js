@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAdminMode } from '@/context/AdminModeContext';
+import { supabase } from '@/lib/supabase';
 import {
   Eye,
   Edit3,
@@ -15,6 +16,9 @@ import {
   Compass,
   Settings,
   Sparkles,
+  BookOpen,
+  ExternalLink,
+  Globe,
 } from 'lucide-react';
 
 const SECTIONS = [
@@ -31,6 +35,7 @@ const SECTIONS = [
 
 export default function AdminDock() {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     isAdmin,
     editMode,
@@ -39,10 +44,69 @@ export default function AdminDock() {
     openDrawer,
     logout,
     user,
+    showToast,
   } = useAdminMode();
 
   const [collapsed, setCollapsed] = useState(false);
   const [sectionNavOpen, setSectionNavOpen] = useState(false);
+
+  // Dynamic route recognition
+  const blogSlugMatch = pathname ? pathname.match(/^\/blog\/([^/?#]+)/) : null;
+  const isBlogPost = Boolean(blogSlugMatch);
+  const blogSlug = blogSlugMatch ? blogSlugMatch[1] : null;
+
+  const projectSlugMatch = pathname ? pathname.match(/^\/projects\/([^/?#]+)/) : null;
+  const isProjectDetail = Boolean(projectSlugMatch);
+  const projectSlug = projectSlugMatch ? projectSlugMatch[1] : null;
+
+  const [blogData, setBlogData] = useState(null);
+  const [projectData, setProjectData] = useState(null);
+
+  // Fetch contextual blog post metadata when on /blog/[slug]
+  useEffect(() => {
+    let isCurrent = true;
+    if (isBlogPost && blogSlug) {
+      supabase
+        .from('blog_posts')
+        .select('id, title, slug, published')
+        .eq('slug', blogSlug)
+        .single()
+        .then(({ data }) => {
+          if (isCurrent && data) {
+            setBlogData(data);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setBlogData(null);
+    }
+    return () => {
+      isCurrent = false;
+    };
+  }, [isBlogPost, blogSlug]);
+
+  // Fetch contextual project metadata when on /projects/[slug]
+  useEffect(() => {
+    let isCurrent = true;
+    if (isProjectDetail && projectSlug) {
+      supabase
+        .from('projects')
+        .select('id, title, slug, live_url, github_url, description, published, featured, cover_image, technologies, tags')
+        .eq('slug', projectSlug)
+        .single()
+        .then(({ data }) => {
+          if (isCurrent && data) {
+            setProjectData(data);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setProjectData(null);
+    }
+    return () => {
+      isCurrent = false;
+    };
+  }, [isProjectDetail, projectSlug]);
 
   // If not admin, do not render dock at all
   if (!isAdmin) return null;
@@ -56,6 +120,88 @@ export default function AdminDock() {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleEditArticle = () => {
+    if (!editMode) toggleEditMode();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('admin:set-blog-view', { detail: 'edit' }));
+      window.dispatchEvent(new CustomEvent('admin:edit-article'));
+    }
+    if (pathname && !pathname.includes('?edit=true')) {
+      if (router?.push) {
+        router.push(`${pathname}?edit=true`);
+      } else if (typeof window !== 'undefined') {
+        window.location.search = '?edit=true';
+      }
+    }
+  };
+
+  const handleTogglePublished = async () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('admin:toggle-published'));
+    }
+
+    if (blogData?.id) {
+      const nextPublished = !blogData.published;
+      setBlogData((prev) => (prev ? { ...prev, published: nextPublished } : prev));
+      try {
+        const { error } = await supabase
+          .from('blog_posts')
+          .update({ published: nextPublished, updated_at: new Date().toISOString() })
+          .eq('id', blogData.id);
+
+        if (error) throw error;
+
+        showToast?.(
+          `Article "${blogData.title || blogSlug}" set to ${nextPublished ? 'Published' : 'Draft'}`,
+          'success'
+        );
+
+        fetch('/api/admin/revalidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET || '',
+          },
+          body: JSON.stringify({ paths: ['/blog', `/blog/${blogSlug}`] }),
+        }).catch(() => {});
+
+        router?.refresh?.();
+      } catch (err) {
+        showToast?.(err?.message || 'Failed to update publication status', 'error');
+      }
+    } else {
+      showToast?.('Toggled article publication state', 'info');
+    }
+  };
+
+  const handleBackToCatalog = () => {
+    if (router?.push) {
+      router.push('/blog');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = '/blog';
+    }
+  };
+
+  const handleEditStory = () => {
+    if (!editMode) toggleEditMode();
+    openDrawer('project-edit', projectData || { slug: projectSlug });
+  };
+
+  const handleViewLiveDemo = () => {
+    if (projectData?.live_url) {
+      if (typeof window !== 'undefined') {
+        window.open(projectData.live_url, '_blank', 'noopener,noreferrer');
+      }
+    } else if (typeof document !== 'undefined') {
+      const liveAnchor = document.querySelector('a[href^="http"]:not([href*="github.com"])');
+      if (liveAnchor?.href && typeof window !== 'undefined') {
+        window.open(liveAnchor.href, '_blank', 'noopener,noreferrer');
+      } else {
+        showToast?.('No live demo URL configured for this project', 'info');
+      }
     }
   };
 
@@ -199,10 +345,80 @@ export default function AdminDock() {
             type="button"
             onClick={() => openDrawer('blog-new')}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-primary/15 hover:bg-primary/25 border border-primary/30 text-xs font-mono-code text-primary font-semibold transition-all"
+            aria-label="New Post"
           >
             <Plus size={13} />
             <span className="hidden sm:inline">New Post</span>
           </button>
+        )}
+
+        {/* Dynamic Blog Article Contextual Controls */}
+        {isBlogPost && (
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleEditArticle}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-primary/15 hover:bg-primary/25 border border-primary/30 text-xs font-mono-code text-primary font-semibold transition-all"
+              title="Edit article in-context"
+              aria-label="Edit Article"
+            >
+              <Edit3 size={13} />
+              <span className="hidden sm:inline">Edit Article</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleTogglePublished}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono-code font-semibold transition-all ${
+                blogData?.published === false
+                  ? 'bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300'
+                  : 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400'
+              }`}
+              title="Toggle published status"
+              aria-label="Toggle Published"
+            >
+              <Globe size={13} />
+              <span className="hidden sm:inline">Toggle Published</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBackToCatalog}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono-code text-zinc-300 hover:text-white transition-all"
+              title="Return to Publications Catalog"
+              aria-label="Back to Catalog"
+            >
+              <BookOpen size={13} />
+              <span className="hidden sm:inline">Back to Catalog</span>
+            </button>
+          </div>
+        )}
+
+        {/* Dynamic Project Route Contextual Controls */}
+        {isProjectDetail && (
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleEditStory}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-primary/15 hover:bg-primary/25 border border-primary/30 text-xs font-mono-code text-primary font-semibold transition-all"
+              title="Edit project story & telemetry"
+              aria-label="Edit Story"
+            >
+              <Edit3 size={13} />
+              <span className="hidden sm:inline">Edit Story</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleViewLiveDemo}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-mono-code text-emerald-400 font-semibold transition-all"
+              title={projectData?.live_url ? `Open live demo (${projectData.live_url})` : 'View live deployment'}
+              aria-label="View Live Demo"
+            >
+              <ExternalLink size={13} />
+              <span className="hidden sm:inline">View Live Demo</span>
+            </button>
+          </div>
         )}
 
         {/* Unread Inquiries / Messages Trigger */}

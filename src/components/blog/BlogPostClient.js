@@ -246,6 +246,25 @@ export default function BlogPostClient({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSave, isAdmin, editMode, isEditParam]);
 
+  // Handle external admin commands (e.g. from AdminDock)
+  useEffect(() => {
+    const handleSetView = (e) => {
+      if (e?.detail) setActiveView(e.detail);
+      else setActiveView('edit');
+    };
+    const handleTogglePub = () => {
+      setPublished((prev) => !prev);
+    };
+    window.addEventListener('admin:set-blog-view', handleSetView);
+    window.addEventListener('admin:edit-article', handleSetView);
+    window.addEventListener('admin:toggle-published', handleTogglePub);
+    return () => {
+      window.removeEventListener('admin:set-blog-view', handleSetView);
+      window.removeEventListener('admin:edit-article', handleSetView);
+      window.removeEventListener('admin:toggle-published', handleTogglePub);
+    };
+  }, []);
+
   const primaryCategory = tags?.[0] || 'ENGINEERING';
 
   return (
