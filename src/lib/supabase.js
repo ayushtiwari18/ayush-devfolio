@@ -32,11 +32,24 @@ export const supabase = createClient(
   {
     global: {
       fetch: (url, options = {}) => {
-        // Strip cache option if it exists to avoid conflicts
+        const isServer = typeof window === 'undefined' || Boolean(globalThis.__FORCE_SERVER_FETCH__);
+        const method = (options.method || 'GET').toUpperCase();
+        const isRead = method === 'GET' || method === 'HEAD';
+
+        // Client-side execution or mutations (POST, PATCH, DELETE) bypass Next.js ISR cache
+        if (!isServer || !isRead) {
+          return fetch(url, options);
+        }
+
+        // Caller opted out of cache
+        if (options.cache === 'no-store' || options.next?.revalidate === 0) {
+          return fetch(url, options);
+        }
+
         const { cache, ...restOptions } = options;
-        return fetch(url, { 
-          ...restOptions, 
-          next: { revalidate: 60 } 
+        return fetch(url, {
+          ...restOptions,
+          next: { revalidate: 60, ...(options.next || {}) },
         });
       },
     },
