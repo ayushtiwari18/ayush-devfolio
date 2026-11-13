@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import InspectorDrawer from '../InspectorDrawer';
 import { useAdminMode } from '@/context/AdminModeContext';
+import { supabase } from '@/lib/supabase';
 import {
   Trophy,
   Code2,
@@ -82,7 +83,15 @@ export default function CodingStatsInspector({ onClose }) {
   const [gfgScore, setGfgScore]       = useState('');
   const [gfgStreak, setGfgStreak]     = useState('');
 
-  const secret = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'mysecret123';
+  async function getAuthHeaders() {
+    const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: {} }));
+    const token = session?.access_token;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(process.env.NEXT_PUBLIC_ADMIN_SECRET ? { 'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET } : {}),
+    };
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -197,10 +206,7 @@ export default function CodingStatsInspector({ onClose }) {
     try {
       const res = await fetch('/api/admin/status', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': secret,
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(payload),
       });
 

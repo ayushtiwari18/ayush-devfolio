@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import InspectorDrawer from '../InspectorDrawer';
 import { useAdminMode } from '@/context/AdminModeContext';
+import { supabase } from '@/lib/supabase';
 import {
   Cpu,
   Plus,
@@ -50,7 +51,15 @@ export default function SkillsInspector({ onClose }) {
   const [editLevel, setEditLevel]         = useState(80);
   const [savingEdit, setSavingEdit]       = useState(false);
 
-  const secret = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'mysecret123';
+  async function getAuthHeaders() {
+    const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: {} }));
+    const token = session?.access_token;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(process.env.NEXT_PUBLIC_ADMIN_SECRET ? { 'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET } : {}),
+    };
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -85,10 +94,7 @@ export default function SkillsInspector({ onClose }) {
     try {
       const res = await fetch('/api/admin/skills', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': secret,
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           name: name.trim(),
           category,
@@ -138,10 +144,7 @@ export default function SkillsInspector({ onClose }) {
     try {
       const res = await fetch('/api/admin/skills', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': secret,
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           id: skillId,
           name: editName.trim(),
@@ -176,10 +179,7 @@ export default function SkillsInspector({ onClose }) {
     try {
       const res = await fetch('/api/admin/skills', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': secret,
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ id: skillId }),
       });
 

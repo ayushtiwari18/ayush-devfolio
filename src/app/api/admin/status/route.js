@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
-
-const secret = process.env.ADMIN_SECRET;
+import { verifyAdminAuth } from '@/lib/adminAuth';
 
 function adminClient() {
   return createClient(
@@ -28,7 +27,7 @@ export async function GET() {
 }
 
 export async function PATCH(request) {
-  if (request.headers.get('x-admin-secret') !== secret) {
+  if (!(await verifyAdminAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {

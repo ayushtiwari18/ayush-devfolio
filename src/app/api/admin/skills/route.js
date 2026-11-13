@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
-
-const secret = process.env.ADMIN_SECRET;
+import { verifyAdminAuth } from '@/lib/adminAuth';
 
 function adminClient() {
   return createClient(
@@ -25,8 +24,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  if (request.headers.get('x-admin-secret') !== secret)
+  if (!(await verifyAdminAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { name, icon, category, level } = await request.json();
     if (!name?.trim()) return NextResponse.json({ error: 'name is required' }, { status: 400 });
@@ -49,8 +49,9 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
-  if (request.headers.get('x-admin-secret') !== secret)
+  if (!(await verifyAdminAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { id, name, icon, category, level } = await request.json();
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -74,8 +75,9 @@ export async function PATCH(request) {
 }
 
 export async function DELETE(request) {
-  if (request.headers.get('x-admin-secret') !== secret)
+  if (!(await verifyAdminAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
