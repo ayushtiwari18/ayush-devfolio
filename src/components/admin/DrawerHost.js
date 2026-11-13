@@ -48,6 +48,9 @@ export default function DrawerHost() {
     case 'blog-new':
       return <BlogInspector mode="new" onClose={closeDrawer} />;
     case 'blog-edit':
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/blog/') && window.location.pathname !== '/blog') {
+        return null;
+      }
       return <BlogInspector mode="edit" post={activeDrawer.data} onClose={closeDrawer} />;
     case 'contact':
       return <ContactInspector onClose={closeDrawer} />;

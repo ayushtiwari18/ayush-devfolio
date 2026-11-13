@@ -6,6 +6,13 @@ import { supabase } from '@/lib/supabase';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+const mockPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
+
 // Mock AdminModeContext
 jest.mock('@/context/AdminModeContext', () => ({
   useAdminMode: jest.fn(),
@@ -136,7 +143,7 @@ describe('BlogFilterClient Component', () => {
     expect(container.textContent).toContain('Published');
     expect(container.textContent).toContain('Draft / Hidden');
 
-    // Test clicking Edit on post
+    // Test clicking Edit on post routes to in-context editor
     const editBtn = container.querySelector('button[aria-label="Edit post"]');
     expect(editBtn).toBeTruthy();
 
@@ -144,6 +151,6 @@ describe('BlogFilterClient Component', () => {
       editBtn.click();
     });
 
-    expect(mockOpenDrawer).toHaveBeenCalledWith('blog-edit', expect.objectContaining({ id: 'post-1' }));
+    expect(mockPush).toHaveBeenCalledWith('/blog/nextjs-systems?edit=true');
   });
 });

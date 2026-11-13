@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Calendar,
   Clock,
@@ -341,6 +342,7 @@ function EmptyState({ activeTag, searchQuery, onReset }) {
 
 // ── Main export ───────────────────────────────────────────────
 export default function BlogFilterClient({ posts: initialPosts = [] }) {
+  const router = useRouter();
   const { isAdmin, editMode, openDrawer, showToast } = useAdminMode();
 
   const [postList, setPostList]         = useState(initialPosts);
@@ -438,9 +440,9 @@ export default function BlogFilterClient({ posts: initialPosts = [] }) {
     (e, post) => {
       e?.preventDefault();
       e?.stopPropagation();
-      openDrawer('blog-edit', post);
+      router.push(`/blog/${post.slug}?edit=true`);
     },
-    [openDrawer]
+    [router]
   );
 
   const handleDeleteClick = useCallback((e, post) => {
