@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -28,11 +29,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAdminMode } from '@/context/AdminModeContext';
 import { supabase } from '@/lib/supabase';
+import { countWords } from '@/lib/blogUtils';
 import BlogContent from './BlogContent';
 import BlogSidebar from './BlogSidebar';
 import BlogTakeaways from './BlogTakeaways';
 import BlogReadingNav from './BlogReadingNav';
 import SeriesBanner from './SeriesBanner';
+
+const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[500px] rounded-2xl border border-white/10 bg-[#080B11] flex flex-col items-center justify-center p-8 gap-3">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+      <span className="text-xs font-mono text-gray-400">Loading Notion block canvas...</span>
+    </div>
+  ),
+});
 
 function slugify(text) {
   return String(text || '')
@@ -77,7 +89,7 @@ export default function BlogPostClient({
   const [content, setContent] = useState(() => {
     if (typeof post.content === 'string') return post.content;
     if (Array.isArray(post.content)) {
-      return post.content.map((b) => (b.content?.[0]?.text ? b.content[0].text : '')).join('\n\n');
+      return JSON.stringify(post.content);
     }
     return '';
   });
@@ -95,6 +107,13 @@ export default function BlogPostClient({
 
   // Word count & auto reading time calculation
   const wordCount = useMemo(() => {
+    if (!content) return 0;
+    try {
+      const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+      if (Array.isArray(parsed)) {
+        return countWords(parsed);
+      }
+    } catch (_) {}
     return content.trim().split(/\s+/).filter(Boolean).length;
   }, [content]);
 
@@ -516,23 +535,24 @@ export default function BlogPostClient({
                   />
                 </div>
 
-                {/* Markdown Content Editor */}
+                {/* Notion BlockNote Canvas Editor */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-mono text-gray-400 uppercase font-semibold flex items-center gap-2">
                       <FileText size={13} className="text-primary" />
-                      <span>Article Markdown Body</span>
+                      <span>Article Blocks (Notion Editor)</span>
                     </label>
                     <span className="text-[11px] font-mono text-gray-500">
-                      GitHub Flavored Markdown · Syntax Highlighting Supported
+                      Type <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-primary font-bold">/</kbd> for headings, code, callouts, images
                     </span>
                   </div>
-                  <textarea
-                    rows={26}
+                  <BlogEditor
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="# Heading 1\n\n## Section 2\n\nYour article content here with ```typescript code blocks..."
-                    className="w-full font-mono text-sm leading-relaxed p-5 bg-[#080B11] border border-white/10 focus:border-primary rounded-2xl text-gray-100 outline-none resize-y transition-all custom-scrollbar selection:bg-primary/30"
+                    onChange={(jsonStr) => setContent(jsonStr)}
+                    onMetaChange={({ reading_time: rTime, excerpt: newExcerpt }) => {
+                      if (rTime) setReadingTime(rTime);
+                      if (newExcerpt && !excerpt) setExcerpt(newExcerpt);
+                    }}
                   />
                 </div>
               </div>

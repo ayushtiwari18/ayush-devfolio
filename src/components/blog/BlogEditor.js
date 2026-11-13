@@ -109,6 +109,23 @@ export default function BlogEditor({ value, onChange, onMetaChange }) {
       
       hasInitialized.current = true;
     } catch (e) {
+      // If JSON.parse fails (e.g. existing Markdown string), convert markdown into blocks
+      if (typeof value === 'string' && value.trim()) {
+        try {
+          const paragraphs = value.split(/\n\n+/).filter(Boolean);
+          const markdownBlocks = paragraphs.map((para) => ({
+            type: 'paragraph',
+            content: [{ type: 'text', text: para.trim() }],
+          }));
+          if (markdownBlocks.length > 0) {
+            editor.replaceBlocks(editor.document, markdownBlocks);
+            hasInitialized.current = true;
+            return;
+          }
+        } catch (innerErr) {
+          console.warn('[BlogEditor] markdown fallback failed:', innerErr);
+        }
+      }
       console.error('[BlogEditor] initialization failed:', e);
       hasInitialized.current = true;
     }

@@ -63,6 +63,21 @@ jest.mock('react-markdown', () => {
   };
 });
 
+// Mock BlogEditor to avoid loading BlockNote in Node/Jest DOM environment
+jest.mock('@/components/blog/BlogEditor', () => {
+  return function MockBlogEditor({ value, onChange }) {
+    return (
+      <div data-testid="mock-blog-editor">
+        <textarea
+          data-testid="mock-blog-editor-textarea"
+          value={typeof value === 'string' ? value : JSON.stringify(value)}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+    );
+  };
+});
+
 const samplePost = {
   id: 'post-101',
   title: 'Microservices vs Monoliths',
@@ -180,7 +195,7 @@ describe('BlogPostClient Component', () => {
 
     // Verify editable inputs are rendered
     expect(container.textContent).toContain('Article Headline (H1)');
-    expect(container.textContent).toContain('Article Markdown Body');
+    expect(container.textContent).toContain('Article Blocks (Notion Editor)');
     expect(container.textContent).toContain('Save Changes');
 
     // Edit title
@@ -217,7 +232,7 @@ describe('BlogPostClient Component', () => {
     });
 
     expect(container.textContent).toContain('Article Headline (H1)');
-    expect(container.textContent).toContain('Article Markdown Body');
+    expect(container.textContent).toContain('Article Blocks (Notion Editor)');
     expect(container.textContent).toContain('Save Changes');
   });
 
