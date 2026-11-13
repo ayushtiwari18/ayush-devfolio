@@ -14,6 +14,7 @@ const navLinks = [
   { href: ROUTES.PROJECTS,       label: 'Projects'      },
   { href: ROUTES.BLOG,           label: 'Blog'          },
   { href: ROUTES.CERTIFICATIONS, label: 'Certifications'},
+  { href: ROUTES.HACKATHONS,     label: 'Hackathons'    },
   { href: ROUTES.EVENTS,         label: 'Events'        },
   { href: ROUTES.CONTACT,        label: 'Contact'       },
 ];
@@ -121,16 +122,16 @@ export default function Navbar() {
       }`}
     >
       <nav
-        className={`pointer-events-auto w-full max-w-5xl rounded-full border transition-all duration-300 ${
+        className={`pointer-events-auto w-full max-w-5xl lg:max-w-6xl rounded-full border transition-all duration-300 ${
           scrolled
-            ? 'bg-[#07090E]/90 border-white/15 backdrop-blur-2xl shadow-2xl shadow-black/80 py-2 sm:py-2.5 px-4 sm:px-6'
-            : 'bg-[#07090E]/75 border-white/10 backdrop-blur-xl shadow-xl shadow-black/50 py-2.5 sm:py-3 px-4 sm:px-6'
+            ? 'bg-[#07090E]/90 border-white/15 backdrop-blur-2xl shadow-2xl shadow-black/80 py-2 sm:py-2.5 px-3.5 sm:px-6'
+            : 'bg-[#07090E]/75 border-white/10 backdrop-blur-xl shadow-xl shadow-black/50 py-2.5 sm:py-3 px-3.5 sm:px-6'
         }`}
       >
         <div className="flex items-center justify-between">
 
           {/* Brand Logo & Name */}
-          <Link href={ROUTES.HOME} className="flex items-center space-x-2.5 group">
+          <Link href={ROUTES.HOME} className="flex items-center space-x-2.5 group shrink-0">
             <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/20 group-hover:ring-primary/60 transition-all duration-300">
               <Image
                 src="/brand-icon.png"
@@ -147,14 +148,14 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav Links with Shared Layout Sliding Pill */}
-          <div className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-full border border-white/5 relative">
+          <div className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-white/[0.03] p-1 rounded-full border border-white/5 relative flex-nowrap whitespace-nowrap">
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 select-none ${
+                  className={`relative px-2.5 lg:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 select-none whitespace-nowrap ${
                     active
                       ? 'text-white'
                       : 'text-muted-foreground hover:text-white'

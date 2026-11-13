@@ -131,6 +131,7 @@ export const NAV_LINKS = [
   { label: 'Projects',       href: '/projects'       },
   { label: 'Blog',           href: '/blog'           },
   { label: 'Certifications', href: '/certifications' },
+  { label: 'Hackathons',     href: '/hackathons'     },
   { label: 'Events',         href: '/events'         },
   { label: 'Contact',        href: '/contact'        },
 ];
@@ -144,6 +145,7 @@ export const ROUTES = {
   PROJECTS:       '/projects',
   BLOG:           '/blog',
   CERTIFICATIONS: '/certifications',
+  HACKATHONS:     '/hackathons',
   EVENTS:         '/events',
   CONTACT:        '/contact',
   ADMIN:          '/admin',
