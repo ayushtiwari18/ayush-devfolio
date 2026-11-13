@@ -9,8 +9,7 @@ import {
   getRelatedBlogs,
 } from '@/services/projects.service';
 import { getProfileSettings } from '@/services/profile.service';
-import ProjectStoryView from '@/components/projects/ProjectStoryView';
-import EditableSection from '@/components/admin/EditableSection';
+import ProjectStoryClient from '@/components/projects/ProjectStoryClient';
 import { BASE_URL } from '@/lib/config';
 
 // Always fetch fresh from Supabase — never serve stale cached project pages
@@ -145,19 +144,13 @@ export default async function ProjectDetailPage({ params }) {
             </Link>
           </div>
 
-          {/* High-Craft Narrative Story Case Study */}
-          <EditableSection
-            title={`Case Study (${project.title})`}
-            drawerId="project-edit"
-            drawerData={project}
-          >
-            <ProjectStoryView
-              project={project}
-              authorHeroImage={authorHeroImage}
-              authorName={authorName}
-              relatedProjects={relatedProjects}
-            />
-          </EditableSection>
+          {/* In-Canvas Notion-Style Narrative Case Study */}
+          <ProjectStoryClient
+            initialProject={project}
+            authorHeroImage={authorHeroImage}
+            authorName={authorName}
+            relatedProjects={relatedProjects}
+          />
         </div>
       </main>
     </>

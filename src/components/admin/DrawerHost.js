@@ -42,6 +42,9 @@ export default function DrawerHost() {
     case 'project-new':
       return <ProjectInspector mode="new" onClose={closeDrawer} />;
     case 'project-edit':
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/projects/') && window.location.pathname !== '/projects') {
+        return null;
+      }
       return <ProjectInspector mode="edit" project={activeDrawer.data} onClose={closeDrawer} />;
     case 'blog':
       return <BlogSectionInspector onClose={closeDrawer} />;

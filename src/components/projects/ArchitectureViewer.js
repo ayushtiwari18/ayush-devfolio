@@ -6,6 +6,7 @@ import { LayoutTemplate, AlertCircle, Loader2, ZoomIn, ZoomOut, Maximize } from 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import BlogContent from '@/components/blog/BlogContent';
 
 // ---------------------------------------------------------------------------
 // Mermaid renderer — loaded dynamically, never in SSR bundle
@@ -163,9 +164,9 @@ export default function ArchitectureViewer({
                 />
               </div>
             )}
-            {architectureType === 'text' && (
+            {(architectureType === 'text' || architectureType === 'blocks') && (
               <div className="prose prose-invert prose-blue max-w-none text-muted-foreground prose-p:text-[0.95rem]">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{architecturePlan}</ReactMarkdown>
+                <BlogContent content={architecturePlan} />
               </div>
             )}
           </>

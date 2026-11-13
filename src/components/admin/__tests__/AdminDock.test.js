@@ -338,11 +338,16 @@ describe('AdminDock Component', () => {
     expect(editStoryBtn.textContent).toContain('Edit Story');
     expect(liveDemoBtn.textContent).toContain('View Live Demo');
 
+    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+
     // Test Edit Story click
     await act(async () => {
       editStoryBtn.click();
     });
-    expect(mockOpenDrawer).toHaveBeenCalledWith('project-edit', expect.objectContaining({ slug: 'sentinal' }));
+    expect(mockPush).toHaveBeenCalledWith('/projects/sentinal?edit=true');
+    expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'admin:edit-story' }));
+
+    dispatchSpy.mockRestore();
 
     // Test Live Demo click
     await act(async () => {

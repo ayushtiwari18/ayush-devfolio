@@ -187,7 +187,17 @@ export default function AdminDock() {
 
   const handleEditStory = () => {
     if (!editMode) toggleEditMode();
-    openDrawer('project-edit', projectData || { slug: projectSlug });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('admin:set-project-view', { detail: 'edit' }));
+      window.dispatchEvent(new CustomEvent('admin:edit-story'));
+    }
+    if (pathname && !pathname.includes('?edit=true')) {
+      if (router?.push) {
+        router.push(`${pathname}?edit=true`);
+      } else if (typeof window !== 'undefined') {
+        window.location.search = '?edit=true';
+      }
+    }
   };
 
   const handleViewLiveDemo = () => {
