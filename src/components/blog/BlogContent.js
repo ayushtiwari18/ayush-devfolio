@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
@@ -65,6 +68,22 @@ function headingId(content) {
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+function getNodeText(node) {
+  if (!node) return '';
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(getNodeText).join('');
+  if (node.props?.children) return getNodeText(node.props.children);
+  return '';
+}
+
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 // ── Copy-code button ──────────────────────────────────────────
 function CopyButton({ code }) {
   const [copied, setCopied] = useState(false);
@@ -95,6 +114,210 @@ function CopyButton({ code }) {
   );
 }
 
+// ── Shared syntax-highlighted code block ───────────────────────
+function CodeBlockCard({ lang = 'text', code }) {
+  const cleanLang = (lang || 'text').trim().toLowerCase();
+  return (
+    <div className="relative my-8 rounded-2xl overflow-hidden border border-white/10 bg-[#080B11] shadow-2xl shadow-black/50 group">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#0D111A] border-b border-white/[0.08]">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5 items-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]/90 border border-[#E0443E]/50 shadow-sm shadow-[#FF5F56]/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]/90 border border-[#DEA123]/50 shadow-sm shadow-[#FFBD2E]/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]/90 border border-[#1AAB29]/50 shadow-sm shadow-[#27C93F]/20" />
+          </div>
+          <span className="text-[11px] font-mono tracking-wider text-gray-400 uppercase font-semibold">
+            {cleanLang} <span className="text-gray-600">// source</span>
+          </span>
+        </div>
+        <CopyButton code={code} />
+      </div>
+      <SyntaxHighlighter
+        language={cleanLang}
+        style={ideTheme}
+        codeTagProps={{
+          style: {
+            background: 'transparent',
+            textShadow: 'none',
+          },
+        }}
+        customStyle={{
+          margin: 0,
+          padding: '1.25rem 1.5rem',
+          borderRadius: 0,
+          background: '#080B11',
+          fontSize: '0.875rem',
+          lineHeight: '1.75',
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        }}
+        showLineNumbers
+        lineNumberStyle={{
+          color: '#4B5563',
+          fontSize: '0.75rem',
+          minWidth: '2.5em',
+          paddingRight: '1rem',
+          userSelect: 'none',
+          background: 'transparent',
+        }}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
+}
+
+// ── Shared heading renderer ───────────────────────────────────
+function renderHeading(level, id, children, align = '') {
+  const base = `group relative font-bold text-foreground scroll-mt-28 tracking-tight ${align}`;
+  const anchor = (
+    <a
+      href={`#${id}`}
+      className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 text-primary/70 hover:text-primary transition-opacity text-base font-mono select-none"
+      title="Direct link to heading"
+    >
+      #
+    </a>
+  );
+  if (level === 1) {
+    return (
+      <h1 id={id} className={`${base} text-3xl sm:text-4xl lg:text-5xl font-extrabold mt-16 mb-6 text-white`}>
+        {anchor}{children}
+      </h1>
+    );
+  }
+  if (level === 2) {
+    return (
+      <h2 id={id} className={`${base} text-2xl sm:text-3xl font-bold mt-14 mb-6 text-white border-b border-white/10 pb-3 flex items-center justify-between`}>
+        <span>{anchor}{children}</span>
+        <span className="text-[11px] font-mono font-normal uppercase tracking-widest text-primary/60 hidden sm:inline-block">Section</span>
+      </h2>
+    );
+  }
+  return (
+    <h3 id={id} className={`${base} text-xl sm:text-2xl font-bold mt-10 mb-4 text-gray-100`}>
+      {anchor}{children}
+    </h3>
+  );
+}
+
+// ── Markdown component map ─────────────────────────────────────
+const markdownComponents = {
+  pre({ children }) {
+    return <>{children}</>;
+  },
+  code({ node, inline, className, children, ...props }) {
+    const match = /language-(\w+)/.exec(className || '');
+    const codeString = String(children || '').replace(/\n$/, '');
+    const isBlock = match || (!inline && codeString.includes('\n'));
+    if (isBlock) {
+      const lang = match ? match[1] : 'text';
+      return <CodeBlockCard lang={lang} code={codeString} />;
+    }
+    return (
+      <code
+        className="px-1.5 py-0.5 bg-zinc-800/80 text-emerald-300 rounded-md text-[0.9em] font-mono border border-zinc-700/50"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+  h1: ({ id, children }) => {
+    const headingSlug = id || slugify(getNodeText(children));
+    return renderHeading(1, headingSlug, children);
+  },
+  h2: ({ id, children }) => {
+    const headingSlug = id || slugify(getNodeText(children));
+    return renderHeading(2, headingSlug, children);
+  },
+  h3: ({ id, children }) => {
+    const headingSlug = id || slugify(getNodeText(children));
+    return renderHeading(3, headingSlug, children);
+  },
+  p: ({ children }) => (
+    <p className="text-gray-200/90 leading-[1.85] mb-7 text-[1.0625rem] sm:text-[1.125rem] font-sans antialiased selection:bg-primary/20 selection:text-white">
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-outside pl-5 mb-7 space-y-2 text-gray-200/90 leading-[1.8] font-sans antialiased">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-outside pl-5 mb-7 space-y-2 text-gray-200/90 leading-[1.8] font-sans antialiased">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li className="mb-1 leading-[1.8] text-gray-200/90 font-sans antialiased">
+      {children}
+    </li>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="relative pl-6 sm:pl-8 pr-6 py-5 my-8 border-l-2 border-primary bg-gradient-to-r from-primary/[0.08] to-transparent rounded-r-2xl">
+      <div className="text-gray-100 italic text-lg sm:text-xl font-medium leading-relaxed font-serif">
+        {children}
+      </div>
+    </blockquote>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-all font-medium"
+    >
+      {children}
+    </a>
+  ),
+  hr: () => (
+    <div className="flex items-center gap-4 my-10">
+      <div className="flex-1 h-px bg-white/10" />
+      <div className="flex gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+        <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+        <span className="w-1.5 h-1.5 rounded-full bg-primary/20" />
+      </div>
+      <div className="flex-1 h-px bg-white/10" />
+    </div>
+  ),
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-8 rounded-2xl border border-white/10 shadow-xl bg-[#07090E]">
+      <table className="w-full text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="bg-[#0B0F19] border-b border-white/10">{children}</thead>
+  ),
+  th: ({ children }) => (
+    <th className="px-5 py-3.5 text-left font-mono font-semibold text-gray-300 text-xs uppercase tracking-wider">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-5 py-3.5 text-gray-300/90 leading-relaxed font-sans border-b border-white/5">
+      {children}
+    </td>
+  ),
+  img: ({ src, alt }) => (
+    <figure className="my-9 flex flex-col items-center">
+      <div className="rounded-xl overflow-hidden border border-border shadow-lg w-full">
+        <img
+          src={src}
+          alt={alt || ''}
+          className="w-full h-auto object-contain bg-muted/20 mx-auto"
+        />
+      </div>
+      {alt && (
+        <figcaption className="text-center text-sm text-muted-foreground mt-3 italic">
+          {alt}
+        </figcaption>
+      )}
+    </figure>
+  ),
+};
+
 // ── Single block renderer ─────────────────────────────────────
 function Block({ block }) {
   const { type, props = {}, content = [], children = [] } = block;
@@ -113,23 +336,7 @@ function Block({ block }) {
     case 'heading': {
       const id = headingId(content);
       const level = props.level || 2;
-      const base = `group relative font-bold text-foreground scroll-mt-28 tracking-tight ${align}`;
-      const anchor = (
-        <a href={`#${id}`}
-          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 text-primary/70 hover:text-primary transition-opacity text-base font-mono select-none"
-          title="Direct link to heading">
-          #
-        </a>
-      );
-      const inner = <><InlineContent content={content} /></>;
-      if (level === 1) return <h1 id={id} className={`${base} text-3xl sm:text-4xl lg:text-5xl font-extrabold mt-16 mb-6 text-white`}>{anchor}{inner}</h1>;
-      if (level === 2) return (
-        <h2 id={id} className={`${base} text-2xl sm:text-3xl font-bold mt-14 mb-6 text-white border-b border-white/10 pb-3 flex items-center justify-between`}>
-          <span>{anchor}{inner}</span>
-          <span className="text-[11px] font-mono font-normal uppercase tracking-widest text-primary/60 hidden sm:inline-block">Section</span>
-        </h2>
-      );
-      return <h3 id={id} className={`${base} text-xl sm:text-2xl font-bold mt-10 mb-4 text-gray-100`}>{anchor}{inner}</h3>;
+      return renderHeading(level, id, <InlineContent content={content} />, align);
     }
 
     case 'bulletListItem':
@@ -172,53 +379,7 @@ function Block({ block }) {
     case 'codeBlock': {
       const lang = props.language || 'text';
       const code = content?.filter(i => i.type === 'text').map(i => i.text).join('') || '';
-      return (
-        <div className="relative my-8 rounded-2xl overflow-hidden border border-white/10 bg-[#080B11] shadow-2xl shadow-black/50 group">
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#0D111A] border-b border-white/[0.08]">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1.5 items-center">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]/90 border border-[#E0443E]/50 shadow-sm shadow-[#FF5F56]/20" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]/90 border border-[#DEA123]/50 shadow-sm shadow-[#FFBD2E]/20" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]/90 border border-[#1AAB29]/50 shadow-sm shadow-[#27C93F]/20" />
-              </div>
-              <span className="text-[11px] font-mono tracking-wider text-gray-400 uppercase font-semibold">
-                {lang} <span className="text-gray-600">// source</span>
-              </span>
-            </div>
-            <CopyButton code={code} />
-          </div>
-          <SyntaxHighlighter
-            language={lang}
-            style={ideTheme}
-            codeTagProps={{
-              style: {
-                background: 'transparent',
-                textShadow: 'none',
-              },
-            }}
-            customStyle={{
-              margin: 0,
-              padding: '1.25rem 1.5rem',
-              borderRadius: 0,
-              background: '#080B11',
-              fontSize: '0.875rem',
-              lineHeight: '1.75',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            }}
-            showLineNumbers
-            lineNumberStyle={{
-              color: '#4B5563',
-              fontSize: '0.75rem',
-              minWidth: '2.5em',
-              paddingRight: '1rem',
-              userSelect: 'none',
-              background: 'transparent',
-            }}
-          >
-            {code}
-          </SyntaxHighlighter>
-        </div>
-      );
+      return <CodeBlockCard lang={lang} code={code} />;
     }
 
     case 'image':
@@ -427,22 +588,47 @@ function Blocks({ blocks }) {
 export default function BlogContent({ content }) {
   if (!content) return null;
 
-  let blocks;
-  try {
-    blocks = typeof content === 'string' ? JSON.parse(content) : content;
-  } catch {
+  let blocks = null;
+  let isBlockNote = false;
+
+  if (Array.isArray(content)) {
+    blocks = content;
+    isBlockNote = true;
+  } else if (typeof content === 'string') {
+    const trimmed = content.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed)) {
+          blocks = parsed;
+          isBlockNote = true;
+        }
+      } catch {
+        // Not valid JSON array, treat as markdown string
+      }
+    }
+  }
+
+  if (isBlockNote && blocks) {
     return (
-      <div className="prose prose-invert prose-lg max-w-none">
-        <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">{content}</p>
+      <div className="blog-content max-w-[720px] mx-auto w-full">
+        <Blocks blocks={blocks} />
       </div>
     );
   }
 
-  if (!Array.isArray(blocks)) return null;
+  const markdownContent = typeof content === 'string' ? content : '';
+  if (!markdownContent.trim()) return null;
 
   return (
     <div className="blog-content max-w-[720px] mx-auto w-full">
-      <Blocks blocks={blocks} />
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSlug]}
+        components={markdownComponents}
+      >
+        {markdownContent}
+      </ReactMarkdown>
     </div>
   );
 }
