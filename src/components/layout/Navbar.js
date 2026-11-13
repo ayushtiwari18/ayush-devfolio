@@ -4,9 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, X, ShieldAlert, ArrowUpRight } from 'lucide-react';
+import { Menu, X, Shield, ArrowUpRight } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
-import { supabase } from '@/lib/supabase';
+import { useAdminMode } from '@/context/AdminModeContext';
 
 const navLinks = [
   { href: ROUTES.HOME,           label: 'Home'          },
@@ -24,9 +24,18 @@ export default function Navbar() {
   const [scrolled,       setScrolled]       = useState(false);
   const [scrolledDeep,   setScrolledDeep]   = useState(false);
   const pathname = usePathname();
-  const [isAdmin,        setIsAdmin]        = useState(false);
   const isHome = pathname === '/';
   const [navRevealed,    setNavRevealed]    = useState(!isHome);
+
+  const { isAdmin = false, editMode = false, toggleEditMode = () => {} } = useAdminMode();
+
+  const handleAdminToggle = () => {
+    toggleEditMode();
+    if (typeof document !== 'undefined') {
+      const dockBtn = document.querySelector('aside[aria-label="Admin command dock"] button');
+      dockBtn?.focus?.();
+    }
+  };
 
   // On home page, navbar is the LAST thing to reveal after the Solar System boot sequence.
   // On other pages, it is revealed immediately.
@@ -73,18 +82,8 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    // Check admin session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAdmin(!!session?.user);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAdmin(!!session?.user);
-    });
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      subscription.unsubscribe();
     };
   }, []);
 
@@ -175,13 +174,21 @@ export default function Navbar() {
           {/* Right Action / Mobile Trigger */}
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <Link
-                href="/admin/dashboard"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-red-500/10 text-red-400 text-xs font-semibold rounded-full hover:bg-red-500/20 transition-colors border border-red-500/20"
+              <button
+                type="button"
+                onClick={handleAdminToggle}
+                className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono-code font-bold tracking-wide transition-all border shadow-lg ${
+                  editMode
+                    ? 'bg-primary/20 text-primary border-primary/40 shadow-primary/20 hover:bg-primary/30'
+                    : 'bg-white/5 text-zinc-300 border-white/10 hover:text-white hover:bg-white/10'
+                }`}
+                title={editMode ? 'Edit Mode Active — Click to switch to Preview' : 'Preview Mode Active — Click to switch to Edit'}
+                aria-label={editMode ? 'Disable edit mode' : 'Enable edit mode'}
               >
-                <ShieldAlert size={12} />
-                <span>Admin</span>
-              </Link>
+                <span className={`w-1.5 h-1.5 rounded-full ${editMode ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
+                <Shield size={12} className={editMode ? 'text-primary' : 'text-zinc-400'} />
+                <span>{editMode ? 'Editing' : 'Admin'}</span>
+              </button>
             )}
 
             <Link
@@ -247,14 +254,25 @@ export default function Navbar() {
               </div>
 
               {isAdmin && (
-                <Link
-                  href="/admin/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 mt-3"
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleAdminToggle();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all border mt-3 ${
+                    editMode
+                      ? 'bg-primary/20 text-primary border-primary/40'
+                      : 'bg-white/5 text-zinc-300 border-white/10 hover:bg-white/10'
+                  }`}
+                  aria-label={editMode ? 'Disable edit mode' : 'Enable edit mode'}
                 >
-                  <ShieldAlert size={16} />
-                  <span>Admin Dashboard</span>
-                </Link>
+                  <div className="flex items-center gap-2">
+                    <Shield size={16} className={editMode ? 'text-primary' : 'text-zinc-400'} />
+                    <span>In-Context Admin ({editMode ? 'Edit Mode' : 'Preview Mode'})</span>
+                  </div>
+                  <span className={`w-2 h-2 rounded-full ${editMode ? 'bg-primary animate-pulse' : 'bg-zinc-500'}`} />
+                </button>
               )}
 
               <div className="pt-4 border-t border-white/10 mt-3 flex items-center justify-between px-2 text-xs text-muted-foreground font-mono-code">
