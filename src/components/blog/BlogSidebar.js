@@ -5,29 +5,88 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Twitter, Linkedin, Link2, Check, BookOpen, Clock, Tag, Award, ExternalLink } from 'lucide-react';
 
-// Extract headings from BlockNote JSON blocks
-function extractHeadings(content) {
-  let blocks;
-  try {
-    blocks = typeof content === 'string' ? JSON.parse(content) : content;
-  } catch {
-    return [];
+// Extract headings from BlockNote JSON blocks or Markdown strings
+export function extractHeadings(content) {
+  if (!content) return [];
+
+  // 1. BlockNote JSON blocks (Array or stringified JSON Array)
+  let blocks = null;
+  if (Array.isArray(content)) {
+    blocks = content;
+  } else if (typeof content === 'string') {
+    const trimmed = content.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed)) {
+          blocks = parsed;
+        }
+      } catch {
+        // Not a valid JSON array, fallback to markdown string parsing
+      }
+    }
   }
-  if (!Array.isArray(blocks)) return [];
+
+  if (blocks && Array.isArray(blocks)) {
+    const headings = [];
+    const walk = (items) => {
+      for (const block of items) {
+        if (block.type === 'heading') {
+          const text = (block.content || []).filter(i => i.type === 'text').map(i => i.text).join('').trim();
+          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          if (text) {
+            headings.push({ id, text, level: block.props?.level || 2 });
+          }
+        }
+        if (block.children?.length) walk(block.children);
+      }
+    };
+    walk(blocks);
+    return headings;
+  }
+
+  // 2. Markdown string format
+  if (typeof content !== 'string') return [];
+
+  const lines = content.split('\n');
   const headings = [];
-  const walk = (blocks) => {
-    for (const block of blocks) {
-      if (block.type === 'heading') {
-        const text = (block.content || []).filter(i => i.type === 'text').map(i => i.text).join('');
-        const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        if (text.trim()) {
-          headings.push({ id, text, level: block.props?.level || 2 });
+  const slugCounts = {};
+  let inCodeBlock = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    // Toggle fenced code block to prevent code comments from being treated as headings
+    if (line.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+
+    if (inCodeBlock) continue;
+
+    // Match Markdown headings (e.g. ## Section or ### Subsection)
+    const match = /^(#{1,3})\s+(.+)$/.exec(line);
+    if (match) {
+      const level = match[1].length;
+      // Filter headings to level 2 and 3 (or level 1 if author used single hash in body)
+      if (level >= 1 && level <= 3) {
+        // Strip markdown inline styles from label
+        const text = match[2].replace(/[*_`~]/g, '').trim();
+        if (text) {
+          const base = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          let id = base;
+          if (!slugCounts[base]) {
+            slugCounts[base] = 1;
+          } else {
+            const count = slugCounts[base]++;
+            id = `${base}-${count}`;
+          }
+          headings.push({ id, text, level });
         }
       }
-      if (block.children?.length) walk(block.children);
     }
-  };
-  walk(blocks);
+  }
+
   return headings;
 }
 
@@ -45,11 +104,12 @@ export default function BlogSidebar({
   // IntersectionObserver — highlight active TOC heading as user scrolls
   useEffect(() => {
     if (!headings.length) return;
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
     const targets = headings
       .map(h => document.getElementById(h.id))
       .filter(Boolean);
 
-    observerRef.current = new IntersectionObserver(
+    observerRef.current = new window.IntersectionObserver(
       (entries) => {
         const visible = entries.filter(e => e.isIntersecting);
         if (visible.length > 0) {
