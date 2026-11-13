@@ -59,8 +59,13 @@ export default function AdminDock() {
   const isProjectDetail = Boolean(projectSlugMatch);
   const projectSlug = projectSlugMatch ? projectSlugMatch[1] : null;
 
+  const eventSlugMatch = pathname ? pathname.match(/^\/events\/([^/?#]+)/) : null;
+  const isEventDetail = Boolean(eventSlugMatch);
+  const eventSlug = eventSlugMatch ? eventSlugMatch[1] : null;
+
   const [blogData, setBlogData] = useState(null);
   const [projectData, setProjectData] = useState(null);
+  const [eventData, setEventData] = useState(null);
 
   // Fetch contextual blog post metadata when on /blog/[slug]
   useEffect(() => {
@@ -107,6 +112,29 @@ export default function AdminDock() {
       isCurrent = false;
     };
   }, [isProjectDetail, projectSlug]);
+
+  // Fetch contextual event metadata when on /events/[slug]
+  useEffect(() => {
+    let isCurrent = true;
+    if (isEventDetail && eventSlug) {
+      supabase
+        .from('events')
+        .select('id, title, slug, published, featured')
+        .eq('slug', eventSlug)
+        .single()
+        .then(({ data }) => {
+          if (isCurrent && data) {
+            setEventData(data);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setEventData(null);
+    }
+    return () => {
+      isCurrent = false;
+    };
+  }, [isEventDetail, eventSlug]);
 
   // If not admin, do not render dock at all
   if (!isAdmin) return null;
@@ -212,6 +240,29 @@ export default function AdminDock() {
       } else {
         showToast?.('No live demo URL configured for this project', 'info');
       }
+    }
+  };
+
+  const handleEditEventStory = () => {
+    if (!editMode) toggleEditMode();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('admin:set-event-view', { detail: 'edit' }));
+      window.dispatchEvent(new CustomEvent('admin:edit-event'));
+    }
+    if (pathname && !pathname.includes('?edit=true')) {
+      if (router?.push) {
+        router.push(`${pathname}?edit=true`);
+      } else if (typeof window !== 'undefined') {
+        window.location.search = '?edit=true';
+      }
+    }
+  };
+
+  const handleBackToEvents = () => {
+    if (router?.push) {
+      router.push('/events');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = '/events';
     }
   };
 
@@ -427,6 +478,33 @@ export default function AdminDock() {
             >
               <ExternalLink size={13} />
               <span className="hidden sm:inline">View Live Demo</span>
+            </button>
+          </div>
+        )}
+
+        {/* Dynamic Event Retrospective Contextual Controls */}
+        {isEventDetail && (
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleEditEventStory}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-primary/15 hover:bg-primary/25 border border-primary/30 text-xs font-mono-code text-primary font-semibold transition-all"
+              title="Edit event retrospective story & metadata"
+              aria-label="Edit Event Story"
+            >
+              <Edit3 size={13} />
+              <span className="hidden sm:inline">Edit Story</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBackToEvents}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono-code text-zinc-300 hover:text-white transition-all"
+              title="Return to Events Overview"
+              aria-label="Back to Events"
+            >
+              <BookOpen size={13} />
+              <span className="hidden sm:inline">Back to Events</span>
             </button>
           </div>
         )}

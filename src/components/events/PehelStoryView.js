@@ -7,6 +7,7 @@ import {
   Youtube, ExternalLink, Share2, Check, Sparkles,
   Camera, Film, Heart, Maximize2, X, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import BlogContent from '@/components/blog/BlogContent';
 
 export default function PehelStoryView({ event }) {
   const [copied, setCopied] = useState(false);
@@ -132,7 +133,7 @@ export default function PehelStoryView({ event }) {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            Pehel — Ek Nayi Subha
+            {event.title || 'Pehel — Ek Nayi Subha'}
           </h1>
 
           <p className="text-xl sm:text-2xl font-light text-slate-300 mb-8 max-w-3xl leading-relaxed">
@@ -143,19 +144,19 @@ export default function PehelStoryView({ event }) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 sm:p-5 rounded-2xl bg-[#090D16] border border-white/10 shadow-2xl">
             <div>
               <span className="block text-[11px] font-mono uppercase tracking-wider text-slate-400">Role</span>
-              <p className="text-sm font-semibold text-white mt-1">Video Lead &amp; Organizer</p>
+              <p className="text-sm font-semibold text-white mt-1">{event.role || 'Video Lead & Organizer'}</p>
             </div>
             <div>
               <span className="block text-[11px] font-mono uppercase tracking-wider text-slate-400">Team</span>
-              <p className="text-sm font-semibold text-white mt-1">Team Indigo (24 Members)</p>
+              <p className="text-sm font-semibold text-white mt-1">{event.duration || 'Team Indigo (24 Members)'}</p>
             </div>
             <div>
               <span className="block text-[11px] font-mono uppercase tracking-wider text-slate-400">Location</span>
-              <p className="text-sm font-semibold text-white mt-1">GGITS Campus, Jabalpur</p>
+              <p className="text-sm font-semibold text-white mt-1">{event.location || 'GGITS Campus, Jabalpur'}</p>
             </div>
             <div>
               <span className="block text-[11px] font-mono uppercase tracking-wider text-slate-400">Coverage</span>
-              <p className="text-sm font-semibold text-white mt-1">8 Hours Live · 500+ Attendees</p>
+              <p className="text-sm font-semibold text-white mt-1">{event.result || '8 Hours Live · 500+ Attendees'}</p>
             </div>
           </div>
         </div>
@@ -233,14 +234,14 @@ export default function PehelStoryView({ event }) {
 
               <div>
                 <span className="text-[11px] font-mono uppercase text-slate-400">Initiative</span>
-                <p className="text-sm font-semibold text-white mt-0.5">Pehel — Ek Nayi Subha</p>
-                <p className="text-xs text-slate-400 mt-1">An annual campus tradition honoring workers who build, clean, and protect the campus.</p>
+                <p className="text-sm font-semibold text-white mt-0.5">{event.title || 'Pehel — Ek Nayi Subha'}</p>
+                <p className="text-xs text-slate-400 mt-1">{event.tagline || 'An annual campus tradition honoring workers who build, clean, and protect the campus.'}</p>
               </div>
 
               <div className="pt-4 border-t border-white/5">
                 <span className="text-[11px] font-mono uppercase text-slate-400">My Responsibility</span>
-                <p className="text-sm font-semibold text-white mt-0.5">End-to-End Media Documentation</p>
-                <p className="text-xs text-slate-400 mt-1">Directing multi-angle event cinematography, live photography, and same-day turnaround editing for university distribution.</p>
+                <p className="text-sm font-semibold text-white mt-0.5">{event.role || 'End-to-End Media Documentation'}</p>
+                <p className="text-xs text-slate-400 mt-1">{event.description || 'Directing multi-angle event cinematography, live photography, and same-day turnaround editing for university distribution.'}</p>
               </div>
 
               <div className="pt-4 border-t border-white/5">
@@ -257,79 +258,87 @@ export default function PehelStoryView({ event }) {
 
           {/* Right Narrative Chapters */}
           <div className="lg:col-span-8 space-y-12 text-slate-300 leading-relaxed">
-            {/* Chapter 1 */}
-            <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 01</span>
-              <h3 className="text-2xl font-bold text-white mt-1 mb-4">
-                The Vision: Recognizing the Unseen Workforce
-              </h3>
-              <p className="text-slate-300 text-base leading-relaxed mb-4">
-                Universities are bustling ecosystems of lectures, hackathons, and labs. Yet the individuals who ensure
-                water runs, pathways are spotless, electrical grids hold up, and campus security remains steadfast often
-                remain invisible in mainstream celebrations.
-              </p>
-              <p className="text-slate-300 text-base leading-relaxed">
-                <strong className="text-white">Pehel – Ek Nayi Subha</strong> was conceived at Gyan Ganga Group of Institutions
-                to turn the spotlight completely onto our auxiliary staff. For the 8th edition, as a core member of Team Indigo,
-                my commitment was to document the day not merely as a corporate recap, but as an authentic, human celebration
-                of gratitude.
-              </p>
-            </div>
+            {event.content && (typeof event.content === 'string' ? event.content.trim() !== '' : true) ? (
+              <div className="prose prose-invert prose-indigo max-w-none">
+                <BlogContent content={event.content} />
+              </div>
+            ) : (
+              <>
+                {/* Chapter 1 */}
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 01</span>
+                  <h3 className="text-2xl font-bold text-white mt-1 mb-4">
+                    The Vision: Recognizing the Unseen Workforce
+                  </h3>
+                  <p className="text-slate-300 text-base leading-relaxed mb-4">
+                    Universities are bustling ecosystems of lectures, hackathons, and labs. Yet the individuals who ensure
+                    water runs, pathways are spotless, electrical grids hold up, and campus security remains steadfast often
+                    remain invisible in mainstream celebrations.
+                  </p>
+                  <p className="text-slate-300 text-base leading-relaxed">
+                    <strong className="text-white">Pehel – Ek Nayi Subha</strong> was conceived at Gyan Ganga Group of Institutions
+                    to turn the spotlight completely onto our auxiliary staff. For the 8th edition, as a core member of Team Indigo,
+                    my commitment was to document the day not merely as a corporate recap, but as an authentic, human celebration
+                    of gratitude.
+                  </p>
+                </div>
 
-            {/* Chapter 2 */}
-            <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 02</span>
-              <h3 className="text-2xl font-bold text-white mt-1 mb-4">
-                Live Coverage &amp; Capturing Spontaneous Joy
-              </h3>
-              <p className="text-slate-300 text-base leading-relaxed mb-4">
-                The celebration spanned 8 continuous hours packed with dynamic energy. We organized hand-printing sessions
-                where hundreds of students, faculty members, and auxiliary staff pressed paint-coated palms onto canvas
-                murals—symbolizing unity and shared dignity.
-              </p>
-              <p className="text-slate-300 text-base leading-relaxed mb-4">
-                This was followed by friendly football matches where roles dissolved—students and security guards cheered
-                together side-by-side. Documenting this meant running across the grounds with gimbal rigs, capturing candid smiles,
-                and recording raw audio amidst cheers and applause.
-              </p>
-              <blockquote className="my-6 p-5 rounded-xl border-l-2 border-cyan-400 bg-white/[0.02] text-sm text-slate-200 italic">
-                &ldquo;Capturing genuine gratitude cannot be staged. It requires being completely present in the crowd, anticipating moments before they occur, and letting the human spirit speak for itself.&rdquo;
-              </blockquote>
-            </div>
+                {/* Chapter 2 */}
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 02</span>
+                  <h3 className="text-2xl font-bold text-white mt-1 mb-4">
+                    Live Coverage &amp; Capturing Spontaneous Joy
+                  </h3>
+                  <p className="text-slate-300 text-base leading-relaxed mb-4">
+                    The celebration spanned 8 continuous hours packed with dynamic energy. We organized hand-printing sessions
+                    where hundreds of students, faculty members, and auxiliary staff pressed paint-coated palms onto canvas
+                    murals—symbolizing unity and shared dignity.
+                  </p>
+                  <p className="text-slate-300 text-base leading-relaxed mb-4">
+                    This was followed by friendly football matches where roles dissolved—students and security guards cheered
+                    together side-by-side. Documenting this meant running across the grounds with gimbal rigs, capturing candid smiles,
+                    and recording raw audio amidst cheers and applause.
+                  </p>
+                  <blockquote className="my-6 p-5 rounded-xl border-l-2 border-cyan-400 bg-white/[0.02] text-sm text-slate-200 italic">
+                    &ldquo;Capturing genuine gratitude cannot be staged. It requires being completely present in the crowd, anticipating moments before they occur, and letting the human spirit speak for itself.&rdquo;
+                  </blockquote>
+                </div>
 
-            {/* Chapter 3 */}
-            <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 03</span>
-              <h3 className="text-2xl font-bold text-white mt-1 mb-4">
-                The Standing Ovation: &ldquo;Main Shayar Toh Nahi&rdquo;
-              </h3>
-              <p className="text-slate-300 text-base leading-relaxed mb-4">
-                Every event has that one defining moment that transcends the schedule. During the cultural talent segment,
-                one of our campus security bouncers stepped onto the auditorium stage, took the microphone, and delivered a
-                heartfelt rendition of <em>&ldquo;Main Shayar Toh Nahi&rdquo;</em>.
-              </p>
-              <p className="text-slate-300 text-base leading-relaxed">
-                The entire hall erupted. Faculty, directors, and students stood up in unison for an emotional standing ovation.
-                Capturing the emotion on his face through the camera lens was one of the most rewarding moments of my creative journey.
-              </p>
-            </div>
+                {/* Chapter 3 */}
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 03</span>
+                  <h3 className="text-2xl font-bold text-white mt-1 mb-4">
+                    The Standing Ovation: &ldquo;Main Shayar Toh Nahi&rdquo;
+                  </h3>
+                  <p className="text-slate-300 text-base leading-relaxed mb-4">
+                    Every event has that one defining moment that transcends the schedule. During the cultural talent segment,
+                    one of our campus security bouncers stepped onto the auditorium stage, took the microphone, and delivered a
+                    heartfelt rendition of <em>&ldquo;Main Shayar Toh Nahi&rdquo;</em>.
+                  </p>
+                  <p className="text-slate-300 text-base leading-relaxed">
+                    The entire hall erupted. Faculty, directors, and students stood up in unison for an emotional standing ovation.
+                    Capturing the emotion on his face through the camera lens was one of the most rewarding moments of my creative journey.
+                  </p>
+                </div>
 
-            {/* Chapter 4 */}
-            <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 04</span>
-              <h3 className="text-2xl font-bold text-white mt-1 mb-4">
-                Gift Ceremonies &amp; What Leadership Really Means
-              </h3>
-              <p className="text-slate-300 text-base leading-relaxed mb-4">
-                The celebration concluded with a university-wide gift distribution ceremony where every auxiliary worker was
-                personally honored with tokens of appreciation and heartfelt applause.
-              </p>
-              <p className="text-slate-300 text-base leading-relaxed">
-                Leading the video production and working alongside 24 organizers in Team Indigo reinforced an enduring
-                principle: technical engineering is about systems, but true leadership is about people. Documenting Pehel
-                sharpened my skills in fast-paced video editing, narrative pacing, and real-time event coordination.
-              </p>
-            </div>
+                {/* Chapter 4 */}
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">Chapter 04</span>
+                  <h3 className="text-2xl font-bold text-white mt-1 mb-4">
+                    Gift Ceremonies &amp; What Leadership Really Means
+                  </h3>
+                  <p className="text-slate-300 text-base leading-relaxed mb-4">
+                    The celebration concluded with a university-wide gift distribution ceremony where every auxiliary worker was
+                    personally honored with tokens of appreciation and heartfelt applause.
+                  </p>
+                  <p className="text-slate-300 text-base leading-relaxed">
+                    Leading the video production and working alongside 24 organizers in Team Indigo reinforced an enduring
+                    principle: technical engineering is about systems, but true leadership is about people. Documenting Pehel
+                    sharpened my skills in fast-paced video editing, narrative pacing, and real-time event coordination.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

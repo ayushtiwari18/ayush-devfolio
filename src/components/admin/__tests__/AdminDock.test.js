@@ -357,4 +357,65 @@ describe('AdminDock Component', () => {
 
     windowOpenSpy.mockRestore();
   });
+
+  it('renders contextual Event controls when viewing /events/[slug]', async () => {
+    usePathname.mockReturnValue('/events/pehel');
+
+    supabase.from.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          id: 'evt-1',
+          title: 'Pehel — Ek Nayi Subha',
+          slug: 'pehel',
+          published: true,
+          featured: true,
+        },
+        error: null,
+      }),
+    });
+
+    const mockToggleEdit = jest.fn();
+
+    useAdminMode.mockReturnValue({
+      isAdmin: true,
+      editMode: true,
+      toggleEditMode: mockToggleEdit,
+      unreadCount: 0,
+      openDrawer: jest.fn(),
+      logout: jest.fn(),
+      user: { email: 'ayush@example.com' },
+    });
+
+    await act(async () => {
+      root.render(<AdminDock />);
+    });
+
+    const editEventBtn = container.querySelector('button[aria-label="Edit Event Story"]');
+    const backToEventsBtn = container.querySelector('button[aria-label="Back to Events"]');
+
+    expect(editEventBtn).toBeTruthy();
+    expect(backToEventsBtn).toBeTruthy();
+
+    expect(editEventBtn.textContent).toContain('Edit Story');
+    expect(backToEventsBtn.textContent).toContain('Back to Events');
+
+    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+
+    // Test Edit Story click
+    await act(async () => {
+      editEventBtn.click();
+    });
+    expect(mockPush).toHaveBeenCalledWith('/events/pehel?edit=true');
+    expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'admin:edit-event' }));
+
+    dispatchSpy.mockRestore();
+
+    // Test Back to Events click
+    await act(async () => {
+      backToEventsBtn.click();
+    });
+    expect(mockPush).toHaveBeenCalledWith('/events');
+  });
 });

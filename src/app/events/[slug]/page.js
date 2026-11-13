@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getEventBySlug, getAllEventSlugs } from '@/services/events.service';
-import PehelStoryView from '@/components/events/PehelStoryView';
+import EventStoryClient from '@/components/events/EventStoryClient';
 import { BASE_URL } from '@/lib/config';
 
 export const revalidate    = 86400;
@@ -88,7 +88,7 @@ export default async function EventDetailPage({ params }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      <PehelStoryView event={event} />
+      <EventStoryClient initialEvent={event} />
     </>
   );
 }
