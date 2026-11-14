@@ -355,10 +355,39 @@ export default function BlogPostClient({
               </button>
             </div>
 
-            {/* Quick Save Hint */}
-            <div className="hidden md:flex items-center gap-2 text-xs font-mono text-gray-400">
-              <kbd className="px-2 py-0.5 rounded bg-white/10 text-[11px] text-gray-300">⌘S</kbd>
-              <span>to quick save</span>
+            {/* Top Actions: Save, Revert & Quick Save Hint */}
+            <div className="flex items-center gap-2.5">
+              <span className="hidden md:inline-flex items-center gap-1 text-xs font-mono text-gray-400">
+                <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-gray-300">⌘S</kbd>
+                <span>to save</span>
+              </span>
+
+              {hasChanges && (
+                <button
+                  type="button"
+                  onClick={handleRevert}
+                  disabled={saving}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/10 text-xs font-mono text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                  title="Discard unsaved changes"
+                >
+                  <RotateCcw size={12} />
+                  <span className="hidden sm:inline">Revert</span>
+                </button>
+              )}
+
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving || !hasChanges}
+                className={`h-8 px-4 rounded-xl text-xs font-mono font-bold transition-all shadow-lg ${
+                  hasChanges
+                    ? 'bg-primary text-black hover:bg-primary/90 shadow-primary/25 cursor-pointer'
+                    : 'bg-white/10 text-gray-400 hover:bg-white/10 cursor-not-allowed'
+                }`}
+              >
+                <Save size={13} className="mr-1.5" />
+                <span>{saving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Up to date'}</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -848,10 +877,11 @@ export default function BlogPostClient({
 
       {/* ─────────────────────────────────────────────────────────────
           STICKY PERSISTENCE DOCK (Always visible when in Edit or Split mode)
+          Positioned above AdminDock to eliminate any overlap collision
       ────────────────────────────────────────────────────────────── */}
       {isAdmin && (editMode || isEditParam) && activeView !== 'read' && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:px-6 rounded-2xl bg-[#090D16]/95 border border-primary/40 backdrop-blur-xl shadow-2xl shadow-black/90">
+        <div className="fixed bottom-24 sm:bottom-20 left-1/2 -translate-x-1/2 z-40 w-full max-w-4xl px-4 pointer-events-none">
+          <div className="pointer-events-auto flex flex-wrap items-center justify-between gap-3 p-3.5 sm:px-6 rounded-2xl bg-[#090D16]/95 border border-primary/40 backdrop-blur-xl shadow-2xl shadow-black/90">
             <div className="flex items-center gap-3">
               {hasChanges ? (
                 <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
