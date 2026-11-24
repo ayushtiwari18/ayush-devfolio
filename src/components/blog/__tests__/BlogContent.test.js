@@ -121,6 +121,12 @@ jest.mock('react-markdown', () => {
         flushList();
       }
 
+      if (line.startsWith('> ')) {
+        const BqComp = components.blockquote || 'blockquote';
+        elements.push(<BqComp key={`bq-${elements.length}`}>{line.replace(/^> /, '').trim()}</BqComp>);
+        continue;
+      }
+
       if (line.startsWith('# ')) {
         const H1Comp = components.h1 || 'h1';
         elements.push(<H1Comp key={`h1-${elements.length}`}>{line.replace(/^# /, '').trim()}</H1Comp>);
@@ -239,6 +245,54 @@ describe('BlogContent Component', () => {
       expect(heading.textContent).toContain('Architecture Overview');
       expect(heading.id).toBe('architecture-overview');
     });
+
+    it('renders Novel / TipTap JSON doc with headings, lists, and code blocks', async () => {
+      const tiptapDoc = {
+        type: 'doc',
+        content: [
+          {
+            type: 'heading',
+            attrs: { level: 1 },
+            content: [{ type: 'text', text: 'Main Overview' }],
+          },
+          {
+            type: 'heading',
+            attrs: { level: 2 },
+            content: [{ type: 'text', text: 'System Internals' }],
+          },
+          {
+            type: 'heading',
+            attrs: { level: 3 },
+            content: [{ type: 'text', text: 'Low-Level Optimization' }],
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Paragraph with ' }, { type: 'text', marks: [{ type: 'bold' }], text: 'bold text' }],
+          },
+        ],
+      };
+
+      await act(async () => {
+        root.render(<BlogContent content={JSON.stringify(tiptapDoc)} />);
+      });
+
+      const h1 = container.querySelector('h1');
+      expect(h1).not.toBeNull();
+      expect(h1.textContent).toContain('Main Overview');
+      expect(h1.id).toBe('main-overview');
+
+      const h2 = container.querySelector('h2');
+      expect(h2).not.toBeNull();
+      expect(h2.textContent).toContain('System Internals');
+      expect(h2.id).toBe('system-internals');
+
+      const h3 = container.querySelector('h3');
+      expect(h3).not.toBeNull();
+      expect(h3.textContent).toContain('Low-Level Optimization');
+      expect(h3.id).toBe('low-level-optimization');
+
+      expect(container.textContent).toContain('bold text');
+    });
   });
 
   describe('Markdown string content', () => {
@@ -312,6 +366,46 @@ function calculateScore(items) {
 
       const table = container.querySelector('table');
       expect(table).not.toBeNull();
+    });
+
+    it('renders glowing callout cards for GitHub alert quotes', async () => {
+      const calloutSample = `
+> [!NOTE] This is an important architectural insight.
+> [!TIP] Optimise with WebWorkers for non-blocking UI.
+`;
+      await act(async () => {
+        root.render(<BlogContent content={calloutSample} />);
+      });
+
+      expect(container.textContent).toContain('NOTE');
+      expect(container.textContent).toContain('This is an important architectural insight.');
+      expect(container.textContent).toContain('PRO TIP');
+      expect(container.textContent).toContain('Optimise with WebWorkers for non-blocking UI.');
+    });
+
+    it('renders Archify System Architecture Diagram from diagram:arch code block', async () => {
+      const diagramSample = `
+\`\`\`diagram:arch
+{
+  "title": "Payment Flow Architecture",
+  "components": [
+    { "id": "client", "type": "frontend", "label": "Web Store", "pos": [40, 80] },
+    { "id": "stripe", "type": "backend", "label": "Stripe Gateway", "pos": [240, 80] }
+  ],
+  "connections": [
+    { "from": "client", "to": "stripe", "label": "Charge Token" }
+  ]
+}
+\`\`\`
+`;
+      await act(async () => {
+        root.render(<BlogContent content={diagramSample} />);
+      });
+
+      expect(container.textContent).toContain('Payment Flow Architecture');
+      expect(container.textContent).toContain('Web Store');
+      expect(container.textContent).toContain('Stripe Gateway');
+      expect(container.textContent).toContain('Archify IR');
     });
   });
 });

@@ -394,3 +394,43 @@
     }
   }
 }
+
+/* ==========================================================
+   NOVEL / TIPPY SLASH COMMAND & BUBBLE MENU
+   ========================================================== */
+[data-tippy-root] {
+  z-index: 999999 !important;
+  max-width: calc(100vw - 10px);
+}
+
+.tippy-box {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: 0;
+  color: inherit !important;
+}
+
+.tippy-content {
+  padding: 0 !important;
+}
+
+.tippy-arrow {
+  display: none !important;
+}
+
+/* ==========================================================
+   ARCHIFY SYSTEM FLOW KEYFRAMES & DASH PULSE
+   ========================================================== */
+@keyframes archifyFlowingDash {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.archify-flowing-dash {
+  animation: archifyFlowingDash 0.95s linear infinite;
+}

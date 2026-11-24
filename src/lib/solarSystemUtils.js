@@ -98,7 +98,7 @@ export const createStarfield = (scene) => {
   const color2 = new Color(0xaaaaff); // Blueish
   const color3 = new Color(0xffddaa); // Yellowish
   
-  for (let i = 0; i < 15000; i++) {
+  for (let i = 0; i < 3500; i++) {
     starVertices.push(
       (Math.random() - 0.5) * 3000,
       (Math.random() - 0.5) * 3000,
@@ -135,7 +135,7 @@ export const createPlanets = (scene) => {
   const orbitPaths    = [];
 
   planets.forEach((planet) => {
-    const geometry = new SphereGeometry(planet.size, 64, 64);
+    const geometry = new SphereGeometry(planet.size, 32, 32);
     let material;
 
     if (planet.name === 'Sun') {
@@ -278,7 +278,7 @@ export const createPlanets = (scene) => {
 };
 
 export const createAsteroidBelt = (scene) => {
-  const asteroidCount = 3500;
+  const asteroidCount = 1000;
   const geometry = new SphereGeometry(0.8, 6, 6); // Low poly asteroid
   const material = new MeshStandardMaterial({
     color: 0x888888,
@@ -354,7 +354,7 @@ export const initThreeJS = async (mount) => {
 
   const renderer = new WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setSize(w, h);
-  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
+  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.25));
   renderer.toneMapping         = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
 

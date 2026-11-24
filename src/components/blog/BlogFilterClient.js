@@ -603,7 +603,7 @@ export default function BlogFilterClient({ posts: initialPosts = [] }) {
                   <div className="flex-1 h-px bg-white/10" />
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {listPosts.map((post) => (
                   <PostCard
                     key={post.id}

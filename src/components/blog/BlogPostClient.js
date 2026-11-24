@@ -41,7 +41,7 @@ const BlogEditor = dynamic(() => import('@/components/blog/BlogEditor'), {
   loading: () => (
     <div className="min-h-[500px] rounded-2xl border border-white/10 bg-[#080B11] flex flex-col items-center justify-center p-8 gap-3">
       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-      <span className="text-xs font-mono text-gray-400">Loading Notion block canvas...</span>
+      <span className="text-xs font-mono text-gray-400">Loading Markdown Studio...</span>
     </div>
   ),
 });
@@ -73,14 +73,14 @@ export default function BlogPostClient({
   const isEditParam = searchParams?.get('edit') === 'true';
 
   const [post, setPost] = useState(initialPost);
-  const [activeView, setActiveView] = useState(() => (isEditParam && isAdmin ? 'edit' : 'read'));
+  const [activeView, setActiveView] = useState(() => (isEditParam ? 'edit' : 'read'));
 
-  // If search param ?edit=true arrives and admin is logged in, switch to edit
+  // If search param ?edit=true arrives, switch to edit mode
   useEffect(() => {
-    if (isEditParam && isAdmin) {
+    if (isEditParam) {
       setActiveView((prev) => (prev === 'read' ? 'edit' : prev));
     }
-  }, [isEditParam, isAdmin]);
+  }, [isEditParam]);
 
   // Form State
   const [title, setTitle] = useState(post.title || '');
@@ -295,107 +295,107 @@ export default function BlogPostClient({
         category={primaryCategory}
       />
 
-      {/* Admin Mode In-Context Editorial Toolbar */}
-      {isAdmin && (editMode || isEditParam) && (
-        <div className="sticky top-20 z-40 px-4 sm:px-6 lg:px-8 mb-6">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#090D16]/95 border border-primary/30 backdrop-blur-md shadow-2xl shadow-primary/10">
-            <div className="flex items-center gap-2.5">
-              <span
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold uppercase tracking-wider ${
-                  published
-                    ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
-                    : 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${published ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                <span>{published ? 'Published' : 'Draft / Private'}</span>
-              </span>
-              <span className="text-xs font-mono text-gray-400 hidden sm:inline-block">
-                {wordCount} words · {calculatedReadingTime}m read
-              </span>
-            </div>
-
-            {/* View Switcher Pills */}
-            <div className="flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/10 text-xs font-mono">
-              <button
-                type="button"
-                onClick={() => setActiveView('read')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                  activeView === 'read'
-                    ? 'bg-primary text-black font-bold shadow-sm'
-                    : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Eye size={13} />
-                <span>Read View</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveView('edit')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                  activeView === 'edit'
-                    ? 'bg-primary text-black font-bold shadow-sm'
-                    : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Edit3 size={13} />
-                <span>In-Context Edit</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveView('split')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                  activeView === 'split'
-                    ? 'bg-primary text-black font-bold shadow-sm'
-                    : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Columns size={13} />
-                <span>Split Preview</span>
-              </button>
-            </div>
-
-            {/* Top Actions: Save, Revert & Quick Save Hint */}
-            <div className="flex items-center gap-2.5">
-              <span className="hidden md:inline-flex items-center gap-1 text-xs font-mono text-gray-400">
-                <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-gray-300">⌘S</kbd>
-                <span>to save</span>
-              </span>
-
-              {hasChanges && (
-                <button
-                  type="button"
-                  onClick={handleRevert}
-                  disabled={saving}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/10 text-xs font-mono text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                  title="Discard unsaved changes"
-                >
-                  <RotateCcw size={12} />
-                  <span className="hidden sm:inline">Revert</span>
-                </button>
-              )}
-
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={saving || !hasChanges}
-                className={`h-8 px-4 rounded-xl text-xs font-mono font-bold transition-all shadow-lg ${
-                  hasChanges
-                    ? 'bg-primary text-black hover:bg-primary/90 shadow-primary/25 cursor-pointer'
-                    : 'bg-white/10 text-gray-400 hover:bg-white/10 cursor-not-allowed'
-                }`}
-              >
-                <Save size={13} className="mr-1.5" />
-                <span>{saving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Up to date'}</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Container */}
-      <main id="main-content" className="min-h-screen pt-4 pb-32 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-white">
-        <div className="max-w-7xl mx-auto">
+      <main id="main-content" className="min-h-screen pt-32 sm:pt-40 lg:pt-44 pb-32 px-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-20 selection:bg-primary/20 selection:text-white">
+        <div className="w-full max-w-[1720px] mx-auto">
+
+          {/* In-Context Editorial Toolbar */}
+          {(isAdmin || isEditParam) && (
+            <div className="sticky top-20 sm:top-24 z-40 mb-8 -mx-2 sm:mx-0">
+              <div className="w-full mx-auto flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#090D16]/95 border border-primary/30 backdrop-blur-md shadow-2xl shadow-primary/10">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold uppercase tracking-wider ${
+                      published
+                        ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                        : 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${published ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                    <span>{published ? 'Published' : 'Draft / Private'}</span>
+                  </span>
+                  <span className="text-xs font-mono text-gray-400 hidden sm:inline-block">
+                    {wordCount} words · {calculatedReadingTime}m read
+                  </span>
+                </div>
+
+                {/* View Switcher Pills */}
+                <div className="flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/10 text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setActiveView('read')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                      activeView === 'read'
+                        ? 'bg-primary text-black font-bold shadow-sm'
+                        : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Eye size={13} />
+                    <span>Read View</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveView('edit')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                      activeView === 'edit'
+                        ? 'bg-primary text-black font-bold shadow-sm'
+                        : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Edit3 size={13} />
+                    <span>In-Context Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveView('split')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                      activeView === 'split'
+                        ? 'bg-primary text-black font-bold shadow-sm'
+                        : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Columns size={13} />
+                    <span>Split Preview</span>
+                  </button>
+                </div>
+
+                {/* Top Actions: Save, Revert & Quick Save Hint */}
+                <div className="flex items-center gap-2.5">
+                  <span className="hidden md:inline-flex items-center gap-1 text-xs font-mono text-gray-400">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-gray-300">⌘S</kbd>
+                    <span>to save</span>
+                  </span>
+
+                  {hasChanges && (
+                    <button
+                      type="button"
+                      onClick={handleRevert}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/10 text-xs font-mono text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      title="Discard unsaved changes"
+                    >
+                      <RotateCcw size={12} />
+                      <span className="hidden sm:inline">Revert</span>
+                    </button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={saving || !hasChanges}
+                    className={`h-8 px-4 rounded-xl text-xs font-mono font-bold transition-all shadow-lg ${
+                      hasChanges
+                        ? 'bg-primary text-black hover:bg-primary/90 shadow-primary/25 cursor-pointer'
+                        : 'bg-white/10 text-gray-400 hover:bg-white/10 cursor-not-allowed'
+                    }`}
+                  >
+                    <Save size={13} className="mr-1.5" />
+                    <span>{saving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Up to date'}</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Breadcrumb & Navigation Controls */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <nav className="flex items-center gap-2 text-xs font-mono text-gray-400">
@@ -407,7 +407,7 @@ export default function BlogPostClient({
                 Publications
               </Link>
               <ChevronRight size={12} className="text-gray-600" />
-              <span className="text-primary truncate max-w-[200px] sm:max-w-xs">
+              <span className="text-primary truncate max-w-xs sm:max-w-md lg:max-w-xl">
                 {title || post.title}
               </span>
             </nav>
@@ -426,8 +426,8 @@ export default function BlogPostClient({
           {/* ─────────────────────────────────────────────────────────────
               VIEW MODE: In-Context Full Canvas Edit or Split Preview
           ────────────────────────────────────────────────────────────── */}
-          {isAdmin && (editMode || isEditParam) && activeView !== 'read' ? (
-            <div className={activeView === 'split' ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : 'max-w-[720px] mx-auto'}>
+          {(isAdmin || isEditParam) && activeView !== 'read' ? (
+            <div className={activeView === 'split' ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : 'w-full max-w-6xl mx-auto'}>
               {/* Left Column: Markdown & Metadata Editor */}
               <div className="space-y-6">
                 {/* Error Banner */}
@@ -564,15 +564,15 @@ export default function BlogPostClient({
                   />
                 </div>
 
-                {/* Notion BlockNote Canvas Editor */}
+                {/* Markdown Editorial Studio */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-mono text-gray-400 uppercase font-semibold flex items-center gap-2">
                       <FileText size={13} className="text-primary" />
-                      <span>Article Blocks (Notion Editor)</span>
+                      <span>Article Content (Markdown Studio)</span>
                     </label>
                     <span className="text-[11px] font-mono text-gray-500">
-                      Type <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-primary font-bold">/</kbd> for headings, code, callouts, images
+                      Supports GFM, IDE Code Cards, Callouts & Archify Diagrams
                     </span>
                   </div>
                   <BlogEditor
@@ -637,6 +637,7 @@ export default function BlogPostClient({
                     fill
                     className="object-cover"
                     priority
+                    unoptimized={Boolean((coverImage || post.cover_image || '').includes('supabase.co'))}
                   />
                   {(featured || post.featured) && (
                     <div className="absolute top-5 left-5 flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400/90 backdrop-blur-md text-black text-xs font-bold font-mono rounded-full shadow-lg">
@@ -659,8 +660,8 @@ export default function BlogPostClient({
               )}
 
               {/* Main Layout: Article + Editorial Sidebar */}
-              <div className="flex flex-col xl:flex-row gap-12 lg:gap-16">
-                <div className="flex-1 min-w-0">
+              <div className="flex flex-col xl:flex-row gap-10 xl:gap-14 2xl:gap-16 w-full items-start">
+                <div className="flex-1 min-w-0 w-full">
                   {!published && (
                     <div className="mb-6 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono-code font-bold flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -670,7 +671,7 @@ export default function BlogPostClient({
                     </div>
                   )}
 
-                  <article>
+                  <article className="w-full">
                     {/* Category & Metadata Pills */}
                     <div className="flex flex-wrap items-center gap-2.5 mb-5 font-mono text-xs">
                       <span className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/25 font-bold uppercase tracking-wider">
@@ -774,7 +775,7 @@ export default function BlogPostClient({
                                 <span className="text-xs font-mono font-normal text-primary">@ayushtiwari18</span>
                               )}
                             </h4>
-                            <p className="text-xs text-gray-400 mt-1 max-w-md leading-relaxed font-sans">
+                            <p className="text-xs text-gray-400 mt-1 max-w-2xl leading-relaxed font-sans">
                               Full-Stack & Systems Engineer building high-throughput web apps, compilers, and algorithmic platforms.
                             </p>
                           </div>
@@ -856,7 +857,7 @@ export default function BlogPostClient({
                 </div>
 
                 {/* Editorial Sticky Sidebar */}
-                <aside className="xl:w-80 shrink-0">
+                <aside className="xl:w-80 2xl:w-88 shrink-0">
                   <BlogSidebar
                     content={content || post.content}
                     postUrl={postUrl}

@@ -41,6 +41,14 @@ export const supabase = createClient(
           return fetch(url, options);
         }
 
+        // In local development, bypass caching so database updates reflect immediately without hard refresh
+        if (process.env.NODE_ENV === 'development') {
+          return fetch(url, {
+            ...options,
+            cache: 'no-store',
+          });
+        }
+
         // Caller opted out of cache
         if (options.cache === 'no-store' || options.next?.revalidate === 0) {
           return fetch(url, options);

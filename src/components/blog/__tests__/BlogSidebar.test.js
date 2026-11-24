@@ -87,6 +87,51 @@ describe('BlogSidebar & extractHeadings', () => {
       });
     });
 
+    it('extracts headings from Novel / TipTap JSON docs', () => {
+      const tiptapDoc = {
+        type: 'doc',
+        content: [
+          {
+            type: 'heading',
+            attrs: { level: 1 },
+            content: [{ type: 'text', text: 'Executive Overview' }],
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Intro paragraph' }],
+          },
+          {
+            type: 'heading',
+            attrs: { level: 2 },
+            content: [{ type: 'text', text: 'Core Architecture' }],
+          },
+          {
+            type: 'heading',
+            attrs: { level: 3 },
+            content: [{ type: 'text', text: 'Deep Details' }],
+          },
+        ],
+      };
+
+      const headings = extractHeadings(JSON.stringify(tiptapDoc));
+      expect(headings).toHaveLength(3);
+      expect(headings[0]).toEqual({
+        id: 'executive-overview',
+        text: 'Executive Overview',
+        level: 1,
+      });
+      expect(headings[1]).toEqual({
+        id: 'core-architecture',
+        text: 'Core Architecture',
+        level: 2,
+      });
+      expect(headings[2]).toEqual({
+        id: 'deep-details',
+        text: 'Deep Details',
+        level: 3,
+      });
+    });
+
     it('extracts headings from Markdown strings with code fence protection', () => {
       const markdown = `
 # Executive Summary

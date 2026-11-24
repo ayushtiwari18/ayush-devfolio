@@ -93,6 +93,29 @@ describe('Supabase Client Global Fetch Polyfill', () => {
     expect(passedOptions.next).toEqual({ revalidate: 60 });
   });
 
+  it('bypasses ISR cache and uses no-store in development mode', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    try {
+      const { supabase } = require('../supabase');
+      const customFetch = supabase.customFetch;
+
+      globalThis.__FORCE_SERVER_FETCH__ = true;
+
+      await customFetch('https://example.supabase.co/rest/v1/posts?select=*', {
+        method: 'GET',
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [, passedOptions] = mockFetch.mock.calls[0];
+      expect(passedOptions.cache).toBe('no-store');
+      expect(passedOptions.next).toBeUndefined();
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
   it('respects caller cache opt-out (cache: no-store) on server read requests', async () => {
     const { supabase } = require('../supabase');
     const customFetch = supabase.customFetch;

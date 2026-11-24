@@ -9,17 +9,15 @@ export const revalidate = 60;
 
 function extractTextFromBlocks(blocks) {
   let text = '';
-  const walk = (blocks) => {
-    for (const block of blocks) {
-      if (Array.isArray(block.content)) {
-        for (const inline of block.content) {
-          if (inline.type === 'text') text += inline.text + ' ';
-        }
-      }
-      if (block.children?.length) walk(block.children);
+  const walk = (items) => {
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (item.type === 'text' && item.text) text += item.text + ' ';
+      if (Array.isArray(item.content)) walk(item.content);
+      if (Array.isArray(item.children)) walk(item.children);
     }
   };
-  walk(blocks);
+  walk(Array.isArray(blocks) ? blocks : blocks?.content);
   return text.trim();
 }
 
@@ -28,8 +26,10 @@ function safeDescription(post) {
   if (!post.content) return '';
   if (typeof post.content === 'string') {
     try {
-      const blocks = JSON.parse(post.content);
-      if (Array.isArray(blocks)) return extractTextFromBlocks(blocks).substring(0, 160);
+      const parsed = JSON.parse(post.content);
+      if (Array.isArray(parsed) || parsed?.type === 'doc') {
+        return extractTextFromBlocks(parsed).substring(0, 160);
+      }
     } catch {}
     return post.content.replace(/[#*`>_~]/g, '').trim().substring(0, 160);
   }

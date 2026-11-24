@@ -54,10 +54,10 @@ export default async function BlogPage() {
         className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-primary/[0.03] rounded-full blur-[140px] pointer-events-none"
       />
 
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="w-full max-w-7xl 2xl:max-w-[1600px] mx-auto relative z-10 px-2 sm:px-4 lg:px-6">
         
         {/* Editorial Masthead */}
-        <div className="mb-14 text-center max-w-3xl mx-auto">
+        <div className="mb-14 text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-xs font-mono-code text-gray-400 mb-4 backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span>AYUSH TIWARI // PUBLICATIONS &amp; FIELD NOTES</span>

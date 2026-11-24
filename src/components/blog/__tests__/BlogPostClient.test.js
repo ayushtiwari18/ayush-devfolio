@@ -195,7 +195,7 @@ describe('BlogPostClient Component', () => {
 
     // Verify editable inputs are rendered
     expect(container.textContent).toContain('Article Headline (H1)');
-    expect(container.textContent).toContain('Article Blocks (Notion Editor)');
+    expect(container.textContent).toContain('Article Content (Markdown Studio)');
     expect(container.textContent).toContain('Save Changes');
 
     // Edit title
@@ -232,7 +232,7 @@ describe('BlogPostClient Component', () => {
     });
 
     expect(container.textContent).toContain('Article Headline (H1)');
-    expect(container.textContent).toContain('Article Blocks (Notion Editor)');
+    expect(container.textContent).toContain('Article Content (Markdown Studio)');
     expect(container.textContent).toContain('Save Changes');
   });
 

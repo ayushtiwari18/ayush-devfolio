@@ -58,7 +58,7 @@ export default function BlogReadingNav({ postTitle, postUrl, category }) {
           : '-translate-y-full opacity-0 pointer-events-none'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+      <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-20 h-14 flex items-center justify-between gap-4">
         {/* Left: Back Link & Domain Pill */}
         <div className="flex items-center gap-3 shrink-0">
           <Link

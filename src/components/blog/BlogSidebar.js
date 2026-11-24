@@ -5,52 +5,79 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Twitter, Linkedin, Link2, Check, BookOpen, Clock, Tag, Award, ExternalLink } from 'lucide-react';
 
-// Extract headings from BlockNote JSON blocks or Markdown strings
+// Extract headings from TipTap/Novel docs, legacy BlockNote blocks, or Markdown strings
 export function extractHeadings(content) {
   if (!content) return [];
 
-  // 1. BlockNote JSON blocks (Array or stringified JSON Array)
-  let blocks = null;
-  if (Array.isArray(content)) {
-    blocks = content;
+  let parsed = null;
+  if (typeof content === 'object') {
+    parsed = content;
   } else if (typeof content === 'string') {
     const trimmed = content.trim();
     if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
       try {
-        const parsed = JSON.parse(content);
-        if (Array.isArray(parsed)) {
-          blocks = parsed;
-        }
+        parsed = JSON.parse(content);
       } catch {
-        // Not a valid JSON array, fallback to markdown string parsing
+        // Not valid JSON, fallback to markdown
       }
     }
   }
 
-  if (blocks && Array.isArray(blocks)) {
-    const headings = [];
+  const headings = [];
+  const slugCounts = {};
+
+  const addHeading = (text, level) => {
+    const cleanText = String(text || '').replace(/[*_`~]/g, '').trim();
+    if (!cleanText) return;
+    const base = cleanText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    let id = base;
+    if (!slugCounts[base]) {
+      slugCounts[base] = 1;
+    } else {
+      const count = slugCounts[base]++;
+      id = `${base}-${count}`;
+    }
+    headings.push({ id, text: cleanText, level: level || 2 });
+  };
+
+  // 1. TipTap / Novel doc format
+  if (parsed?.type === 'doc' && Array.isArray(parsed?.content)) {
+    const walkTiptap = (items) => {
+      for (const node of items) {
+        if (node.type === 'heading') {
+          const text = (node.content || []).map((c) => c.text || '').join('').trim();
+          addHeading(text, node.attrs?.level || 2);
+        }
+        if (Array.isArray(node.content) && node.type !== 'heading') {
+          walkTiptap(node.content);
+        }
+      }
+    };
+    walkTiptap(parsed.content);
+    return headings;
+  }
+
+  // 2. Legacy BlockNote JSON blocks
+  if (Array.isArray(parsed)) {
     const walk = (items) => {
       for (const block of items) {
         if (block.type === 'heading') {
           const text = (block.content || []).filter(i => i.type === 'text').map(i => i.text).join('').trim();
-          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           if (text) {
-            headings.push({ id, text, level: block.props?.level || 2 });
+            addHeading(text, block.props?.level || 2);
           }
         }
         if (block.children?.length) walk(block.children);
       }
     };
-    walk(blocks);
+    walk(parsed);
     return headings;
   }
 
-  // 2. Markdown string format
+  // 3. Markdown string format
   if (typeof content !== 'string') return [];
 
   const lines = content.split('\n');
-  const headings = [];
-  const slugCounts = {};
   let inCodeBlock = false;
 
   for (const rawLine of lines) {
@@ -68,21 +95,8 @@ export function extractHeadings(content) {
     const match = /^(#{1,3})\s+(.+)$/.exec(line);
     if (match) {
       const level = match[1].length;
-      // Filter headings to level 2 and 3 (or level 1 if author used single hash in body)
       if (level >= 1 && level <= 3) {
-        // Strip markdown inline styles from label
-        const text = match[2].replace(/[*_`~]/g, '').trim();
-        if (text) {
-          const base = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-          let id = base;
-          if (!slugCounts[base]) {
-            slugCounts[base] = 1;
-          } else {
-            const count = slugCounts[base]++;
-            id = `${base}-${count}`;
-          }
-          headings.push({ id, text, level });
-        }
+        addHeading(match[2], level);
       }
     }
   }
